@@ -560,9 +560,11 @@
                     this.style.display = 'none';
                     if (logoText) logoText.style.display = 'block';
                 });
-                // Check if image loaded successfully
+                // Check if image already failed to load
                 if (!logoImg.complete || logoImg.naturalHeight === 0) {
-                    logoImg.onerror();
+                    // Trigger error event if image failed
+                    var event = new Event('error');
+                    logoImg.dispatchEvent(event);
                 }
             }
 
