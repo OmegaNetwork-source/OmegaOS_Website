@@ -584,17 +584,19 @@
             }
 
             function getDownloadUrl(platform) {
-                // Update these URLs once you have releases created on GitHub
-                // Format: https://github.com/OmegaNetwork-source/Omega_OS/releases/download/v1.0.0/Omega-OS-Setup-1.0.0.exe
+                // GitHub releases latest download URLs
+                // These will work once you create a release with these filenames
                 const baseUrl = 'https://github.com/OmegaNetwork-source/Omega_OS/releases/latest/download/';
                 
+                // Try common electron-builder filename patterns
                 const urls = {
-                    'windows': baseUrl + 'Omega-OS-Setup.exe', // Update with actual filename
-                    'macos': baseUrl + 'Omega-OS.dmg', // Update with actual filename
-                    'linux': baseUrl + 'Omega-OS.AppImage' // Update with actual filename
+                    'windows': baseUrl + 'Omega OS Setup 1.0.0.exe', // NSIS installer
+                    'macos': baseUrl + 'Omega OS-1.0.0.dmg',
+                    'linux': baseUrl + 'Omega OS-1.0.0.AppImage'
                 };
                 
-                return urls[platform] || baseUrl;
+                // Fallback to releases page if platform unknown
+                return urls[platform] || 'https://github.com/OmegaNetwork-source/Omega_OS/releases/latest';
             }
 
             // Set up download button
