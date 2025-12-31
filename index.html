@@ -569,30 +569,9 @@
             }
 
             // Download functionality
-            function detectOS() {
-                const userAgent = window.navigator.userAgent.toLowerCase();
-                const platform = window.navigator.platform.toLowerCase();
-                
-                if (platform.indexOf('win') > -1 || userAgent.indexOf('windows') > -1) {
-                    return 'windows';
-                } else if (platform.indexOf('mac') > -1 || userAgent.indexOf('macintosh') > -1) {
-                    return 'macos';
-                } else if (platform.indexOf('linux') > -1 || userAgent.indexOf('linux') > -1) {
-                    return 'linux';
-                }
-                return 'unknown';
-            }
-
-            function getDownloadUrl(platform) {
-                // GitHub releases latest download URLs
-                const baseUrl = 'https://github.com/OmegaNetwork-source/OmegaOS_Website/releases/latest/download/';
-                
-                const urls = {
-                    'windows': baseUrl + 'Omega.OS.Setup.1.0.0.exe' // NSIS installer (GitHub replaces spaces with dots)
-                };
-                
-                // Fallback to releases page if platform unknown or not windows
-                return urls[platform] || 'https://github.com/OmegaNetwork-source/OmegaOS_Website/releases/latest';
+            function getDownloadUrl() {
+                // GitHub releases latest download URL
+                return 'https://github.com/OmegaNetwork-source/OmegaOS_Website/releases/latest/download/Omega.OS.Setup.1.0.0.exe';
             }
 
             // Set up download button
@@ -600,19 +579,9 @@
             if (downloadBtn) {
                 downloadBtn.addEventListener('click', function(e) {
                     e.preventDefault();
-                    const os = detectOS();
-                    const url = getDownloadUrl(os);
-                    // Create a temporary link to trigger download
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = '';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    // Fallback: open in new tab if download doesn't start
-                    setTimeout(function() {
-                        window.open(url, '_blank');
-                    }, 500);
+                    const url = getDownloadUrl();
+                    // Direct download - open in new window
+                    window.open(url, '_blank');
                 });
             }
 
