@@ -56,6 +56,18 @@ if (themeToggleBtn) {
     });
 }
 
+// Switch browser to use qwen2.5:1.5b model (works better for browser summarization than DeepSeek)
+if (window.electronAPI && window.electronAPI.aiSetModel) {
+    // Use qwen2.5:1.5b for browser - it works better with extracted page content
+    window.electronAPI.aiSetModel('qwen2.5:1.5b').then(result => {
+        if (result && result.success) {
+            console.log('[Browser] Switched to qwen2.5:1.5b model for better browser compatibility');
+        }
+    }).catch(err => {
+        console.log('[Browser] Model switch failed (will use default):', err);
+    });
+}
+
 // Sidebar Toggle
 let sidebarCollapsed = localStorage.getItem('sidebarCollapsed');
 if (sidebarCollapsed === null) {
@@ -65,16 +77,13 @@ if (sidebarCollapsed === null) {
 }
 
 const sidebar = document.getElementById('sidebar');
-const aiButton = document.getElementById('aiButton');
 
 function updateSidebarState(collapsed) {
     sidebarCollapsed = collapsed;
     if (sidebarCollapsed) {
         sidebar.classList.add('collapsed');
-        aiButton.classList.remove('active');
     } else {
         sidebar.classList.remove('collapsed');
-        aiButton.classList.add('active');
     }
     localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
 }
@@ -82,25 +91,273 @@ function updateSidebarState(collapsed) {
 if (sidebarCollapsed) {
     sidebar.classList.add('collapsed');
 } else {
-    aiButton.classList.add('active');
+    sidebar.classList.remove('collapsed');
 }
-
-// AI Button - Toggle Sidebar
-aiButton.addEventListener('click', () => {
-    updateSidebarState(!sidebarCollapsed);
-});
 
 // Sidebar Toggle Button
 document.getElementById('sidebarToggle').addEventListener('click', () => {
     updateSidebarState(!sidebarCollapsed);
 });
 
+// Sidebar Move Button - Move sidebar to other side
+let sidebarRightSide = localStorage.getItem('sidebarRightSide') === 'true';
+const sidebarMoveBtn = document.getElementById('sidebarMoveBtn');
+
+function updateSidebarPosition(rightSide) {
+    sidebarRightSide = rightSide;
+    if (sidebarRightSide) {
+        sidebar.classList.add('right-side');
+    } else {
+        sidebar.classList.remove('right-side');
+    }
+    localStorage.setItem('sidebarRightSide', sidebarRightSide);
+}
+
+// Initialize sidebar position
+if (sidebarRightSide) {
+    sidebar.classList.add('right-side');
+}
+
+if (sidebarMoveBtn) {
+    sidebarMoveBtn.addEventListener('click', () => {
+        updateSidebarPosition(!sidebarRightSide);
+    });
+}
+
+// AI Chat Functionality
+let conversationHistory = [];
+let isAIProcessing = false;
+
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+const welcomeMessage = document.getElementById('welcomeMessage');
+
+// Ensure chat input is enabled immediately
+if (chatInput) chatInput.disabled = false;
+if (chatSend) chatSend.disabled = false;
+
+// Check if AI is ready and enable chat
+async function initializeAIChat() {
+    if (!window.electronAPI?.aiCheckReady) {
+        console.warn('AI API not available');
+        // Enable chat anyway - let user try
+        if (chatInput) chatInput.disabled = false;
+        if (chatSend) chatSend.disabled = false;
+        return;
+    }
+    
+    // Always enable chat input - let user try and we'll handle errors
+    if (chatInput) chatInput.disabled = false;
+    if (chatSend) chatSend.disabled = false;
+    
+    try {
+        const status = await window.electronAPI.aiCheckReady();
+        if (status.ready || status.available) {
+            // AI is ready
+            if (welcomeMessage) {
+                const subtitle = welcomeMessage.querySelector('.subtitle');
+                if (subtitle) {
+                    subtitle.textContent = 'AI ready - ask me anything!';
+                }
+            }
+        } else {
+            // Not ready yet, but enable input anyway
+            if (welcomeMessage) {
+                const subtitle = welcomeMessage.querySelector('.subtitle');
+                if (subtitle) {
+                    subtitle.textContent = 'AI initializing... You can try sending a message.';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error checking AI status:', error);
+        // Still enable chat - errors will be shown in chat if needed
+        if (welcomeMessage) {
+            const subtitle = welcomeMessage.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.textContent = 'AI may be starting... Try sending a message.';
+            }
+        }
+    }
+}
+
+// Add message to chat
+function addChatMessage(role, content) {
+    if (welcomeMessage && welcomeMessage.parentElement) {
+        welcomeMessage.remove();
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+    messageDiv.innerHTML = `
+        <div class="chat-message-content">${escapeHtml(content)}</div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Send chat message
+async function sendChatMessage() {
+    const message = chatInput.value.trim();
+    if (!message || isAIProcessing) return;
+    
+    if (!window.electronAPI?.aiChat) {
+        alert('AI chat is not available');
+        return;
+    }
+    
+    // Add user message
+    addChatMessage('user', message);
+    conversationHistory.push({ role: 'user', content: message });
+    chatInput.value = '';
+    chatInput.disabled = true;
+    chatSend.disabled = true;
+    isAIProcessing = true;
+    
+    // Show typing indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-message assistant typing';
+    typingDiv.innerHTML = '<div class="chat-message-content">Thinking...</div>';
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    try {
+        const result = await window.electronAPI.aiChat(message, conversationHistory);
+        typingDiv.remove();
+        
+        if (result.success) {
+            addChatMessage('assistant', result.response);
+            conversationHistory.push({ role: 'assistant', content: result.response });
+        } else {
+            addChatMessage('assistant', `Error: ${result.error || 'Unknown error'}`);
+        }
+    } catch (error) {
+        typingDiv.remove();
+        addChatMessage('assistant', `Error: ${error.message}`);
+    } finally {
+        chatInput.disabled = false;
+        chatSend.disabled = false;
+        isAIProcessing = false;
+        chatInput.focus();
+    }
+}
+
+// Event listeners for chat
+if (chatSend) {
+    chatSend.addEventListener('click', sendChatMessage);
+}
+
+if (chatInput) {
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendChatMessage();
+        }
+    });
+}
+
+// Wrap updateSidebarState to initialize AI when sidebar opens
+const originalUpdateSidebarState = updateSidebarState;
+window.updateSidebarState = function(collapsed) {
+    originalUpdateSidebarState(collapsed);
+    if (!collapsed && chatInput) {
+        // Sidebar opened, initialize AI if not already done
+        setTimeout(() => {
+            initializeAIChat();
+            chatInput.focus();
+        }, 100);
+    }
+};
+
+// Also initialize on page load if sidebar is open
+if (!sidebarCollapsed) {
+    setTimeout(initializeAIChat, 500);
+}
+
+// Page Summarization
+async function summarizeCurrentPage() {
+    if (!window.electronAPI?.aiSummarizePage) {
+        alert('AI summarization is not available');
+        return;
+    }
+    
+    // Get active webview
+    const activeWebview = document.querySelector(`webview[data-tab-id="${activeTabId}"]`);
+    if (!activeWebview) {
+        alert('No active page to summarize');
+        return;
+    }
+    
+    try {
+        // Extract page content WITHOUT modifying the actual page
+        const pageContent = await activeWebview.executeJavaScript(`
+            (function() {
+                // Clone the body to avoid modifying the actual page
+                const clone = document.body.cloneNode(true);
+                
+                // Remove unwanted elements from the clone only
+                const unwanted = clone.querySelectorAll('script, style, nav, header, footer, aside, iframe, embed, object, audio, video');
+                unwanted.forEach(el => el.remove());
+                
+                // Get text content from clone (doesn't affect original page)
+                const bodyText = clone.innerText || clone.textContent || '';
+                
+                // Get title
+                const title = document.title || '';
+                
+                return title + '\\n\\n' + bodyText.substring(0, 5000); // Limit to 5000 chars
+            })();
+        `);
+        
+        if (!pageContent || pageContent.trim().length < 50) {
+            alert('Unable to extract page content. Please wait for the page to fully load.');
+            return;
+        }
+        
+        // Show loading in chat
+        addChatMessage('user', 'Summarize this page');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-message assistant typing';
+        typingDiv.innerHTML = '<div class="chat-message-content">Summarizing page...</div>';
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Summarize
+        const result = await window.electronAPI.aiSummarizePage(pageContent, 200);
+        typingDiv.remove();
+        
+        if (result.success) {
+            addChatMessage('assistant', `**Page Summary:**\n\n${result.summary}`);
+            conversationHistory.push({ role: 'user', content: 'Summarize this page' });
+            conversationHistory.push({ role: 'assistant', content: result.summary });
+        } else {
+            addChatMessage('assistant', `Error: ${result.error || 'Failed to summarize page'}`);
+        }
+    } catch (error) {
+        console.error('Error summarizing page:', error);
+        alert('Error summarizing page: ' + error.message);
+    }
+}
+
+// Summarize page button
+const summarizePageBtn = document.getElementById('summarizePageBtn');
+if (summarizePageBtn) {
+    summarizePageBtn.addEventListener('click', summarizeCurrentPage);
+}
+
 // Tab Management
 let tabs = [];
 let activeTabId = 0;
 let tabIdCounter = 0;
 
-function createTab(url = null) {
+async function createTab(url = null) {
     if (!url) {
         url = getHomeUrl();
     }
@@ -141,7 +398,7 @@ function createTab(url = null) {
     }
     
     // Create webview for this tab before switching
-    createWebView(tabId, url);
+    await createWebView(tabId, url);
     
     // Switch to the new tab
     switchTab(tabId);
@@ -220,16 +477,33 @@ function updateTabTitle(tabId, title) {
     }
 }
 
-function createWebView(tabId, url) {
+async function createWebView(tabId, url) {
     const container = document.querySelector('.webview-container');
     const webview = document.createElement('webview');
     webview.dataset.tabId = tabId;
+    
+    // CRITICAL: Set preload BEFORE setting src
+    // Preload must be set before webview loads
+    let preloadPath = './webview-preload.js';
+    if (window.electronAPI?.getPreloadPath) {
+        try {
+            const path = await window.electronAPI.getPreloadPath();
+            if (path) preloadPath = path;
+        } catch (e) {
+            // Use fallback
+        }
+    }
+    webview.setAttribute('preload', preloadPath);
+    
     webview.src = url;
     webview.style.width = '100%';
     webview.style.height = '100%';
     webview.style.display = tabId === activeTabId ? 'inline-flex' : 'none';
     webview.setAttribute('allowpopups', 'true');
-    webview.setAttribute('webpreferences', 'allowRunningInsecureContent');
+    // Set Chrome user agent so Chrome Web Store recognizes us
+    const chromeUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    webview.setAttribute('useragent', chromeUserAgent);
+    webview.setAttribute('webpreferences', 'allowRunningInsecureContent,contextIsolation=yes');
     
     // Hide all other webviews when this one is shown
     webview.addEventListener('dom-ready', () => {
@@ -270,8 +544,11 @@ function createWebView(tabId, url) {
                 }
             }
             // Add to history
-            if (e.url && !e.url.startsWith('chrome-extension://') && !e.url.startsWith('about:')) {
+            if (e.url && !e.url.startsWith('chrome-extension://') && !e.url.startsWith('about:') && !e.url.startsWith('chrome://') && !e.url.startsWith('file://') && !e.url.startsWith('data:')) {
                 addToHistory(e.url, tab.title);
+                // Notify firewall of navigation - THIS IS KEY!
+                addConsoleLog('navigation', `did-navigate: ${e.url}`);
+                notifyFirewall('navigate', e.url, 'GET');
             }
         }
         updateNavButtons();
@@ -288,6 +565,11 @@ function createWebView(tabId, url) {
                     addressBar.value = e.url;
                 }
             }
+            // Notify firewall of in-page navigation
+            if (e.url && !e.url.startsWith('chrome-extension://') && !e.url.startsWith('about:') && !e.url.startsWith('chrome://') && !e.url.startsWith('file://') && !e.url.startsWith('data:')) {
+                addConsoleLog('navigation', `did-navigate-in-page: ${e.url}`);
+                notifyFirewall('navigate', e.url, 'GET');
+            }
         }
     });
     
@@ -296,11 +578,93 @@ function createWebView(tabId, url) {
         // Could show an error page here
     });
     
+    // Intercept popup/new window requests (like MetaMask connection popups)
+    // Open them in new tabs instead
+    webview.addEventListener('new-window', (e) => {
+        e.preventDefault();
+        const url = e.url;
+        console.log('Intercepted popup request:', url);
+        
+        // If it's a chrome-extension:// URL (MetaMask/Phantom popup), open in new tab
+        if (url.startsWith('chrome-extension://')) {
+            createTab(url);
+        } else {
+            // Regular popup - open in new tab
+            createTab(url);
+        }
+    });
+    
     webview.addEventListener('did-start-navigation', (e) => {
         if (e.isDownload) {
             addDownload(e.url, e.url.split('/').pop() || 'download');
         }
+            // ALWAYS send network event to firewall - this ensures we catch everything
+        if (e.url && !e.url.startsWith('about:') && !e.url.startsWith('chrome-extension://') && !e.url.startsWith('chrome://') && !e.url.startsWith('file://') && !e.url.startsWith('data:')) {
+            addConsoleLog('navigation', `did-start-navigation: ${e.url}`, { isMainFrame: e.isMainFrame });
+            notifyFirewall('navigation', e.url, e.isMainFrame ? 'GET' : 'GET');
+        }
     });
+    
+    // Monitor when page starts loading - capture the URL
+    webview.addEventListener('did-start-loading', () => {
+        // Use getURL() which is async
+        webview.getURL().then(url => {
+            if (url && !url.startsWith('about:') && !url.startsWith('chrome-extension://') && !url.startsWith('chrome://') && !url.startsWith('file://') && !url.startsWith('data:')) {
+                addConsoleLog('navigation', `did-start-loading: ${url}`);
+                notifyFirewall('request', url, 'GET');
+            }
+        }).catch(() => {
+            // Fallback to src attribute
+            const url = webview.src;
+            if (url && !url.startsWith('about:') && !url.startsWith('chrome-extension://') && !url.startsWith('chrome://') && !url.startsWith('file://') && !url.startsWith('data:')) {
+                addConsoleLog('navigation', `did-start-loading (fallback): ${url}`);
+                notifyFirewall('request', url, 'GET');
+            }
+        });
+    });
+    
+    // Monitor when page finishes loading - capture final URL
+    webview.addEventListener('did-finish-load', () => {
+        webview.getURL().then(url => {
+            if (url && !url.startsWith('about:') && !url.startsWith('chrome-extension://') && !url.startsWith('chrome://') && !url.startsWith('file://') && !url.startsWith('data:')) {
+                addConsoleLog('navigation', `did-finish-load: ${url}`);
+                notifyFirewall('request', url, 'GET');
+            }
+        }).catch(() => {});
+    });
+    
+    // Also notify when webview URL changes (src set) - more aggressive monitoring
+    let lastUrl = webview.src;
+    const urlObserver = new MutationObserver(() => {
+        const currentUrl = webview.src;
+            if (currentUrl && currentUrl !== lastUrl && 
+                !currentUrl.startsWith('about:') && !currentUrl.startsWith('chrome-extension://') && 
+                !currentUrl.startsWith('chrome://') && !currentUrl.startsWith('file://') && 
+                !currentUrl.startsWith('data:')) {
+                addConsoleLog('navigation', `URL mutation detected: ${currentUrl}`);
+                lastUrl = currentUrl;
+                notifyFirewall('navigation', currentUrl, 'GET');
+            }
+    });
+    urlObserver.observe(webview, { attributes: true, attributeFilter: ['src'] });
+    
+    // Periodic URL check as backup (every 500ms)
+    let urlCheckInterval = setInterval(() => {
+        try {
+            const currentUrl = webview.src;
+            if (currentUrl && currentUrl !== lastUrl && 
+                !currentUrl.startsWith('about:') && !currentUrl.startsWith('chrome-extension://') && 
+                !currentUrl.startsWith('chrome://') && !currentUrl.startsWith('file://') && 
+                !currentUrl.startsWith('data:')) {
+                addConsoleLog('navigation', `Periodic URL check: ${currentUrl}`);
+                lastUrl = currentUrl;
+                notifyFirewall('navigation', currentUrl, 'GET');
+            }
+        } catch (e) {
+            // Webview might be removed
+            clearInterval(urlCheckInterval);
+        }
+    }, 500);
     
     webview.addEventListener('will-download', (e) => {
         const filename = e.suggestedFilename || e.url.split('/').pop() || 'download';
@@ -309,7 +673,131 @@ function createWebView(tabId, url) {
     
     container.appendChild(webview);
     applyZoom();
+    
+    // Inject Omega Wallet providers IMMEDIATELY when webview is created
+    // This ensures they're available before dApps check for them
     injectSolanaProvider(webview);
+    injectEVMProvider(webview);
+    
+    // Also re-inject on dom-ready to ensure they're present
+    webview.addEventListener('dom-ready', () => {
+        injectSolanaProvider(webview);
+        injectEVMProvider(webview);
+    });
+}
+
+// Console Logging System
+let consoleLogs = [];
+const MAX_CONSOLE_LOGS = 1000;
+
+function addConsoleLog(type, message, data = null) {
+    const log = {
+        time: new Date().toLocaleTimeString(),
+        type: type,
+        message: message,
+        data: data,
+        timestamp: Date.now()
+    };
+    consoleLogs.push(log);
+    if (consoleLogs.length > MAX_CONSOLE_LOGS) {
+        consoleLogs = consoleLogs.slice(-MAX_CONSOLE_LOGS);
+    }
+    updateConsoleDisplay();
+}
+
+function updateConsoleDisplay() {
+    const output = document.getElementById('consoleOutput');
+    if (!output) return;
+    
+    const autoScroll = document.getElementById('autoScrollConsole')?.checked !== false;
+    
+    output.innerHTML = consoleLogs.map(log => {
+        let color = '#d4d4d4';
+        if (log.type === 'error') color = '#f48771';
+        else if (log.type === 'warn') color = '#cca700';
+        else if (log.type === 'firewall') color = '#4ec9b0';
+        else if (log.type === 'navigation') color = '#569cd6';
+        else if (log.type === 'info') color = '#4fc1ff';
+        
+        let html = `<div style="color: ${color}; margin-bottom: 4px;">`;
+        html += `<span style="color: #858585;">[${log.time}]</span> `;
+        html += `<span style="color: ${color}; font-weight: bold;">${log.type.toUpperCase()}:</span> `;
+        html += `<span>${escapeHtml(log.message)}</span>`;
+        if (log.data) {
+            html += ` <span style="color: #858585;">${escapeHtml(JSON.stringify(log.data, null, 2))}</span>`;
+        }
+        html += `</div>`;
+        return html;
+    }).join('');
+    
+    if (autoScroll) {
+        output.scrollTop = output.scrollHeight;
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Override console methods to capture logs
+const originalConsole = {
+    log: console.log.bind(console),
+    error: console.error.bind(console),
+    warn: console.warn.bind(console),
+    info: console.info.bind(console)
+};
+
+console.log = function(...args) {
+    originalConsole.log(...args);
+    addConsoleLog('log', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+console.error = function(...args) {
+    originalConsole.error(...args);
+    addConsoleLog('error', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+console.warn = function(...args) {
+    originalConsole.warn(...args);
+    addConsoleLog('warn', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+console.info = function(...args) {
+    originalConsole.info(...args);
+    addConsoleLog('info', args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+};
+
+// Notify firewall of network activity
+function notifyFirewall(type, url, method) {
+    if (!url || url.startsWith('about:') || url.startsWith('chrome-extension://') || 
+        url.startsWith('chrome://') || url.startsWith('file://') || url.startsWith('data:')) {
+        return; // Skip internal URLs
+    }
+    
+    addConsoleLog('firewall', `Firewall notification: ${type} ${url}`, { type, url, method });
+    
+    // Always send to main process - it will forward to firewall if registered
+    if (window.electronAPI && window.electronAPI.firewallNotify) {
+        try {
+            const eventData = {
+                type: type,
+                url: url,
+                method: method || 'GET',
+                timestamp: Date.now()
+            };
+            originalConsole.log('notifyFirewall called:', url);
+            window.electronAPI.firewallNotify(eventData);
+            addConsoleLog('firewall', `Sent to main process: ${url}`);
+        } catch (e) {
+            originalConsole.error('Failed to notify firewall:', e);
+            addConsoleLog('error', `Failed to notify firewall: ${e.message}`);
+        }
+    } else {
+        originalConsole.warn('electronAPI.firewallNotify not available!');
+        addConsoleLog('warn', 'electronAPI.firewallNotify not available!');
+    }
 }
 
 // Navigation
@@ -350,7 +838,55 @@ addressBar.addEventListener('keydown', (e) => {
     }
 });
 
-function navigateToAddress(input) {
+// AI Mode Button - Toggle Sidebar
+const aiModeBtn = document.getElementById('aiModeBtn');
+
+if (aiModeBtn) {
+    // Update button state based on sidebar state
+    function updateAIModeButton() {
+        if (aiModeBtn) {
+            if (!sidebarCollapsed) {
+                aiModeBtn.classList.add('active');
+            } else {
+                aiModeBtn.classList.remove('active');
+            }
+        }
+    }
+    
+    aiModeBtn.addEventListener('click', () => {
+        // Toggle the sidebar when AI button is clicked
+        // Use window.updateSidebarState if available (has AI initialization), otherwise use updateSidebarState
+        if (window.updateSidebarState) {
+            window.updateSidebarState(!sidebarCollapsed);
+        } else {
+            updateSidebarState(!sidebarCollapsed);
+        }
+    });
+    
+    // Update button state when sidebar state changes
+    // Hook into the existing wrapper
+    const existingWrapper = window.updateSidebarState;
+    if (existingWrapper) {
+        window.updateSidebarState = function(collapsed) {
+            existingWrapper(collapsed);
+            updateAIModeButton();
+        };
+    } else {
+        // If wrapper doesn't exist yet, wrap the original function
+        const originalUpdateSidebarState = updateSidebarState;
+        updateSidebarState = function(collapsed) {
+            originalUpdateSidebarState(collapsed);
+            updateAIModeButton();
+        };
+    }
+    
+    // Initial state
+    updateAIModeButton();
+}
+
+// Camera button removed - no longer needed
+
+async function navigateToAddress(input) {
     let url = input;
     
         if (!url) {
@@ -376,7 +912,7 @@ function navigateToAddress(input) {
         webview.src = url;
     } else {
         // Webview doesn't exist yet, create it
-        createWebView(activeTabId, url);
+        await createWebView(activeTabId, url);
     }
 }
 
@@ -614,6 +1150,8 @@ function openPanel(panelId) {
             renderDownloads();
         } else if (panelId === 'settingsPanel') {
             openSettings();
+        } else if (panelId === 'consolePanel') {
+            // Console panel opened
         }
     }
 }
@@ -630,11 +1168,70 @@ function closeAllPanels() {
     closePanel('bookmarksPanel');
     closePanel('downloadsPanel');
     closePanel('settingsPanel');
+    closePanel('consolePanel');
     closeDropdown();
 }
 
 // Settings Dropdown
 const settingsDropdown = document.getElementById('settingsDropdown');
+
+// Ad Blocker Toggle
+function setupAdBlockerToggle() {
+    const adBlockerCheckbox = document.getElementById('adBlockerCheckbox');
+    const adBlockerToggle = document.getElementById('adBlockerToggle');
+    
+    if (adBlockerCheckbox && window.electronAPI) {
+        // Load current status
+        window.electronAPI.adBlockerGetStatus().then(status => {
+            adBlockerCheckbox.checked = status.enabled;
+            updateAdBlockerToggleVisual(adBlockerCheckbox.checked);
+        }).catch(err => {
+            console.error('Error loading ad blocker status:', err);
+        });
+        
+        // Handle checkbox change
+        adBlockerCheckbox.addEventListener('change', async (e) => {
+            const enabled = e.target.checked;
+            try {
+                await window.electronAPI.adBlockerSetStatus(enabled);
+                updateAdBlockerToggleVisual(enabled);
+            } catch (err) {
+                console.error('Error setting ad blocker status:', err);
+                // Revert on error
+                adBlockerCheckbox.checked = !enabled;
+                updateAdBlockerToggleVisual(!enabled);
+            }
+        });
+        
+        // Handle click on toggle container (to ensure it works)
+        if (adBlockerToggle) {
+            adBlockerToggle.addEventListener('click', (e) => {
+                // Don't toggle if clicking directly on the checkbox (it handles itself)
+                if (e.target !== adBlockerCheckbox && !e.target.closest('label')) {
+                    adBlockerCheckbox.checked = !adBlockerCheckbox.checked;
+                    adBlockerCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
+    }
+}
+
+function updateAdBlockerToggleVisual(checked) {
+    const checkbox = document.getElementById('adBlockerCheckbox');
+    if (checkbox) {
+        const toggleSpan = checkbox.nextElementSibling;
+        if (toggleSpan) {
+            const circle = toggleSpan.querySelector('span');
+            if (checked) {
+                toggleSpan.style.backgroundColor = 'rgba(34, 197, 94, 0.5)';
+                if (circle) circle.style.transform = 'translateX(16px)';
+            } else {
+                toggleSpan.style.backgroundColor = 'rgba(100, 116, 139, 0.5)';
+                if (circle) circle.style.transform = 'translateX(0)';
+            }
+        }
+    }
+}
 let dropdownOpen = false;
 
 function toggleDropdown() {
@@ -657,6 +1254,127 @@ function closeDropdown() {
 const settingsPanel = document.getElementById('settingsPanel');
 let settingsOpen = false;
 
+// Extensions removed - using WalletConnect instead
+async function renderExtensionsList() {
+    // Function kept for compatibility but does nothing
+    return;
+
+    // Update user data path display
+    const userDataPathEl = document.getElementById('userDataPath');
+    if (userDataPathEl) {
+        // Try to get user data path (this will be shown in the instructions)
+        const path = window.electronAPI?.getUserDataPath ? 
+            await window.electronAPI.getUserDataPath().catch(() => null) : null;
+        if (path) {
+            userDataPathEl.textContent = path + '\\extensions\\';
+        } else {
+            // Fallback path
+            const isWindows = navigator.platform.toLowerCase().includes('win');
+            const isMac = navigator.platform.toLowerCase().includes('mac');
+            if (isWindows) {
+                userDataPathEl.textContent = '%APPDATA%\\omega-os\\extensions\\';
+            } else if (isMac) {
+                userDataPathEl.textContent = '~/Library/Application Support/omega-os/extensions/';
+            } else {
+                userDataPathEl.textContent = '~/.config/omega-os/extensions/';
+            }
+        }
+    }
+
+    // Available extensions to install
+    const availableExtensions = [
+        {
+            id: 'metamask',
+            name: 'MetaMask',
+            description: 'Crypto wallet for Ethereum and EVM chains',
+            chromeStoreId: 'nkbihfbeogaeaoehlefnkodbefgpgknn',
+            icon: '🦊',
+            chromeStoreUrl: 'https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn'
+        },
+        {
+            id: 'phantom',
+            name: 'Phantom',
+            description: 'Crypto wallet for Solana, Ethereum, and Polygon',
+            chromeStoreId: 'bfnaelmomeimhlpmgjnjophhpkkoljpa',
+            icon: '👻',
+            chromeStoreUrl: 'https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa'
+        }
+    ];
+
+    // Get loaded extensions
+    let loadedExtensions = [];
+    if (window.electronAPI?.getLoadedExtensions) {
+        try {
+            loadedExtensions = await window.electronAPI.getLoadedExtensions();
+        } catch (e) {
+            console.warn('Could not get loaded extensions:', e);
+        }
+    }
+
+    // Render extension cards
+    extensionsList.innerHTML = '';
+    
+    for (const ext of availableExtensions) {
+        const isInstalled = loadedExtensions.some(le => 
+            le.name?.toLowerCase().includes(ext.id) || 
+            le.id === ext.chromeStoreId
+        );
+
+        const extCard = document.createElement('div');
+        extCard.style.cssText = `
+            padding: 15px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        `;
+
+        extCard.innerHTML = `
+            <div style="font-size: 32px; flex-shrink: 0;">${ext.icon}</div>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <strong style="color: rgba(255, 255, 255, 0.95); font-size: 14px;">${ext.name}</strong>
+                    ${isInstalled ? '<span style="font-size: 11px; padding: 2px 8px; background: #107c10; color: white; border-radius: 10px;">Installed</span>' : ''}
+                </div>
+                <div style="font-size: 12px; color: rgba(255, 255, 255, 0.7); margin-bottom: 10px;">${ext.description}</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6); margin-bottom: 4px;">Extension ID:</div>
+                        <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 3px; font-size: 11px; word-break: break-all; display: inline-block;">${ext.chromeStoreId}</code>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: flex-end;">
+                        <a href="https://chrome-extension-downloader.com/" target="_blank" style="
+                            display: inline-block;
+                            padding: 6px 12px;
+                            background: var(--accent, #007aff);
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            font-weight: 500;
+                        ">Download Extension →</a>
+                        <a href="${ext.chromeStoreUrl}" target="_blank" style="
+                            display: inline-block;
+                            padding: 6px 12px;
+                            background: rgba(255, 255, 255, 0.1);
+                            color: rgba(255, 255, 255, 0.9);
+                            text-decoration: none;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            border: 1px solid rgba(255, 255, 255, 0.2);
+                        ">View on Store</a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        extensionsList.appendChild(extCard);
+    }
+}
+
 function openSettings() {
     settingsOpen = true;
     settingsPanel.classList.add('active');
@@ -676,6 +1394,64 @@ function openSettings() {
     if (clearOnClose) {
         clearOnClose.checked = localStorage.getItem('clearOnClose') === 'true';
     }
+    
+    // Update Tor status display
+    updateTorStatusDisplay();
+}
+
+function enableTorMode() {
+    const torStatus = document.getElementById('torStatus');
+    const torStatusText = document.getElementById('torStatusText');
+    const torStatusDot = document.getElementById('torStatusDot');
+    
+    if (torStatus) {
+        torStatus.style.display = 'block';
+        torStatusText.textContent = 'Tor Mode Active';
+        if (torStatusDot) {
+            torStatusDot.style.background = '#107c10';
+            torStatusDot.style.boxShadow = '0 0 8px #107c10';
+        }
+        updateTorInfo();
+    }
+}
+
+function disableTorMode() {
+    const torStatus = document.getElementById('torStatus');
+    if (torStatus) {
+        torStatus.style.display = 'none';
+    }
+}
+
+async function updateTorStatusDisplay() {
+    const torEnabled = document.getElementById('torEnabled');
+    if (torEnabled && torEnabled.checked) {
+        enableTorMode();
+    } else {
+        disableTorMode();
+    }
+}
+
+async function updateTorInfo() {
+    // Fetch IP info to show Tor is working
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        const ipAddress = document.getElementById('torIpAddress');
+        if (ipAddress) {
+            ipAddress.textContent = data.ip || 'Unknown';
+        }
+        
+        // Try to get exit node info
+        const exitNode = document.getElementById('torExitNode');
+        if (exitNode) {
+            exitNode.textContent = 'Connected via Tor';
+        }
+    } catch (error) {
+        const ipAddress = document.getElementById('torIpAddress');
+        const exitNode = document.getElementById('torExitNode');
+        if (ipAddress) ipAddress.textContent = 'Unable to fetch';
+        if (exitNode) exitNode.textContent = 'Connecting...';
+    }
 }
 
 function closeSettings() {
@@ -683,7 +1459,13 @@ function closeSettings() {
     settingsPanel.classList.remove('active');
 }
 
-// Initialize all buttons after DOM is ready
+// Extension Icons - Removed (using WalletConnect instead)
+async function initializeExtensionIcons() {
+    // Extensions removed - users connect via WalletConnect
+    // Function kept for compatibility but does nothing
+    return;
+}
+
 function initializeButtons() {
     // New Tab Button
     const newTabBtn = document.getElementById('newTabBtn');
@@ -752,6 +1534,29 @@ function initializeButtons() {
     document.getElementById('bookmarksClose')?.addEventListener('click', () => closePanel('bookmarksPanel'));
     document.getElementById('downloadsClose')?.addEventListener('click', () => closePanel('downloadsPanel'));
     document.getElementById('settingsClose')?.addEventListener('click', () => closePanel('settingsPanel'));
+    document.getElementById('consoleClose')?.addEventListener('click', () => closePanel('consolePanel'));
+    
+    // Developer Console
+    document.getElementById('openConsoleBtn')?.addEventListener('click', () => {
+        closeAllPanels();
+        openPanel('consolePanel');
+    });
+    
+    document.getElementById('clearConsoleBtn')?.addEventListener('click', () => {
+        consoleLogs = [];
+        updateConsoleDisplay();
+    });
+    
+    document.getElementById('exportConsoleBtn')?.addEventListener('click', () => {
+        const logsText = consoleLogs.map(log => `[${log.time}] ${log.type}: ${log.message}`).join('\n');
+        const blob = new Blob([logsText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `console-logs-${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
     
     // Clear History Button
     document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
@@ -798,8 +1603,111 @@ function initializeButtons() {
         });
     }
     
+    // VPN/Tor Toggle Button (Quick Disable)
+    const vpnToggleBtn = document.getElementById('vpnToggleBtn');
+    const vpnToggleText = document.getElementById('vpnToggleText');
+    if (vpnToggleBtn) {
+        // Check initial state
+        updateVpnToggleButton();
+        
+        vpnToggleBtn.addEventListener('click', async () => {
+            // Disable both Tor and VPN for normal browsing
+            if (window.electronAPI) {
+                try {
+                    // Disable Tor
+                    if (window.electronAPI.setTorMode) {
+                        await window.electronAPI.setTorMode(false);
+                        localStorage.setItem('torEnabled', 'false');
+                    }
+                    
+                    // Disable VPN
+                    if (window.electronAPI.vpnSetProxy) {
+                        await window.electronAPI.vpnSetProxy(null);
+                        localStorage.removeItem('selectedVpnLocation');
+                        localStorage.setItem('vpnUseRealLocation', 'true');
+                    }
+                    
+                    // Update UI
+                    const torEnabled = document.getElementById('torEnabled');
+                    if (torEnabled) {
+                        torEnabled.checked = false;
+                    }
+                    disableTorMode();
+                    updateVpnToggleButton();
+                    
+                    // Reload current page to apply changes
+                    const webview = document.querySelector(`webview[data-tab-id="${activeTabId}"]`);
+                    if (webview) {
+                        webview.reload();
+                    }
+                    
+                    alert('VPN/Tor disabled. Normal browsing enabled.');
+                } catch (error) {
+                    console.error('Failed to disable VPN/Tor:', error);
+                    alert('Failed to disable VPN/Tor: ' + error.message);
+                }
+            }
+        });
+    }
+    
+    function updateVpnToggleButton() {
+        if (!vpnToggleBtn || !vpnToggleText) return;
+        
+        const torEnabled = localStorage.getItem('torEnabled') === 'true';
+        const vpnLocation = localStorage.getItem('selectedVpnLocation');
+        const isActive = torEnabled || vpnLocation;
+        
+        if (isActive) {
+            vpnToggleBtn.classList.add('active');
+            vpnToggleText.textContent = 'VPN ON';
+            vpnToggleBtn.title = 'VPN/Tor Active - Click to disable for normal browsing';
+        } else {
+            vpnToggleBtn.classList.remove('active');
+            vpnToggleText.textContent = 'VPN';
+            vpnToggleBtn.title = 'VPN/Tor - Click to disable for normal browsing';
+        }
+    }
+    
+    // Tor Mode Toggle
+    const torEnabled = document.getElementById('torEnabled');
+    if (torEnabled) {
+        // Load saved state
+        const savedTorState = localStorage.getItem('torEnabled') === 'true';
+        torEnabled.checked = savedTorState;
+        
+        torEnabled.addEventListener('change', async (e) => {
+            const enabled = e.target.checked;
+            localStorage.setItem('torEnabled', enabled);
+            if (window.electronAPI && window.electronAPI.setTorMode) {
+                try {
+                    await window.electronAPI.setTorMode(enabled);
+                    updateVpnToggleButton();
+                } catch (error) {
+                    console.error('Failed to set Tor mode:', error);
+                    alert('Failed to enable Tor mode. Make sure Tor is running on localhost:9050');
+                    e.target.checked = false;
+                    return;
+                }
+            }
+            if (enabled) {
+                enableTorMode();
+            } else {
+                disableTorMode();
+            }
+            updateVpnToggleButton();
+        });
+        
+        // Initialize Tor status
+        if (savedTorState) {
+            enableTorMode();
+        } else {
+            disableTorMode();
+        }
+        updateVpnToggleButton();
+    }
+    
     // Close panels when clicking outside
-    ['historyPanel', 'bookmarksPanel', 'downloadsPanel', 'settingsPanel', 'walletPanel'].forEach(panelId => {
+    ['historyPanel', 'bookmarksPanel', 'downloadsPanel', 'settingsPanel', 'walletPanel', 'consolePanel'].forEach(panelId => {
         const panel = document.getElementById(panelId);
         if (panel) {
             panel.addEventListener('click', (e) => {
@@ -934,15 +1842,47 @@ function initializeButtons() {
         await refreshWalletBalance();
     });
     
+    // Network selector change handler
+    document.getElementById('walletNetworkSelect')?.addEventListener('change', async () => {
+        await updateWalletDisplay();
+    });
+    
+    // Copy address (based on selected network)
     document.getElementById('copyAddressBtn')?.addEventListener('click', async () => {
-        const publicKey = await window.electronAPI.walletGetPublicKey();
-        if (publicKey) {
-            navigator.clipboard.writeText(publicKey);
-            alert('Address copied to clipboard!');
+        const network = document.getElementById('walletNetworkSelect').value;
+        if (network === 'solana') {
+            const publicKey = await window.electronAPI.walletGetPublicKey();
+            if (publicKey) {
+                navigator.clipboard.writeText(publicKey);
+                alert('Solana address copied to clipboard!');
+            }
+        } else {
+            const evmAddress = await window.electronAPI.walletGetEvmAddress();
+            if (evmAddress) {
+                navigator.clipboard.writeText(evmAddress);
+                alert('EVM address copied to clipboard!');
+            }
         }
     });
     
-    document.getElementById('sendSolBtn')?.addEventListener('click', async () => {
+    // Update placeholder based on selected chain
+    document.getElementById('sendChain')?.addEventListener('change', (e) => {
+        const chain = e.target.value;
+        const addressInput = document.getElementById('sendToAddress');
+        const amountInput = document.getElementById('sendAmount');
+        
+        if (chain === 'solana') {
+            addressInput.placeholder = 'Enter Solana address';
+            amountInput.placeholder = '0.00 SOL';
+        } else {
+            addressInput.placeholder = 'Enter Ethereum address';
+            amountInput.placeholder = '0.00 ETH';
+        }
+    });
+    
+    // Send transaction (supports both chains)
+    document.getElementById('sendTransactionBtn')?.addEventListener('click', async () => {
+        const chain = document.getElementById('sendChain').value;
         const toAddress = document.getElementById('sendToAddress').value.trim();
         const amount = parseFloat(document.getElementById('sendAmount').value);
         
@@ -956,15 +1896,23 @@ function initializeButtons() {
             return;
         }
         
-        if (confirm(`Send ${amount} SOL to ${toAddress.substring(0, 8)}...${toAddress.substring(toAddress.length - 8)}?`)) {
+        const chainName = chain === 'solana' ? 'SOL' : 'ETH';
+        const shortAddress = toAddress.substring(0, 8) + '...' + toAddress.substring(toAddress.length - 8);
+        
+        if (confirm(`Send ${amount} ${chainName} to ${shortAddress}?`)) {
             try {
-                const signature = await window.electronAPI.walletSendSol(toAddress, amount);
-                alert(`Transaction sent! Signature: ${signature}`);
+                if (chain === 'solana') {
+                    const signature = await window.electronAPI.walletSendSol(toAddress, amount);
+                    alert(`Transaction sent! Signature: ${signature}`);
+                } else {
+                    const txHash = await window.electronAPI.walletSendEvmTransaction(toAddress, amount.toString(), '0x', 1);
+                    alert(`Transaction sent! Hash: ${txHash}`);
+                }
                 document.getElementById('sendToAddress').value = '';
                 document.getElementById('sendAmount').value = '';
                 await refreshWalletBalance();
             } catch (error) {
-                alert('Failed to send SOL: ' + error.message);
+                alert(`Failed to send ${chainName}: ` + error.message);
             }
         }
     });
@@ -1004,20 +1952,52 @@ async function loadWalletDashboard() {
     document.getElementById('walletLogin').style.display = 'none';
     document.getElementById('walletDashboard').style.display = 'block';
     
-    const publicKey = await window.electronAPI.walletGetPublicKey();
-    if (publicKey) {
-        document.getElementById('walletAddress').textContent = publicKey;
-    }
+    // Setup network selector
+    const networkSelect = document.getElementById('walletNetworkSelect');
+    networkSelect.addEventListener('change', async () => {
+        await updateWalletDisplay();
+    });
     
-    await refreshWalletBalance();
+    await updateWalletDisplay();
+}
+
+async function updateWalletDisplay() {
+    const network = document.getElementById('walletNetworkSelect').value;
+    const balanceLabel = document.getElementById('walletBalanceLabel');
+    const balanceAmount = document.getElementById('walletBalance');
+    const address = document.getElementById('walletAddress');
+    
+    if (network === 'solana') {
+        balanceLabel.textContent = 'Solana Balance';
+        const publicKey = await window.electronAPI.walletGetPublicKey();
+        if (publicKey) {
+            address.textContent = publicKey;
+        }
+        await refreshWalletBalance();
+    } else {
+        balanceLabel.textContent = 'Ethereum Balance';
+        const evmAddress = await window.electronAPI.walletGetEvmAddress();
+        if (evmAddress) {
+            address.textContent = evmAddress;
+        }
+        await refreshWalletBalance();
+    }
 }
 
 async function refreshWalletBalance() {
+    const network = document.getElementById('walletNetworkSelect').value;
+    const balanceAmount = document.getElementById('walletBalance');
+    
     try {
-        const balance = await window.electronAPI.walletGetBalance();
-        document.getElementById('walletBalance').textContent = balance.toFixed(4) + ' SOL';
+        if (network === 'solana') {
+            const balance = await window.electronAPI.walletGetBalance();
+            balanceAmount.textContent = balance.toFixed(4) + ' SOL';
+        } else {
+            const evmBalance = await window.electronAPI.walletGetEvmBalance(1);
+            balanceAmount.textContent = parseFloat(evmBalance).toFixed(4) + ' ETH';
+        }
     } catch (error) {
-        document.getElementById('walletBalance').textContent = 'Error loading balance';
+        balanceAmount.textContent = 'Error loading balance';
     }
 }
 
@@ -1033,12 +2013,16 @@ function openWalletPanel() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initializeButtons();
+        initializeExtensionIcons();
+        setupAdBlockerToggle();
         // Initialize first tab
         createTab(getHomeUrl());
     });
 } else {
     // DOM is already ready
     initializeButtons();
+    setupAdBlockerToggle();
+    initializeExtensionIcons();
     createTab(getHomeUrl());
 }
 
@@ -1055,7 +2039,7 @@ const solanaProviderScript = `
             this.isConnected = false;
             this.publicKey = null;
             this.listeners = {};
-            this.isPhantom = false;
+            this.isPhantom = true; // Set to true so Solana dApps recognize it
             this.isOmega = true;
         }
         
@@ -1101,25 +2085,38 @@ const solanaProviderScript = `
             if (!this.isConnected) throw new Error('Wallet not connected');
             
             const requestId = Date.now() + Math.random();
+            const serialized = transaction.serialize({ requireAllSignatures: false });
+            const base64 = btoa(String.fromCharCode(...serialized));
+            
+            // Store request in queue
+            if (!window.__omegaSolanaQueue) {
+                window.__omegaSolanaQueue = [];
+            }
+            window.__omegaSolanaQueue.push({
+                type: 'OMEGA_WALLET_REQUEST',
+                action: 'signTransaction',
+                data: base64,
+                id: requestId
+            });
+            
+            // Poll for response
             return new Promise((resolve, reject) => {
-                const serialized = transaction.serialize({ requireAllSignatures: false });
-                const base64 = btoa(String.fromCharCode(...serialized));
-                
-                window.postMessage({ 
-                    type: 'OMEGA_WALLET_REQUEST',
-                    action: 'signTransaction',
-                    data: base64,
-                    id: requestId
-                }, '*');
-                
-                const handler = (event) => {
-                    if (event.data && event.data.type === 'OMEGA_WALLET_RESPONSE' && event.data.action === 'signTransaction' && event.data.id === requestId) {
-                        window.removeEventListener('message', handler);
-                        if (event.data.error) {
-                            reject(new Error(event.data.error));
+                const startTime = Date.now();
+                const pollInterval = setInterval(() => {
+                    if (!window.__omegaSolanaResponses) {
+                        window.__omegaSolanaResponses = {};
+                    }
+                    
+                    if (window.__omegaSolanaResponses[requestId]) {
+                        clearInterval(pollInterval);
+                        const response = window.__omegaSolanaResponses[requestId];
+                        delete window.__omegaSolanaResponses[requestId];
+                        
+                        if (response.error) {
+                            reject(new Error(response.error));
                         } else {
                             try {
-                                const signed = Uint8Array.from(atob(event.data.data), c => c.charCodeAt(0));
+                                const signed = Uint8Array.from(atob(response.data), c => c.charCodeAt(0));
                                 const Transaction = window.solanaWeb3?.Transaction;
                                 if (Transaction) {
                                     resolve(Transaction.from(signed));
@@ -1130,9 +2127,11 @@ const solanaProviderScript = `
                                 reject(e);
                             }
                         }
+                    } else if (Date.now() - startTime > 30000) {
+                        clearInterval(pollInterval);
+                        reject(new Error('Request timeout'));
                     }
-                };
-                window.addEventListener('message', handler);
+                }, 50);
             });
         }
         
@@ -1148,27 +2147,42 @@ const solanaProviderScript = `
             if (!this.isConnected) throw new Error('Wallet not connected');
             
             const requestId = Date.now() + Math.random();
+            const messageStr = typeof message === 'string' ? message : new TextDecoder(encoding).decode(message);
+            
+            // Store request in queue
+            if (!window.__omegaSolanaQueue) {
+                window.__omegaSolanaQueue = [];
+            }
+            window.__omegaSolanaQueue.push({
+                type: 'OMEGA_WALLET_REQUEST',
+                action: 'signMessage',
+                data: messageStr,
+                id: requestId
+            });
+            
+            // Poll for response
             return new Promise((resolve, reject) => {
-                const messageStr = typeof message === 'string' ? message : new TextDecoder(encoding).decode(message);
-                
-                window.postMessage({ 
-                    type: 'OMEGA_WALLET_REQUEST',
-                    action: 'signMessage',
-                    data: messageStr,
-                    id: requestId
-                }, '*');
-                
-                const handler = (event) => {
-                    if (event.data && event.data.type === 'OMEGA_WALLET_RESPONSE' && event.data.action === 'signMessage' && event.data.id === requestId) {
-                        window.removeEventListener('message', handler);
-                        if (event.data.error) {
-                            reject(new Error(event.data.error));
-                        } else {
-                            resolve({ signature: Uint8Array.from(atob(event.data.data), c => c.charCodeAt(0)) });
-                        }
+                const startTime = Date.now();
+                const pollInterval = setInterval(() => {
+                    if (!window.__omegaSolanaResponses) {
+                        window.__omegaSolanaResponses = {};
                     }
-                };
-                window.addEventListener('message', handler);
+                    
+                    if (window.__omegaSolanaResponses[requestId]) {
+                        clearInterval(pollInterval);
+                        const response = window.__omegaSolanaResponses[requestId];
+                        delete window.__omegaSolanaResponses[requestId];
+                        
+                        if (response.error) {
+                            reject(new Error(response.error));
+                        } else {
+                            resolve({ signature: Uint8Array.from(atob(response.data), c => c.charCodeAt(0)) });
+                        }
+                    } else if (Date.now() - startTime > 30000) {
+                        clearInterval(pollInterval);
+                        reject(new Error('Request timeout'));
+                    }
+                }, 50);
             });
         }
         
@@ -1195,27 +2209,36 @@ const solanaProviderScript = `
 `;
 
 function injectSolanaProvider(webview) {
-    webview.executeJavaScript(solanaProviderScript);
-    
-    // Listen for wallet requests from webview
-    webview.addEventListener('ipc-message', async (event) => {
-        if (event.channel === 'wallet-request') {
-            await handleWalletRequest(webview, event.args[0]);
-        }
+    webview.addEventListener('dom-ready', () => {
+        webview.executeJavaScript(solanaProviderScript).catch(() => {});
+        
+        // Initialize queues
+        webview.executeJavaScript(`
+            window.__omegaSolanaQueue = window.__omegaSolanaQueue || [];
+            window.__omegaSolanaResponses = window.__omegaSolanaResponses || {};
+        `).catch(() => {});
     });
     
-    // Also handle postMessage via content script injection
-    webview.addEventListener('dom-ready', () => {
-        webview.executeJavaScript(`
-            (function() {
-                const originalPostMessage = window.postMessage;
-                window.addEventListener('message', (event) => {
-                    if (event.data && event.data.type === 'OMEGA_WALLET_REQUEST') {
-                        window.parent.postMessage(event.data, '*');
-                    }
-                });
-            })();
-        `);
+    // Poll for requests from webview
+    const pollInterval = setInterval(async () => {
+        try {
+            const queue = await webview.executeJavaScript('window.__omegaSolanaQueue || []').catch(() => []);
+            if (queue.length > 0) {
+                // Clear queue
+                await webview.executeJavaScript('window.__omegaSolanaQueue = []').catch(() => {});
+                
+                // Process each request
+                for (const request of queue) {
+                    await handleWalletRequest(webview, request);
+                }
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    }, 100);
+    
+    webview.addEventListener('destroyed', () => {
+        clearInterval(pollInterval);
     });
 }
 
@@ -1247,13 +2270,234 @@ async function handleWalletRequest(webview, request) {
                 response = { error: 'Unknown action' };
         }
         
-        // Send response back to webview
-        const responseData = { type: 'OMEGA_WALLET_RESPONSE', ...response, id: request.id, action: request.action };
+        // Send response back to webview via response queue
         webview.executeJavaScript(`
-            window.postMessage(${JSON.stringify(responseData)}, '*');
-        `);
+            if (!window.__omegaSolanaResponses) window.__omegaSolanaResponses = {};
+            window.__omegaSolanaResponses[${JSON.stringify(request.id)}] = ${JSON.stringify(response)};
+        `).catch(() => {});
     } catch (error) {
         const errorResponse = { type: 'OMEGA_WALLET_RESPONSE', error: error.message, id: request.id, action: request.action };
+        webview.executeJavaScript(`
+            window.postMessage(${JSON.stringify(errorResponse)}, '*');
+        `);
+    }
+}
+
+// EVM Provider Injection
+const evmProviderScript = `
+(function() {
+    if (window.ethereum && window.ethereum.isOmega) return;
+    
+    class OmegaEVMProvider {
+        constructor() {
+            this.isConnected = false;
+            this.selectedAddress = null;
+            this.chainId = '0x1'; // Ethereum mainnet by default
+            this.listeners = {};
+            this.isOmega = true;
+            this.isMetaMask = false; // Compatibility flag
+        }
+        
+        async request(args) {
+            const { method, params } = args;
+            const requestId = Date.now() + Math.random();
+            
+            // Store request in global queue for renderer to poll
+            if (!window.__omegaEVMQueue) {
+                window.__omegaEVMQueue = [];
+            }
+            window.__omegaEVMQueue.push({
+                type: 'OMEGA_EVM_REQUEST',
+                method: method,
+                params: params || [],
+                id: requestId
+            });
+            
+            // Poll for response
+            return new Promise((resolve, reject) => {
+                const startTime = Date.now();
+                const pollInterval = setInterval(() => {
+                    // Check for response
+                    if (!window.__omegaEVMResponses) {
+                        window.__omegaEVMResponses = {};
+                    }
+                    
+                    if (window.__omegaEVMResponses[requestId]) {
+                        clearInterval(pollInterval);
+                        const response = window.__omegaEVMResponses[requestId];
+                        delete window.__omegaEVMResponses[requestId];
+                        
+                        if (response.error) {
+                            reject(new Error(response.error));
+                        } else {
+                            resolve(response.result);
+                        }
+                    } else if (Date.now() - startTime > 30000) {
+                        clearInterval(pollInterval);
+                        reject(new Error('Request timeout'));
+                    }
+                }, 50);
+            });
+        }
+        
+        async enable() {
+            return this.request({ method: 'eth_requestAccounts' });
+        }
+        
+        on(event, callback) {
+            if (!this.listeners[event]) this.listeners[event] = [];
+            this.listeners[event].push(callback);
+        }
+        
+        removeListener(event, callback) {
+            if (this.listeners[event]) {
+                this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+            }
+        }
+        
+        emit(event, data) {
+            if (this.listeners[event]) {
+                this.listeners[event].forEach(callback => callback(data));
+            }
+        }
+    }
+    
+    const provider = new OmegaEVMProvider();
+    
+    // EIP-1193 standard - MUST be set before dApps check
+    window.ethereum = provider;
+    
+    // MetaMask detection flags
+    window.ethereum.isMetaMask = true;
+    window.ethereum._metamask = provider;
+    
+    // Legacy web3 compatibility
+    if (!window.web3) {
+        window.web3 = {
+            currentProvider: provider,
+            eth: {
+                accounts: [],
+                getAccounts: () => provider.request({ method: 'eth_accounts' })
+            }
+        };
+    }
+    
+    // Emit connect event if already has accounts
+    if (provider.selectedAddress) {
+        provider.emit('connect', { chainId: provider.chainId });
+    }
+})();
+`;
+
+function injectEVMProvider(webview) {
+    // Initialize request queue
+    webview.addEventListener('dom-ready', () => {
+        webview.executeJavaScript(evmProviderScript).catch(() => {});
+        
+        // Initialize queues
+        webview.executeJavaScript(`
+            window.__omegaEVMQueue = window.__omegaEVMQueue || [];
+            window.__omegaEVMResponses = window.__omegaEVMResponses || {};
+        `).catch(() => {});
+    });
+    
+    // Poll for requests from webview
+    const pollInterval = setInterval(async () => {
+        try {
+            const queue = await webview.executeJavaScript('window.__omegaEVMQueue || []').catch(() => []);
+            if (queue.length > 0) {
+                // Clear queue
+                await webview.executeJavaScript('window.__omegaEVMQueue = []').catch(() => {});
+                
+                // Process each request
+                for (const request of queue) {
+                    await handleEVMRequest(webview, request);
+                }
+            }
+        } catch (e) {
+            // Ignore errors
+        }
+    }, 100);
+    
+    webview.addEventListener('destroyed', () => {
+        clearInterval(pollInterval);
+    });
+}
+
+async function handleEVMRequest(webview, request) {
+    try {
+        let response;
+        
+        switch (request.method) {
+            case 'eth_requestAccounts':
+            case 'eth_accounts':
+                const evmAddress = await window.electronAPI.walletGetEvmAddress();
+                if (!evmAddress) {
+                    response = { error: 'Wallet not unlocked. Please unlock Omega Wallet first.' };
+                } else {
+                    response = { result: [evmAddress] };
+                }
+                break;
+                
+            case 'eth_chainId':
+                response = { result: '0x1' }; // Ethereum mainnet
+                break;
+                
+            case 'eth_getBalance':
+                const address = request.params[0];
+                const chainId = parseInt(request.params[1] || '0x1', 16);
+                const balance = await window.electronAPI.walletGetEvmBalance(chainId);
+                // Convert balance to hex (wei)
+                const balanceWei = BigInt(Math.floor(parseFloat(balance) * 1e18)).toString(16);
+                response = { result: '0x' + balanceWei };
+                break;
+                
+            case 'eth_sendTransaction':
+                const tx = request.params[0];
+                // Convert value from hex wei to ether string
+                const valueHex = tx.value || '0x0';
+                const valueWei = BigInt(valueHex);
+                const valueEth = (Number(valueWei) / 1e18).toString();
+                const txChainId = parseInt(tx.chainId || '0x1', 16);
+                const txHash = await window.electronAPI.walletSendEvmTransaction(
+                    tx.to,
+                    valueEth,
+                    tx.data || '0x',
+                    txChainId
+                );
+                response = { result: txHash };
+                break;
+                
+            case 'eth_sign':
+            case 'personal_sign':
+                const message = request.params[0] || request.params[1];
+                const signature = await window.electronAPI.walletSignEvmMessage(message);
+                response = { result: signature };
+                break;
+                
+            case 'eth_signTransaction':
+                const signedTx = await window.electronAPI.walletSignEvmTransaction(request.params[0]);
+                response = { result: signedTx };
+                break;
+                
+            default:
+                response = { error: 'Method not supported: ' + request.method };
+        }
+        
+        // Send response back to webview via response queue
+        if (!response.error) {
+            webview.executeJavaScript(`
+                if (!window.__omegaEVMResponses) window.__omegaEVMResponses = {};
+                window.__omegaEVMResponses[${JSON.stringify(request.id)}] = ${JSON.stringify(response)};
+            `).catch(() => {});
+        } else {
+            webview.executeJavaScript(`
+                if (!window.__omegaEVMResponses) window.__omegaEVMResponses = {};
+                window.__omegaEVMResponses[${JSON.stringify(request.id)}] = ${JSON.stringify(response)};
+            `).catch(() => {});
+        }
+    } catch (error) {
+        const errorResponse = { type: 'OMEGA_EVM_RESPONSE', error: error.message, id: request.id };
         webview.executeJavaScript(`
             window.postMessage(${JSON.stringify(errorResponse)}, '*');
         `);
@@ -1269,6 +2513,12 @@ window.addEventListener('message', async (event) => {
             // Check if message came from this webview (approximate check)
             await handleWalletRequest(webview, event.data);
             break; // Handle first matching for now
+        }
+    } else if (event.data && event.data.type === 'OMEGA_EVM_REQUEST') {
+        const webviews = document.querySelectorAll('webview');
+        for (const webview of webviews) {
+            await handleEVMRequest(webview, event.data);
+            break;
         }
     }
 });

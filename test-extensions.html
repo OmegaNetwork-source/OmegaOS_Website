@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Extensions</title>
+</head>
+<body>
+    <h1>Extension Test Page</h1>
+    <p>Open the console and check if extensions are available:</p>
+    <button onclick="testMetaMask()">Test MetaMask</button>
+    <button onclick="testPhantom()">Test Phantom</button>
+    <div id="result"></div>
+
+    <script>
+        async function testMetaMask() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing MetaMask...';
+            
+            if (typeof window.ethereum !== 'undefined') {
+                result.innerHTML = '✓ MetaMask is available!<br>' + 
+                    'Provider: ' + (window.ethereum.isMetaMask ? 'MetaMask' : 'Unknown');
+                console.log('MetaMask provider:', window.ethereum);
+            } else {
+                result.innerHTML = '✗ MetaMask not found. window.ethereum is undefined.';
+                console.log('Available globals:', Object.keys(window).filter(k => k.includes('eth') || k.includes('sol')));
+            }
+        }
+
+        async function testPhantom() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing Phantom...';
+            
+            if (typeof window.solana !== 'undefined') {
+                result.innerHTML = '✓ Phantom is available!<br>' + 
+                    'Provider: ' + (window.solana.isPhantom ? 'Phantom' : 'Unknown');
+                console.log('Phantom provider:', window.solana);
+            } else {
+                result.innerHTML = '✗ Phantom not found. window.solana is undefined.';
+                console.log('Available globals:', Object.keys(window).filter(k => k.includes('eth') || k.includes('sol')));
+            }
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Checking extensions...');
+            setTimeout(() => {
+                testMetaMask();
+                setTimeout(testPhantom, 1000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+
+

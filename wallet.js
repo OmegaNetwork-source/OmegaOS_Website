@@ -1,4 +1,5 @@
 const { Connection, Keypair, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = require('@solana/web3.js');
+const { ethers } = require('ethers');
 const bs58 = require('bs58');
 const CryptoJS = require('crypto-js');
 const { safeStorage } = require('electron');
@@ -11,9 +12,11 @@ class OmegaWallet {
         // Use devnet for testing - change to mainnet-beta for production
         this.connection = new Connection('https://api.devnet.solana.com', 'confirmed');
         this.keypair = null;
-        // ISOLATED: Store wallet in isolated environment directory, not user home
+        // ISOLATED: Store wallet in browser-specific directory (separate from desktop app)
+        // Browser wallet stored at: userData/isolated-env/browser-wallet
+        // Desktop app wallet stored at: userData/isolated-env/wallet
         const app = require('electron').app || { getPath: () => process.env.APPDATA || os.homedir() };
-        const isolatedPath = path.join(app.getPath('userData'), 'isolated-env', 'wallet');
+        const isolatedPath = path.join(app.getPath('userData'), 'isolated-env', 'browser-wallet');
         this.walletPath = isolatedPath;
         this.ensureWalletDirectory();
     }
@@ -53,10 +56,16 @@ class OmegaWallet {
             // Encrypt secret key
             const encrypted = CryptoJS.AES.encrypt(secretKey, password).toString();
             
+            // Also create EVM wallet from same seed
+            const evmWallet = ethers.Wallet.createRandom();
+            const evmEncrypted = CryptoJS.AES.encrypt(evmWallet.privateKey, password).toString();
+            
             // Save wallet
             const walletData = {
                 publicKey: publicKey,
                 encryptedSecretKey: encrypted,
+                evmAddress: evmWallet.address,
+                encryptedEvmPrivateKey: evmEncrypted,
                 createdAt: Date.now()
             };
             
@@ -64,9 +73,11 @@ class OmegaWallet {
             fs.writeFileSync(walletFile, JSON.stringify(walletData, null, 2));
             
             this.keypair = keypair;
+            this.evmWallet = evmWallet;
             return {
                 publicKey: publicKey,
-                secretKey: secretKey // Only return once on creation/import
+                secretKey: secretKey, // Only return once on creation/import
+                evmAddress: evmWallet.address
             };
         } catch (error) {
             throw new Error(`Failed to create wallet: ${error.message}`);
@@ -93,8 +104,18 @@ class OmegaWallet {
             const secretKeyBuffer = Buffer.from(secretKey, 'base64');
             this.keypair = Keypair.fromSecretKey(secretKeyBuffer);
             
+            // Load EVM wallet if exists
+            if (walletData.encryptedEvmPrivateKey) {
+                const evmDecrypted = CryptoJS.AES.decrypt(walletData.encryptedEvmPrivateKey, password);
+                const evmPrivateKey = evmDecrypted.toString(CryptoJS.enc.Utf8);
+                if (evmPrivateKey) {
+                    this.evmWallet = new ethers.Wallet(evmPrivateKey);
+                }
+            }
+            
             return {
-                publicKey: this.keypair.publicKey.toString()
+                publicKey: this.keypair.publicKey.toString(),
+                evmAddress: this.evmWallet ? this.evmWallet.address : null
             };
         } catch (error) {
             throw new Error(`Failed to load wallet: ${error.message}`);
@@ -184,6 +205,144 @@ class OmegaWallet {
 
     isLoaded() {
         return this.keypair !== null;
+    }
+
+    async exportPrivateKey(password) {
+        if (!this.keypair) {
+            throw new Error('Wallet not loaded');
+        }
+
+        try {
+            const walletFile = path.join(this.walletPath, 'wallet.json');
+            if (!fs.existsSync(walletFile)) {
+                throw new Error('Wallet file not found');
+            }
+
+            const walletData = JSON.parse(fs.readFileSync(walletFile, 'utf8'));
+            
+            // Decrypt secret key
+            const decrypted = CryptoJS.AES.decrypt(walletData.encryptedSecretKey, password);
+            const secretKey = decrypted.toString(CryptoJS.enc.Utf8);
+            
+            if (!secretKey) {
+                throw new Error('Invalid password');
+            }
+
+            // Decrypt EVM private key if exists
+            let evmPrivateKey = null;
+            if (walletData.encryptedEvmPrivateKey) {
+                const evmDecrypted = CryptoJS.AES.decrypt(walletData.encryptedEvmPrivateKey, password);
+                evmPrivateKey = evmDecrypted.toString(CryptoJS.enc.Utf8);
+            }
+
+            return {
+                solanaPrivateKey: secretKey,
+                evmPrivateKey: evmPrivateKey,
+                // Also return in Base58 format for Solana
+                solanaPrivateKeyBase58: bs58.encode(Buffer.from(secretKey, 'base64'))
+            };
+        } catch (error) {
+            throw new Error(`Failed to export private key: ${error.message}`);
+        }
+    }
+
+    // EVM Methods
+    getEvmAddress() {
+        if (!this.evmWallet) {
+            return null;
+        }
+        return this.evmWallet.address;
+    }
+
+    getEvmWallet() {
+        if (!this.evmWallet) {
+            return null;
+        }
+        return this.evmWallet;
+    }
+
+    async getEvmBalance(chainId = 1) {
+        if (!this.evmWallet) {
+            throw new Error('EVM wallet not loaded');
+        }
+
+        try {
+            // Default to Ethereum mainnet, but support other chains
+            const rpcUrls = {
+                1: 'https://eth.llamarpc.com', // Ethereum mainnet
+                5: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161', // Goerli testnet
+                137: 'https://polygon-rpc.com', // Polygon
+                56: 'https://bsc-dataseed.binance.org', // BSC
+                42161: 'https://arb1.arbitrum.io/rpc', // Arbitrum
+                10: 'https://mainnet.optimism.io', // Optimism
+                1313161768: 'https://0x4e454228.rpc.aurora-c.omeganetwork.co', // Omega Network
+            };
+
+            const rpcUrl = rpcUrls[chainId] || rpcUrls[1];
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const balance = await provider.getBalance(this.evmWallet.address);
+            return ethers.formatEther(balance);
+        } catch (error) {
+            throw new Error(`Failed to get EVM balance: ${error.message}`);
+        }
+    }
+
+    async signEvmTransaction(transaction) {
+        if (!this.evmWallet) {
+            throw new Error('EVM wallet not loaded');
+        }
+
+        try {
+            // transaction should be a serialized transaction object
+            return await this.evmWallet.signTransaction(transaction);
+        } catch (error) {
+            throw new Error(`Failed to sign EVM transaction: ${error.message}`);
+        }
+    }
+
+    async signEvmMessage(message) {
+        if (!this.evmWallet) {
+            throw new Error('EVM wallet not loaded');
+        }
+
+        try {
+            const messageStr = typeof message === 'string' ? message : new TextDecoder().decode(message);
+            return await this.evmWallet.signMessage(messageStr);
+        } catch (error) {
+            throw new Error(`Failed to sign EVM message: ${error.message}`);
+        }
+    }
+
+    async sendEvmTransaction(to, value, data = '0x', chainId = 1) {
+        if (!this.evmWallet) {
+            throw new Error('EVM wallet not loaded');
+        }
+
+        try {
+            const rpcUrls = {
+                1: 'https://eth.llamarpc.com',
+                5: 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+                137: 'https://polygon-rpc.com',
+                56: 'https://bsc-dataseed.binance.org',
+                42161: 'https://arb1.arbitrum.io/rpc',
+                10: 'https://mainnet.optimism.io',
+            };
+
+            const rpcUrl = rpcUrls[chainId] || rpcUrls[1];
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const wallet = this.evmWallet.connect(provider);
+
+            const tx = {
+                to: to,
+                value: ethers.parseEther(value.toString()),
+                data: data,
+            };
+
+            const txResponse = await wallet.sendTransaction(tx);
+            return txResponse.hash;
+        } catch (error) {
+            throw new Error(`Failed to send EVM transaction: ${error.message}`);
+        }
     }
 }
 

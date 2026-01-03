@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Secure Vault</title>
+    <link rel="stylesheet" href="secure-vault.css">
+</head>
+<body>
+    <!-- Window Title Bar -->
+    <div class="window-titlebar">
+        <div class="window-title">Omega Secure Vault</div>
+        <div class="window-controls">
+            <button class="window-control minimize" id="minimizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="0" y1="6" x2="12" y2="6"/>
+                </svg>
+            </button>
+            <button class="window-control maximize" id="maximizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="8" height="8"/>
+                </svg>
+            </button>
+            <button class="window-control close" id="closeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="2" y1="2" x2="10" y2="10"/>
+                    <line x1="10" y1="2" x2="2" y2="10"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">💎</div>
+                <h2>Secure Vault</h2>
+            </div>
+            <div class="sidebar-actions">
+                <button class="sidebar-btn primary" id="uploadFileBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload File
+                </button>
+                <button class="sidebar-btn" id="createFolderBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    New Folder
+                </button>
+            </div>
+            <div class="vault-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Files</div>
+                    <div class="stat-value" id="fileCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Size</div>
+                    <div class="stat-value" id="totalSize">0 MB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1>Secure Vault</h1>
+                <p>Encrypted file storage - All files are encrypted before storage</p>
+            </div>
+
+            <!-- Lock Screen -->
+            <div class="lock-screen" id="lockScreen">
+                <div class="lock-icon">🔒</div>
+                <h2>Vault is Locked</h2>
+                <p>Enter your vault password to unlock</p>
+                <div class="password-input">
+                    <input type="password" id="vaultPassword" placeholder="Vault Password" autofocus>
+                    <button class="unlock-btn" id="unlockBtn">Unlock Vault</button>
+                </div>
+                <div class="setup-link" id="setupLink" style="display: none;">
+                    <a href="#" id="setupVaultBtn">Setup Vault Password</a>
+                </div>
+            </div>
+
+            <!-- Vault Content -->
+            <div class="vault-content" id="vaultContent" style="display: none;">
+                <div class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item active" data-path="">Vault</span>
+                </div>
+
+                <div class="file-grid" id="fileGrid">
+                    <!-- Files will be displayed here -->
+                </div>
+
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📁</div>
+                    <h3>Vault is Empty</h3>
+                    <p>Upload files to start storing them securely</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Upload Input -->
+    <input type="file" id="fileUploadInput" multiple style="display: none;">
+
+    <script src="secure-vault.js"></script>
+</body>
+</html>
+

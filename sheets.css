@@ -26,10 +26,93 @@ body {
     -webkit-app-region: drag;
 }
 
+.window-titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
 .window-title {
     color: white;
     font-size: 12px;
     font-weight: 500;
+}
+
+.file-menu-container {
+    position: relative;
+}
+
+.file-menu-btn {
+    height: 32px;
+    padding: 0 12px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 2px;
+}
+
+.file-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.file-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 220px;
+    padding: 4px 0;
+    display: none;
+    z-index: 10000;
+    margin-top: 2px;
+}
+
+.file-menu-dropdown.show {
+    display: block;
+}
+
+.file-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    transition: background 0.1s;
+}
+
+.file-menu-item:hover {
+    background: #f0f0f0;
+}
+
+.file-menu-item svg {
+    color: #666;
+    flex-shrink: 0;
+}
+
+.file-menu-item span:not(.file-menu-shortcut) {
+    flex: 1;
+}
+
+.file-menu-shortcut {
+    color: #999;
+    font-size: 11px;
+    margin-left: auto;
+}
+
+.file-menu-divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 4px 0;
 }
 
 .window-controls {
@@ -74,6 +157,8 @@ body {
     align-items: center;
     gap: 8px;
     padding: 0 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .toolbar-group {
@@ -172,6 +257,28 @@ body {
     color: #666;
     border-right: 1px solid #dee2e6;
     background: #f8f9fa;
+    position: relative;
+    user-select: none;
+}
+
+.column-header span {
+    flex: 1;
+    text-align: center;
+}
+
+.column-resize-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+}
+
+.column-resize-handle:hover {
+    background: #0078d4;
 }
 
 .spreadsheet-body {
@@ -196,6 +303,28 @@ body {
     font-weight: 600;
     color: #666;
     border-bottom: 1px solid #dee2e6;
+    position: relative;
+    user-select: none;
+}
+
+.row-number span {
+    flex: 1;
+    text-align: center;
+}
+
+.row-resize-handle {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    cursor: row-resize;
+    background: transparent;
+    z-index: 10;
+}
+
+.row-resize-handle:hover {
+    background: #0078d4;
 }
 
 .cells-container {
@@ -239,6 +368,127 @@ body {
 
 .cell.editing {
     background: white;
+}
+
+.cell.range-selected {
+    background: #bbdefb;
+    border: 1px solid #2196f3;
+}
+
+.cell.range-selected.selected {
+    background: #90caf9;
+    border: 2px solid #1976d2;
+}
+
+/* Table Styles */
+.cell.table-header {
+    background: #f5f5f5;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+}
+
+.cell.table-cell {
+    border: 1px solid #ddd;
+}
+
+/* Sheet Tabs */
+.sheet-tabs-container {
+    height: 32px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.sheet-tabs {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 8px;
+}
+
+.sheet-tab {
+    height: 28px;
+    min-width: 80px;
+    max-width: 150px;
+    padding: 0 24px 0 12px;
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    margin-right: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    position: relative;
+    font-size: 12px;
+    color: #495057;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sheet-tab:hover {
+    background: #dee2e6;
+}
+
+.sheet-tab.active {
+    background: white;
+    border-bottom: 1px solid white;
+    z-index: 1;
+    font-weight: 500;
+}
+
+.sheet-tab-close {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+}
+
+.sheet-tab-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #000;
+}
+
+.sheet-tab-add {
+    height: 28px;
+    width: 32px;
+    min-width: 32px;
+    background: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #495057;
+    padding: 0;
+    transition: background 0.2s;
+}
+
+.sheet-tab-add:hover {
+    background: #dee2e6;
+}
+
+.sheet-tab-add svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Scrollbar */

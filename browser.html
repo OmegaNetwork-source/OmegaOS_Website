@@ -10,11 +10,6 @@
     <!-- Unified Top Bar -->
     <div class="top-bar" id="topBar">
         <div class="top-bar-left">
-            <button class="ai-button" id="aiButton" title="AI Chat">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M10 2 L12 8 L18 10 L12 12 L10 18 L8 12 L2 10 L8 8 Z"/>
-                </svg>
-            </button>
             <div class="nav-buttons-compact">
                 <button class="nav-btn-compact" id="backBtn" title="Back">
                     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
@@ -38,7 +33,23 @@
         
         <!-- Centered URL Bar -->
         <div class="url-bar-center">
-            <input type="text" class="address-bar-compact" id="addressBar" placeholder="Search or enter address" autocomplete="off">
+            <div class="address-bar-wrapper">
+                <input type="text" class="address-bar-compact" id="addressBar" placeholder="Search or enter address" autocomplete="off">
+                <button class="ai-mode-btn" id="aiModeBtn" title="AI Mode">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1 L12 3 M12 21 L12 23 M1 12 L3 12 M21 12 L23 12 M4.22 4.22 L5.64 5.64 M18.36 18.36 L19.78 19.78 M4.22 19.78 L5.64 18.36 M18.36 5.64 L19.78 4.22"/>
+                    </svg>
+                    <span>AI</span>
+                </button>
+                <button class="vpn-toggle-btn" id="vpnToggleBtn" title="VPN/Tor - Click to disable for normal browsing">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11 V7 A5 5 0 0 1 17 7 V11"/>
+                    </svg>
+                    <span id="vpnToggleText">VPN</span>
+                </button>
+            </div>
         </div>
         
         <div class="top-bar-right">
@@ -89,6 +100,26 @@
                             </svg>
                             <span>Downloads</span>
                             <span class="dropdown-shortcut">Ctrl+J</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown-divider"></div>
+                    
+                    <div class="dropdown-section">
+                        <div class="dropdown-item" id="adBlockerToggle" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="2" y="2" width="12" height="12" rx="2"/>
+                                    <path d="M5 8 L11 8"/>
+                                </svg>
+                                <span>Ad Blocker</span>
+                            </div>
+                            <label style="position: relative; display: inline-block; width: 36px; height: 20px; cursor: pointer; -webkit-user-select: none; user-select: none;">
+                                <input type="checkbox" id="adBlockerCheckbox" style="position: absolute; opacity: 0; width: 36px; height: 20px; margin: 0; cursor: pointer; z-index: 1;">
+                                <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(100, 116, 139, 0.5); border-radius: 20px; transition: 0.3s; pointer-events: none;">
+                                    <span style="position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                                </span>
+                            </label>
                         </div>
                     </div>
                     
@@ -149,22 +180,32 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h3>AI Chat</h3>
-                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10 4 L6 8 L10 12"/>
-                    </svg>
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="sidebar-summarize-btn" id="summarizePageBtn" title="Summarize Current Page" style="padding: 4px 8px; font-size: 11px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer;">
+                        Summarize
+                    </button>
+                    <button class="sidebar-move-btn" id="sidebarMoveBtn" title="Move Sidebar to Other Side">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 8 L12 8 M8 4 L12 8 L8 12"/>
+                        </svg>
+                    </button>
+                    <button class="sidebar-toggle" id="sidebarToggle" title="Toggle Sidebar">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 4 L6 8 L10 12"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
-                    <div class="welcome-message">
+                    <div class="welcome-message" id="welcomeMessage">
                         <p>Welcome to Omega Browser</p>
-                        <p class="subtitle">AI chat coming soon</p>
+                        <p class="subtitle">AI chat ready - ask me anything!</p>
                     </div>
                 </div>
                 <div class="chat-input-container">
-                    <input type="text" class="chat-input" id="chatInput" placeholder="Message..." disabled>
-                    <button class="chat-send" id="chatSend" disabled>
+                    <input type="text" class="chat-input" id="chatInput" placeholder="Message...">
+                    <button class="chat-send" id="chatSend">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M15 3 L8 10 M15 3 L10 15 L8 10 M15 3 L2 8"/>
                         </svg>
@@ -245,6 +286,54 @@
         </div>
     </div>
 
+    <!-- Developer Console Panel -->
+    <div class="panel-overlay" id="consolePanel">
+        <div class="panel-content" style="max-width: 900px; height: 80vh;">
+            <div class="panel-header">
+                <h2>Developer Console</h2>
+                <button class="panel-close" id="consoleClose">&times;</button>
+            </div>
+            <div class="panel-body" style="padding: 0; height: calc(100% - 60px); display: flex; flex-direction: column;">
+                <div style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; gap: 10px;">
+                    <button id="clearConsoleBtn" style="
+                        padding: 6px 12px;
+                        background: var(--danger);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">Clear Console</button>
+                    <button id="exportConsoleBtn" style="
+                        padding: 6px 12px;
+                        background: var(--primary);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 13px;
+                    ">Export Logs</button>
+                    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                            <input type="checkbox" id="autoScrollConsole" checked>
+                            <span>Auto-scroll</span>
+                        </label>
+                    </div>
+                </div>
+                <div id="consoleOutput" style="
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 15px;
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    background: #1e1e1e;
+                    color: #d4d4d4;
+                    line-height: 1.6;
+                "></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Panel -->
     <div class="panel-overlay" id="settingsPanel">
         <div class="panel-content">
@@ -291,6 +380,77 @@
                         <span>Clear browsing data on close</span>
                     </label>
                 </div>
+                <div class="settings-section">
+                    <h3>Developer Tools</h3>
+                    <p class="settings-desc">Console logs and debugging information</p>
+                    <button class="settings-btn" id="openConsoleBtn" style="
+                        padding: 10px 20px;
+                        background: var(--primary);
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                        margin-top: 10px;
+                    ">Open Developer Console</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Wallet Connections</h3>
+                    <p class="settings-desc">Connect to dApps using WalletConnect</p>
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(0, 150, 255, 0.1); border-left: 3px solid var(--accent); border-radius: 6px;">
+                        <strong style="color: rgba(255, 255, 255, 0.9);">How to Connect Wallets:</strong>
+                        <p style="margin: 10px 0; color: rgba(255, 255, 255, 0.8);">This browser uses <strong>WalletConnect</strong> to connect to wallets. No browser extensions needed!</p>
+                        <div style="margin-top: 15px;">
+                            <strong style="color: rgba(255, 255, 255, 0.9);">Steps:</strong>
+                            <ol style="margin: 8px 0 0 20px; line-height: 1.8;">
+                                <li>Visit a dApp (like Uniswap, Jupiter, etc.)</li>
+                                <li>Click "Connect Wallet"</li>
+                                <li>Select "WalletConnect" from the options</li>
+                                <li>Scan the QR code with your mobile wallet app:
+                                    <ul style="margin: 5px 0 0 20px;">
+                                        <li><strong>MetaMask Mobile</strong> - for Ethereum dApps</li>
+                                        <li><strong>Phantom Mobile</strong> - for Solana dApps</li>
+                                        <li>Or any WalletConnect-compatible wallet</li>
+                                    </ul>
+                                </li>
+                                <li>Approve the connection in your mobile wallet</li>
+                                <li>You're connected! Your wallet works in the dApp.</li>
+                            </ol>
+                        </div>
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(0, 200, 100, 0.1); border-radius: 4px;">
+                            <strong>✅ Benefits:</strong>
+                            <ul style="margin: 5px 0 0 20px; line-height: 1.6;">
+                                <li>Works with MetaMask Mobile & Phantom Mobile</li>
+                                <li>No browser extensions needed</li>
+                                <li>Works on all dApps (Uniswap, Jupiter, OpenSea, etc.)</li>
+                                <li>Secure - your keys stay in your mobile wallet</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Tor Mode</h3>
+                    <p class="settings-desc">Route traffic through Tor network for enhanced anonymity</p>
+                    <label class="settings-checkbox">
+                        <input type="checkbox" id="torEnabled">
+                        <span>Enable Tor Browser Mode</span>
+                    </label>
+                    <div id="torStatus" style="margin-top: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7); display: none;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <div class="status-dot" id="torStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #107c10;"></div>
+                            <span id="torStatusText" style="color: rgba(255, 255, 255, 0.95);">Tor Connected</span>
+                        </div>
+                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6);">
+                            <div>Exit Node: <span id="torExitNode">Loading...</span></div>
+                            <div>IP Address: <span id="torIpAddress">Loading...</span></div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 12px; font-size: 11px; color: rgba(255, 255, 255, 0.6);">
+                        Note: Tor mode routes all browser traffic through the Tor network. 
+                        Requires Tor proxy to be running on localhost:9050 or configured proxy.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -310,7 +470,7 @@
                             <div class="wallet-action-icon">✨</div>
                             <div class="wallet-action-content">
                                 <div class="wallet-action-title">Create New Wallet</div>
-                                <div class="wallet-action-desc">Generate a new Solana wallet</div>
+                                <div class="wallet-action-desc">Generate a new multi-chain wallet</div>
                             </div>
                         </button>
                         <button class="wallet-action-btn" id="importWalletBtn">
@@ -366,8 +526,18 @@
                 
                 <!-- Wallet Dashboard -->
                 <div id="walletDashboard" style="display: none;">
+                    <!-- Network Selector -->
+                    <div class="wallet-form-group" style="margin-bottom: 20px;">
+                        <label>Network</label>
+                        <select id="walletNetworkSelect" class="wallet-input">
+                            <option value="solana">Solana</option>
+                            <option value="evm">Ethereum (EVM)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Balance Card (Single, updates based on network) -->
                     <div class="wallet-balance-card">
-                        <div class="wallet-balance-label">Balance</div>
+                        <div class="wallet-balance-label" id="walletBalanceLabel">Solana Balance</div>
                         <div class="wallet-balance-amount" id="walletBalance">0.00 SOL</div>
                         <div class="wallet-address" id="walletAddress">Loading...</div>
                     </div>
@@ -391,16 +561,23 @@
                     </div>
                     
                     <div class="wallet-section">
-                        <h3>Send SOL</h3>
+                        <h3>Send Transaction</h3>
+                        <div class="wallet-form-group">
+                            <label>Chain</label>
+                            <select id="sendChain" class="wallet-input">
+                                <option value="solana">Solana</option>
+                                <option value="evm">Ethereum (EVM)</option>
+                            </select>
+                        </div>
                         <div class="wallet-form-group">
                             <label>Recipient Address</label>
                             <input type="text" id="sendToAddress" class="wallet-input" placeholder="Enter Solana address">
                         </div>
                         <div class="wallet-form-group">
-                            <label>Amount (SOL)</label>
+                            <label>Amount</label>
                             <input type="number" id="sendAmount" class="wallet-input" placeholder="0.00" step="0.000000001" min="0">
                         </div>
-                        <button class="wallet-primary-btn" id="sendSolBtn">Send SOL</button>
+                        <button class="wallet-primary-btn" id="sendTransactionBtn">Send</button>
                     </div>
                 </div>
             </div>

@@ -11,6 +11,9 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "download-model": "node scripts/download-model.js",
+    "download-tor": "node scripts/download-tor.js",
+    "prebuild": "npm run download-model && npm run download-tor",
     "build": "electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -18,7 +21,8 @@
     "build:all": "electron-builder --win --mac --linux",
     "extensions:help": "node download-extensions.js",
     "extensions:bundle": "node bundle-extensions.js",
-    "extensions:copy": "node copy-chrome-extensions.js"
+    "extensions:copy": "node copy-chrome-extensions.js",
+    "stats": "node scripts/get-download-stats.js"
   },
   "keywords": [
     "browser",
@@ -37,9 +41,15 @@
   "dependencies": {
     "@solana/web3.js": "^1.87.6",
     "adm-zip": "^0.5.16",
+    "axios": "^1.13.2",
     "bs58": "^5.0.0",
+    "cheerio": "^1.1.2",
     "crypto-js": "^4.2.0",
-    "ethers": "^6.16.0"
+    "docx": "^9.5.1",
+    "electron-ollama": "^0.1.25",
+    "ethers": "^6.16.0",
+    "pptxgenjs": "^4.0.1",
+    "xlsx": "^0.18.5"
   },
   "build": {
     "appId": "com.omeganetwork.os",
@@ -61,8 +71,10 @@
       "!**/docs/**/*",
       "!**/examples/**/*",
       "extensions/**/*",
+      "build/models/**/*",
+      "build/tor/tor.exe",
       "!dist/**/*",
-      "!build/**/*",
+      "!build/installer.nsh",
       "!.git/**/*",
       "!omega-os-landing.html",
       "!serve-landing.py",

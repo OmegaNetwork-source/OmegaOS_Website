@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Breakout</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" integrity="sha512-FDcVY+g7vc5CXANbrTSg1K5qLyriCsGDYCE02Li1tXEYdNQPvLPHNE+rT2Mjei8N7fZbe0WLhw27j2SrGRpdMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary-color: #00ffff;
+            --background-color: #0d0d0d;
+            --text-color: #ffffff;
+            --panel-bg-color: #1a1a1a;
+            --border-color: #333;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            width: 90vw;
+            height: 90vh;
+            max-width: 1400px;
+            max-height: 800px;
+        }
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        canvas {
+            background-color: #000;
+            box-shadow: 0 0 20px var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        .ui-panel {
+            width: 300px;
+            padding: 20px;
+            background-color: var(--panel-bg-color);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+        h1, h2, p {
+            text-align: center;
+            text-shadow: 0 0 5px var(--primary-color);
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        .stats p {
+            font-size: clamp(1em, 2.5vh, 1.2em);
+            margin: 10px 0;
+        }
+        .leaderboard {
+            margin-top: 20px;
+            flex-grow: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th {
+            text-align: center;
+            color: var(--primary-color);
+        }
+        td {
+            font-size: 0.9em;
+        }
+        .web3-btn {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 10px 15px;
+            margin: 10px auto;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            display: block;
+            width: 80%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .web3-btn:hover {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+        }
+        .message-box {
+            position: absolute;
+            background-color: rgba(26, 26, 26, 0.9);
+            padding: 30px;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 0 15px var(--primary-color);
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: 100vh;
+                width: 100vw;
+            }
+            .ui-panel {
+                width: 100%;
+                height: auto;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+                flex-shrink: 0;
+                overflow-y: auto;
+                padding: 10px;
+            }
+            .game-container {
+                height: 60vh;
+            }
+            h1 {
+                font-size: 2em;
+                margin-bottom: 10px;
+            }
+            .web3-btn {
+                padding: 12px;
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="messageBox" class="message-box">
+                <h2 id="messageTitle"></h2>
+                <p id="messageText"></p>
+                <button id="actionButton" class="web3-btn">Play</button>
+            </div>
+        </div>
+        <div class="ui-panel">
+            <h1>Omega<br>Breakout</h1>
+            <div class="stats">
+                <p>Score: <span id="score">0</span></p>
+                <p>Lives: <span id="lives">3</span></p>
+            </div>
+            <button id="connectWalletBtn" class="web3-btn">Connect Wallet</button>
+            <button id="submitScoreBtn" class="web3-btn" style="display:none;">Submit Score</button>
+            <button id="exportCsvBtn" class="web3-btn">Export CSV</button>
+            <div class="leaderboard">
+                <h2>Leaderboard</h2>
+                <table>
+                    <thead>
+                        <tr><th>Rank</th><th>Player</th><th>Score</th></tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Scores will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="walletStatus" style="font-size: 0.8em; text-align: center;"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const gameContainer = document.querySelector('.game-container');
+
+            canvas.width = gameContainer.clientWidth;
+            canvas.height = gameContainer.clientHeight;
+
+            // Game State
+            let gameState = 'start'; // 'start', 'playing', 'paused', 'over', 'won'
+            let score = 0;
+            let lives = 3;
+
+            // Time-based physics
+            let lastTime = 0;
+
+            // Controls
+            let rightPressed = false;
+            let leftPressed = false;
+
+            // --- Game Objects ---
+            const paddle = {
+                x: canvas.width / 2 - 50,
+                y: canvas.height - 20,
+                width: 100,
+                height: 10,
+                color: 'var(--primary-color)',
+                speed: 450 // pixels per second
+            };
+
+            const ball = {
+                x: canvas.width / 2,
+                y: canvas.height - 30,
+                radius: 7,
+                dx: 200, // pixels per second
+                dy: -200, // pixels per second
+                color: 'var(--primary-color)'
+            };
+
+            const bricks = {
+                rowCount: 6,
+                columnCount: 8,
+                width: (canvas.width * 0.9) / 8,
+                height: 20,
+                padding: 5,
+                offsetTop: 50,
+                offsetLeft: (canvas.width * 0.05),
+                list: []
+            };
+
+            // --- Drawing Functions ---
+            function drawPaddle() {
+                ctx.beginPath();
+                ctx.rect(paddle.x, paddle.y, paddle.width, paddle.height);
+                ctx.fillStyle = paddle.color;
+                ctx.shadowColor = paddle.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            }
+
+            function drawBall() {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.shadowColor = ball.color;
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            }
+
+            function drawBricks() {
+                bricks.list.forEach(column => {
+                    column.forEach(brick => {
+                        if (brick.status === 1) {
+                            ctx.beginPath();
+                            ctx.rect(brick.x, brick.y, bricks.width, bricks.height);
+                            ctx.fillStyle = `hsl(180, 100%, ${brick.health * 20 + 40}%)`;
+                            ctx.fill();
+                            ctx.closePath();
+                        }
+                    });
+                });
+            }
+            
+            // --- Game Logic ---
+            function createBricks() {
+                bricks.list = [];
+                for (let c = 0; c < bricks.columnCount; c++) {
+                    bricks.list[c] = [];
+                    for (let r = 0; r < bricks.rowCount; r++) {
+                        const brickX = c * (bricks.width + bricks.padding) + bricks.offsetLeft;
+                        const brickY = r * (bricks.height + bricks.padding) + bricks.offsetTop;
+                        bricks.list[c][r] = { x: brickX, y: brickY, status: 1, health: bricks.rowCount - r };
+                    }
+                }
+            }
+
+            function update(deltaTime) {
+                // Ball movement
+                ball.x += ball.dx * deltaTime;
+                ball.y += ball.dy * deltaTime;
+
+                // Wall collision (left/right)
+                if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
+                    ball.dx = -ball.dx;
+                }
+                // Wall collision (top)
+                if (ball.y - ball.radius < 0) {
+                    ball.dy = -ball.dy;
+                }
+
+                // Paddle collision
+                if (ball.y + ball.radius > paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
+                    ball.dy = -Math.abs(ball.dy); // Ensure it always goes up
+                }
+
+                // Lose a life
+                if (ball.y + ball.radius > canvas.height) {
+                    lives--;
+                    document.getElementById('lives').textContent = lives;
+                    if (lives <= 0) {
+                        setGameState('over');
+                    } else {
+                        resetBallAndPaddle();
+                    }
+                }
+                
+                // Brick collision
+                let totalBricks = 0;
+                bricks.list.forEach(column => {
+                    column.forEach(brick => {
+                        if (brick.status === 1) {
+                            totalBricks++;
+                            if (ball.x > brick.x && ball.x < brick.x + bricks.width && ball.y > brick.y && ball.y < brick.y + bricks.height) {
+                                ball.dy = -ball.dy;
+                                brick.status = 0; // For now, just destroy it
+                                score += 10;
+                                document.getElementById('score').textContent = score;
+                            }
+                        }
+                    });
+                });
+
+                if(totalBricks === 0) {
+                    setGameState('won');
+                }
+
+                // Paddle movement from keyboard
+                if (rightPressed && paddle.x < canvas.width - paddle.width) {
+                    paddle.x += paddle.speed * deltaTime;
+                }
+                if (leftPressed && paddle.x > 0) {
+                    paddle.x -= paddle.speed * deltaTime;
+                }
+            }
+
+            function gameLoop(timestamp) {
+                if (!lastTime) lastTime = timestamp;
+                const deltaTime = (timestamp - lastTime) / 1000;
+                lastTime = timestamp;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (gameState === 'playing') {
+                    update(deltaTime);
+                }
+                
+                drawBricks();
+                drawPaddle();
+                drawBall();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // --- State Management & Controls ---
+            
+            function showMessage(state) {
+                const box = document.getElementById('messageBox');
+                const title = document.getElementById('messageTitle');
+                const text = document.getElementById('messageText');
+                const button = document.getElementById('actionButton');
+                
+                box.style.display = 'block';
+                if(state === 'start') {
+                    title.innerText = "Omega Breakout";
+                    text.innerText = "Clear all the bricks to win.";
+                    button.innerText = "Play";
+                    button.onclick = () => setGameState('playing');
+                } else if (state === 'over') {
+                    title.innerText = "Game Over";
+                    text.innerText = `Final Score: ${score}`;
+                    button.innerText = "Play Again";
+                    button.onclick = () => location.reload();
+                    if(userAddress) document.getElementById('submitScoreBtn').style.display = 'block';
+                } else if (state === 'won') {
+                    title.innerText = "You Win!";
+                    text.innerText = `Final Score: ${score}`;
+                    button.innerText = "Play Again";
+                    button.onclick = () => location.reload();
+                    if(userAddress) document.getElementById('submitScoreBtn').style.display = 'block';
+                }
+            }
+
+            function setGameState(newState) {
+                gameState = newState;
+                const box = document.getElementById('messageBox');
+                box.style.display = 'none';
+
+                if (newState === 'playing') {
+                    lastTime = 0; // Reset timer for smooth start
+                } else {
+                   showMessage(newState);
+                }
+            }
+
+            function resetBallAndPaddle() {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height - 30;
+                ball.dx = 200 * (Math.random() > 0.5 ? 1 : -1);
+                ball.dy = -200;
+                paddle.x = canvas.width / 2 - paddle.width / 2;
+            }
+
+            // Mouse controls
+            document.addEventListener('mousemove', (e) => {
+                const relativeX = e.clientX - canvas.getBoundingClientRect().left;
+                if (relativeX > 0 && relativeX < canvas.width) {
+                    paddle.x = relativeX - paddle.width / 2;
+                }
+            });
+
+            // Touch controls
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const relativeX = touch.clientX - canvas.getBoundingClientRect().left;
+                if (relativeX > 0 && relativeX < canvas.width) {
+                    paddle.x = relativeX - paddle.width / 2;
+                }
+            }, { passive: false });
+
+            // Keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'Right' || e.key === 'ArrowRight') rightPressed = true;
+                else if(e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = true;
+            });
+            document.addEventListener('keyup', (e) => {
+                if(e.key === 'Right' || e.key === 'ArrowRight') rightPressed = false;
+                else if(e.key === 'Left' || e.key === 'ArrowLeft') leftPressed = false;
+            });
+
+            // --- Web3 Integration (Placeholder) ---
+            let provider, signer, contract, userAddress;
+            const contractAddress = "0x9d93ece865b97cc9d14eccea6ff9471a8d4be05a"; // <-- IMPORTANT
+            const contractABI = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "player",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "score",
+				"type": "uint256"
+			}
+		],
+		"name": "ScoreSubmitted",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_score",
+				"type": "uint256"
+			}
+		],
+		"name": "submitScore",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getLeaderboard",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "player",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "score",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct Leaderboard.ScoreEntry[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getPlayerCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "highScores",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "players",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const submitScoreBtn = document.getElementById('submitScoreBtn');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            const walletStatusP = document.getElementById('walletStatus');
+
+            async function connectWallet() {
+                if (typeof ethers === 'undefined') {
+                    walletStatusP.textContent = 'Library not loaded. Please refresh.';
+                    console.error("Ethers.js is not loaded.");
+                    return;
+                }
+                if (typeof window.ethereum === 'undefined') {
+                    walletStatusP.textContent = 'Please install MetaMask!';
+                    return;
+                }
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+                    
+                    walletStatusP.textContent = `Connected: ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
+                    connectWalletBtn.textContent = 'Wallet Connected';
+                    connectWalletBtn.disabled = true;
+                } catch (error) {
+                    console.error("Wallet connection failed:", error);
+                    walletStatusP.textContent = 'Connection failed.';
+                }
+            }
+
+            async function submitScore() {
+                if (!contract || !userAddress) {
+                    walletStatusP.textContent = 'Please connect wallet first.';
+                    return;
+                }
+                try {
+                    submitScoreBtn.textContent = 'Submitting...';
+                    submitScoreBtn.disabled = true;
+                    const tx = await contract.submitScore(score);
+                    await tx.wait();
+                    alert('Score submitted successfully!');
+                    fetchLeaderboard(); // Refresh leaderboard
+                } catch (error) {
+                    console.error("Score submission failed:", error);
+                    alert('Score submission failed.');
+                } finally {
+                    submitScoreBtn.textContent = 'Submit Score';
+                    submitScoreBtn.disabled = false;
+                    submitScoreBtn.style.display = 'none';
+                }
+            }
+
+            async function fetchLeaderboard() {
+                if (!contractAddress || !contractABI.length) return;
+                
+                let tempProvider = new ethers.providers.JsonRpcProvider('https://mainnet.aurora.dev');
+                 if (typeof window.ethereum !== 'undefined') {
+                    tempProvider = new ethers.providers.Web3Provider(window.ethereum);
+                }
+                const readonlyContract = new ethers.Contract(contractAddress, contractABI, tempProvider);
+
+                try {
+                    const board = await readonlyContract.getLeaderboard();
+                    leaderboardBody.innerHTML = ''; // Clear previous entries
+                    
+                    // Sort the leaderboard by score descending
+                    const sortedBoard = [...board].sort((a, b) => b.score - a.score);
+
+                    sortedBoard.slice(0, 10).forEach((entry, index) => {
+                        const row = leaderboardBody.insertRow();
+                        const rankCell = row.insertCell(0);
+                        const playerCell = row.insertCell(1);
+                        const scoreCell = row.insertCell(2);
+
+                        rankCell.textContent = index + 1;
+                        playerCell.textContent = `${entry.player.substring(0, 6)}...${entry.player.substring(entry.player.length - 4)}`;
+                        scoreCell.textContent = entry.score.toString();
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch leaderboard:", error);
+                }
+            }
+            
+            async function exportLeaderboardToCsv() {
+                if (!contract) {
+                    alert("Please connect your wallet first to fetch the latest data.");
+                    return;
+                }
+                
+                exportCsvBtn.disabled = true;
+                exportCsvBtn.textContent = 'Exporting...';
+
+                try {
+                    const board = await contract.getLeaderboard();
+                    const sortedBoard = [...board].sort((a, b) => b.score - a.score);
+
+                    let csvContent = "data:text/csv;charset=utf-8,Rank,Player,Score\n";
+                    
+                    sortedBoard.forEach((entry, index) => {
+                        const rank = index + 1;
+                        const player = entry.player;
+                        const score = entry.score.toString();
+                        csvContent += `${rank},${player},${score}\n`;
+                    });
+
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "omega-breakout-leaderboard.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                } catch (error) {
+                    console.error("Failed to export CSV:", error);
+                    alert("Failed to export leaderboard. See console for details.");
+                } finally {
+                    exportCsvBtn.disabled = false;
+                    exportCsvBtn.textContent = 'Export CSV';
+                }
+            }
+
+            connectWalletBtn.addEventListener('click', connectWallet);
+            submitScoreBtn.addEventListener('click', submitScore);
+            exportCsvBtn.addEventListener('click', exportLeaderboardToCsv);
+
+            // --- Initial Setup ---
+            createBricks();
+            setGameState('start');
+            // We fetch leaderboard on load, but contract might not be fully available
+            // without a provider. Let's try, but also fetch after connecting.
+            setTimeout(fetchLeaderboard, 500);
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+</html> 

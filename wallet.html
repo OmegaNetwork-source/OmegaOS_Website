@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Wallet</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        .wallet-window {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: transparent;
+        }
+
+        .wallet-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            -webkit-app-region: drag;
+        }
+
+        .wallet-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .wallet-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 20px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            -webkit-app-region: no-drag;
+        }
+
+        .wallet-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.95);
+            transform: rotate(90deg);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .wallet-body {
+            padding: 28px;
+            overflow-y: auto;
+            flex: 1;
+            background: transparent;
+        }
+
+        .wallet-window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .wallet-window-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wallet-window-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .wallet-window-btn.close:hover {
+            background: #e81123;
+            color: white;
+        }
+
+        /* Toggle Switch Styling */
+        #hotWalletToggle:checked + span {
+            background-color: rgba(34, 197, 94, 0.5) !important;
+        }
+
+        #hotWalletToggle:checked + span span {
+            transform: translateX(24px) !important;
+        }
+
+        #hotWalletToggle + span {
+            transition: background-color 0.3s;
+        }
+
+        #hotWalletToggle + span span {
+            transition: transform 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="wallet-window">
+        <div class="wallet-header">
+            <h2>Omega Wallet</h2>
+            <div class="wallet-window-controls">
+                <button class="wallet-window-btn minimize" id="minimizeBtn">
+                    <svg width="12" height="12" viewBox="0 0 12 12">
+                        <rect x="0" y="5" width="12" height="1"/>
+                    </svg>
+                </button>
+                <button class="wallet-window-btn maximize" id="maximizeBtn">
+                    <svg width="12" height="12" viewBox="0 0 12 12">
+                        <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                </button>
+                <button class="wallet-window-btn close" id="closeBtn">
+                    <svg width="12" height="12" viewBox="0 0 12 12">
+                        <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="wallet-body">
+            <!-- Wallet Not Created/Loaded -->
+            <div id="walletSetup" style="display: none;">
+                <div class="wallet-setup-options">
+                    <button class="wallet-action-btn" id="createWalletBtn">
+                        <div class="wallet-action-icon">✨</div>
+                        <div class="wallet-action-content">
+                            <div class="wallet-action-title">Create New Wallet</div>
+                            <div class="wallet-action-desc">Generate a new multi-chain wallet</div>
+                        </div>
+                    </button>
+                    <button class="wallet-action-btn" id="importWalletBtn">
+                        <div class="wallet-action-icon">📥</div>
+                        <div class="wallet-action-content">
+                            <div class="wallet-action-title">Import Wallet</div>
+                            <div class="wallet-action-desc">Import from private key</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Create Wallet Form -->
+                <div id="createWalletForm" style="display: none; margin-top: 20px;">
+                    <div class="wallet-form-group">
+                        <label>Password</label>
+                        <input type="password" id="createPassword" class="wallet-input" placeholder="Enter password">
+                    </div>
+                    <div class="wallet-form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="createPasswordConfirm" class="wallet-input" placeholder="Confirm password">
+                    </div>
+                    <button class="wallet-primary-btn" id="createWalletSubmit">Create Wallet</button>
+                    <div id="walletMnemonic" style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">⚠️ Save Your Private Key</p>
+                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">This is the only time you'll see this. Save it securely!</p>
+                        <textarea id="walletPrivateKey" readonly style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-family: monospace; font-size: 12px; color: rgba(255, 255, 255, 0.9);"></textarea>
+                        <button class="wallet-primary-btn" id="walletMnemonicConfirm" style="margin-top: 10px;">I've Saved It</button>
+                    </div>
+                </div>
+                
+                <!-- Import Wallet Form -->
+                <div id="importWalletForm" style="display: none; margin-top: 20px;">
+                    <div class="wallet-form-group">
+                        <label>Private Key (Base58)</label>
+                        <input type="text" id="importPrivateKey" class="wallet-input" placeholder="Enter private key">
+                    </div>
+                    <div class="wallet-form-group">
+                        <label>Password</label>
+                        <input type="password" id="importPassword" class="wallet-input" placeholder="Enter password">
+                    </div>
+                    <button class="wallet-primary-btn" id="importWalletSubmit">Import Wallet</button>
+                </div>
+            </div>
+            
+            <!-- Wallet Login -->
+            <div id="walletLogin" style="display: none;">
+                <div class="wallet-form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="wallet-input" placeholder="Enter password">
+                </div>
+                <button class="wallet-primary-btn" id="loginWalletBtn">Unlock Wallet</button>
+            </div>
+            
+            <!-- Wallet Dashboard -->
+            <div id="walletDashboard" style="display: none;">
+                <!-- Top Bar: Network Selector + Settings -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <select id="walletNetworkSelect" class="wallet-input" style="flex: 1; max-width: 200px; margin: 0;">
+                        <option value="solana">Solana</option>
+                        <option value="omega">Omega Network</option>
+                        <option value="evm">Ethereum</option>
+                        <option value="bsc">BSC</option>
+                    </select>
+                    <button id="walletSettingsBtn" style="width: 40px; height: 40px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2">
+                            <circle cx="10" cy="10" r="2.5"/>
+                            <path d="M10 2.5 L10 5.5 M10 14.5 L10 17.5 M2.5 10 L5.5 10 M14.5 10 L17.5 10"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Balance Display -->
+                <div class="wallet-balance-card" style="margin-bottom: 24px; text-align: center; padding: 32px 24px;">
+                    <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;" id="walletBalanceLabel">Total Balance</div>
+                    <div class="wallet-balance-amount" id="walletBalance" style="font-size: 36px; font-weight: 700; margin: 12px 0; background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">--</div>
+                    <div class="wallet-address" id="walletAddress" style="font-size: 12px; color: rgba(255, 255, 255, 0.5); margin-top: 8px; word-break: break-all;">Loading...</div>
+                </div>
+                
+                <!-- Quick Actions: Send/Receive -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <button id="sendBtn" class="wallet-primary-btn" style="padding: 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 10 L18 10 M10 2 L18 10 L10 18"/>
+                        </svg>
+                        Send
+                    </button>
+                    <button id="receiveBtn" class="wallet-primary-btn" style="padding: 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 10 L18 10 M10 2 L18 10 L10 18" transform="rotate(180 10 10)"/>
+                        </svg>
+                        Receive
+                    </button>
+                </div>
+                
+                <!-- Mode Status Badge (compact) -->
+                <div id="modeStatusBadge" style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.7);">
+                        <span>🔒</span>
+                        <span id="modeDescription">Cold Storage Mode</span>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                        <input type="checkbox" id="hotWalletToggle" style="opacity: 0; width: 0; height: 0;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(100, 116, 139, 0.5); border-radius: 24px; transition: 0.3s;">
+                            <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                        </span>
+                    </label>
+                </div>
+                <div id="hotModeWarning" style="display: none; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 12px; color: rgba(239, 68, 68, 0.9); line-height: 1.5; margin-bottom: 24px;">
+                    ⚠️ <strong>Hot Wallet Mode:</strong> Network access enabled. Security reduced.
+                </div>
+                
+                <!-- Assets Section -->
+                <div class="wallet-section" style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Assets</h3>
+                        <button id="refreshBalanceBtn" style="display: none; width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2">
+                                <path d="M3 10 C3 6 6 3 10 3 C13 3 15.5 5 16.5 8"/>
+                                <path d="M13 6 C13 10 10 13 6 13 C3 13 0.5 11 -0.5 8"/>
+                                <path d="M13 6 L16 3 M13 6 L10 3 M3 10 L0 13 M3 10 L6 13"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="assetsList" style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Assets will be populated here -->
+                    </div>
+                </div>
+                
+                <!-- Activity Section -->
+                <div class="wallet-section">
+                    <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600;">Activity</h3>
+                    <div id="activityList" style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
+                        No transactions yet
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Send Modal -->
+            <div id="sendModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Send</h3>
+                        <button id="closeSendModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                    </div>
+                    <div class="wallet-form-group">
+                        <label>Chain</label>
+                        <select id="sendChain" class="wallet-input">
+                            <option value="solana">Solana</option>
+                            <option value="omega">Omega Network</option>
+                            <option value="evm">Ethereum</option>
+                            <option value="bsc">BSC</option>
+                        </select>
+                    </div>
+                    <div class="wallet-form-group">
+                        <label>Recipient Address</label>
+                        <input type="text" id="sendToAddress" class="wallet-input" placeholder="Enter address">
+                    </div>
+                    <div class="wallet-form-group">
+                        <label>Amount (<span id="sendAmountUnit">SOL</span>)</label>
+                        <input type="number" id="sendAmount" class="wallet-input" placeholder="0.00" step="0.000000001" min="0">
+                    </div>
+                    <button class="wallet-primary-btn" id="sendTransactionBtn" style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600;">Send Transaction</button>
+                </div>
+            </div>
+            
+            <!-- Receive Modal -->
+            <div id="receiveModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Receive</h3>
+                        <button id="closeReceiveModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); margin-bottom: 12px;">Your Address</div>
+                        <div id="receiveAddress" style="font-size: 13px; color: rgba(255, 255, 255, 0.9); word-break: break-all; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 16px;"></div>
+                        <button id="copyReceiveAddressBtn" class="wallet-primary-btn" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                                <rect x="5" y="5" width="8" height="8" rx="1"/>
+                                <path d="M3 11 L3 3 L11 3"/>
+                            </svg>
+                            Copy Address
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Modal -->
+            <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Settings</h3>
+                        <button id="closeSettingsModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                    </div>
+                    <div class="wallet-section">
+                        <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600;">Security</h3>
+                        <button class="wallet-primary-btn" id="exportPrivateKeyBtn" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: rgba(239, 68, 68, 0.9);">
+                            Export Private Key
+                        </button>
+                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 12px; line-height: 1.6;">
+                            Export your private key for backup or to use with other wallets.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="wallet-app.js"></script>
+</body>
+</html>
+

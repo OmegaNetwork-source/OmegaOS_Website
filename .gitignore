@@ -36,3 +36,8 @@ isolated-env/
 *.tmp
 *.temp
 
+# Browser extensions (bundled separately, not committed to repo)
+# Note: The extensions/ folder structure is kept via .gitkeep
+extensions/*
+!extensions/.gitkeep
+

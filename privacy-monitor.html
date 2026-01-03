@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Privacy Monitor</title>
+    <link rel="stylesheet" href="privacy-monitor.css">
+</head>
+<body>
+    <!-- Window Title Bar -->
+    <div class="window-titlebar">
+        <div class="window-title">Omega Privacy Monitor</div>
+        <div class="window-controls">
+            <button class="window-control minimize" id="minimizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="0" y1="6" x2="12" y2="6"/>
+                </svg>
+            </button>
+            <button class="window-control maximize" id="maximizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="8" height="8"/>
+                </svg>
+            </button>
+            <button class="window-control close" id="closeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="2" y1="2" x2="10" y2="10"/>
+                    <line x1="10" y1="2" x2="2" y2="10"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">🛡️</div>
+                <h2>Privacy Monitor</h2>
+            </div>
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="access">File Access</button>
+                <button class="tab-btn" data-tab="network">Network</button>
+                <button class="tab-btn" data-tab="permissions">Permissions</button>
+                <button class="tab-btn" data-tab="logs">Activity Logs</button>
+            </div>
+            <div class="monitor-controls">
+                <button class="control-btn" id="clearLogsBtn">Clear Logs</button>
+                <button class="control-btn" id="exportLogsBtn">Export Logs</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h1 id="tabTitle">File Access Monitor</h1>
+                <div class="status-indicator">
+                    <div class="status-dot active"></div>
+                    <span>Monitoring Active</span>
+                </div>
+            </div>
+
+            <!-- File Access Tab -->
+            <div class="tab-content active" id="accessTab">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="fileAccessCount">0</div>
+                            <div class="stat-label">File Accesses</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✏️</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="fileWriteCount">0</div>
+                            <div class="stat-label">File Writes</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📤</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="networkRequests">0</div>
+                            <div class="stat-label">Network Requests</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-list" id="fileAccessList">
+                    <!-- Activity items will appear here -->
+                </div>
+            </div>
+
+            <!-- Network Tab -->
+            <div class="tab-content" id="networkTab">
+                <div class="network-stats">
+                    <div class="network-stat">
+                        <label>Requests Today:</label>
+                        <span id="requestsToday">0</span>
+                    </div>
+                    <div class="network-stat">
+                        <label>Data Sent:</label>
+                        <span id="dataSent">0 KB</span>
+                    </div>
+                    <div class="network-stat">
+                        <label>Data Received:</label>
+                        <span id="dataReceived">0 KB</span>
+                    </div>
+                </div>
+                <div class="activity-list" id="networkList">
+                    <!-- Network activity will appear here -->
+                </div>
+            </div>
+
+            <!-- Permissions Tab -->
+            <div class="tab-content" id="permissionsTab">
+                <div class="permissions-list" id="permissionsList">
+                    <!-- Permission items will appear here -->
+                </div>
+            </div>
+
+            <!-- Activity Logs Tab -->
+            <div class="tab-content" id="logsTab">
+                <div class="logs-container" id="logsContainer">
+                    <!-- Logs will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="privacy-monitor.js"></script>
+</body>
+</html>
+

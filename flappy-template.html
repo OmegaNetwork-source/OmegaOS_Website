@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flappy Omega</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Align items vertically */
+            justify-content: flex-start; /* Align to the top */
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+            color: #ffffff;
+            overflow-y: auto; /* Allow scrolling */
+        }
+        .game-container {
+            position: relative;
+            width: 95vw; /* Use viewport width for responsiveness */
+            max-width: 380px; /* Keep original max size on larger screens */
+            height: 600px;
+            background-color: #000000;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            overflow: hidden;
+            transition: width 0.4s, height 0.4s;
+        }
+        .game-container.extended-view {
+            width: 90vw;
+            height: 80vh;
+            max-width: 1200px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            margin-top: 50px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 20px 30px;
+            border-radius: 10px;
+            text-align: center;
+            display: none; /* Hidden by default */
+            pointer-events: all; /* Allow clicks on buttons inside */
+        }
+        .message-box h2 {
+            margin: 0 0 10px;
+            color: #00ffff;
+        }
+        .message-box button {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        .message-box button:hover {
+            background-color: #00a884;
+        }
+        .wallet-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            width: 90%;
+            transform: translateX(-50%);
+            z-index: 10;
+            text-align: center;
+            pointer-events: all;
+        }
+        #walletStatus {
+            color: #00ffff;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .leaderboard-section {
+            margin-top: 30px;
+            width: 95vw; /* Match the game container's responsive width */
+            max-width: 380px;
+            text-align: center;
+        }
+        .leaderboard-section h2 {
+            color: #00ffff;
+        }
+        .leaderboard-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .leaderboard-section th, .leaderboard-section td {
+            padding: 12px;
+            border-bottom: 1px solid #333;
+            text-align: center !important; /* Force center alignment */
+        }
+        .leaderboard-section tr:last-child td {
+            border-bottom: none;
+        }
+        .web3-btn {
+             background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="ui-overlay">
+            <div id="scoreDisplay" class="score">0</div>
+            <div id="startMessage" class="message-box" style="display: block;">
+                <h2>Flappy Omega</h2>
+                <p>Click or Tap to Start</p>
+            </div>
+            <div id="gameOverMessage" class="message-box">
+                <h2>Game Over</h2>
+                <p>Score: <span id="finalScore">0</span></p>
+                <button id="playAgainBtn" class="web3-btn">Play Again</button>
+                <button id="submitScoreBtn" class="web3-btn" style="display: none;">Submit Score</button>
+                <p style="font-size: 0.8em; color: #999; margin-top: 10px;">Note: Wallet must be reconnected for a new game.</p>
+            </div>
+            <div class="wallet-controls">
+                <button id="connectWalletBtn" class="web3-btn">Connect Wallet</button>
+                <button id="toggleSizeBtn" class="web3-btn">Extend Size</button>
+                <p id="walletStatus" style="display: none;"></p>
+            </div>
+        </div>
+    </div>
+    <div class="leaderboard-section">
+        <h2>Leaderboard</h2>
+        <table>
+            <thead><tr><th>Rank</th><th>Wallet</th><th>Score</th></tr></thead>
+            <tbody id="leaderboardBody"></tbody>
+        </table>
+        <button id="exportCsvBtn" class="web3-btn">Export as CSV</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.2.0/dist/ethers.umd.min.js" type="text/javascript"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.querySelector('.game-container');
+
+        const toggleSizeBtn = document.getElementById('toggleSizeBtn');
+        if (localStorage.getItem('extendedView') === 'true') {
+            gameContainer.classList.add('extended-view');
+            toggleSizeBtn.textContent = 'Normal Size';
+        } else {
+            toggleSizeBtn.textContent = 'Extend Size';
+        }
+
+        canvas.width = gameContainer.clientWidth;
+        canvas.height = gameContainer.clientHeight;
+
+        // Game state
+        let gameState = 'start'; // 'start', 'playing', 'over'
+
+        // Time-based physics for consistent speed across devices
+        let lastTime = 0;
+        const BIRD_GRAVITY = 800;  // pixels per second per second
+        const BIRD_LIFT = -320;     // pixels per second
+        const PIPE_SPEED = 140;      // pixels per second
+        const PIPE_SPAWN_INTERVAL = 2.2; // seconds
+
+        // Game variables
+        const bird = {
+            x: 60,
+            y: canvas.height / 2,
+            radius: 15,
+            velocity: 0,
+            color: '#00ffff',
+            shadowColor: 'rgba(0, 255, 255, 0.7)'
+        };
+
+        const pipes = {
+            list: [],
+            width: 50,
+            gap: 250,      // A reasonably challenging gap
+            spawnTimer: 0,
+            color: '#ffffff',
+            shadowColor: 'rgba(255, 255, 255, 0.7)'
+        };
+        
+        let score = 0;
+        let provider, signer, contract, userAddress;
+
+        const contractAddress = "0x6b451b71f1540972d7fd5aae76b5e683246ade9e";
+        const contractABI = [ { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "player", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "score", "type": "uint256" } ], "name": "ScoreSubmitted", "type": "event" }, { "inputs": [ { "internalType": "uint256", "name": "_score", "type": "uint256" } ], "name": "submitScore", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "getLeaderboard", "outputs": [ { "components": [ { "internalType": "address", "name": "player", "type": "address" }, { "internalType": "uint256", "name": "score", "type": "uint256" } ], "internalType": "struct Leaderboard.ScoreEntry[]", "name": "", "type": "tuple[]" } ], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "getPlayerCount", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "address", "name": "", "type": "address" } ], "name": "highScores", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" }, { "inputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "name": "players", "outputs": [ { "internalType": "address", "name": "", "type": "address" } ], "stateMutability": "view", "type": "function" } ];
+
+        const connectWalletBtn = document.getElementById('connectWalletBtn');
+        const submitScoreBtn = document.getElementById('submitScoreBtn');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        const walletStatusP = document.getElementById('walletStatus');
+
+        function drawBird() {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+            ctx.fillStyle = bird.color;
+            ctx.shadowColor = bird.shadowColor;
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.closePath();
+            ctx.restore();
+        }
+
+        function updateBird(deltaTime) {
+            bird.velocity += BIRD_GRAVITY * deltaTime;
+            bird.y += bird.velocity * deltaTime;
+
+            // Stop bird from falling off screen
+            if (bird.y + bird.radius > canvas.height) {
+                bird.y = canvas.height - bird.radius;
+                bird.velocity = 0;
+                setGameOver();
+            }
+            if (bird.y - bird.radius < 0) {
+                bird.y = bird.radius;
+                bird.velocity = 0;
+            }
+        }
+
+        function flap() {
+            bird.velocity = BIRD_LIFT;
+        }
+
+        function drawPipes() {
+            ctx.save();
+            ctx.fillStyle = pipes.color;
+            ctx.shadowColor = pipes.shadowColor;
+            ctx.shadowBlur = 10;
+            for (const p of pipes.list) {
+                // Top pipe
+                ctx.fillRect(p.x, 0, p.width, p.topHeight);
+                // Bottom pipe
+                ctx.fillRect(p.x, p.topHeight + pipes.gap, p.width, canvas.height - p.topHeight - pipes.gap);
+            }
+            ctx.restore();
+        }
+
+        function updatePipes(deltaTime) {
+            pipes.spawnTimer += deltaTime;
+            if (pipes.spawnTimer > PIPE_SPAWN_INTERVAL) {
+                pipes.spawnTimer = 0;
+                const topHeight = Math.random() * (canvas.height - pipes.gap - 150) + 75;
+                pipes.list.push({ x: canvas.width, topHeight: topHeight, passed: false, width: pipes.width, gap: pipes.gap });
+            }
+
+            for (let i = pipes.list.length - 1; i >= 0; i--) {
+                const p = pipes.list[i];
+                p.x -= PIPE_SPEED * deltaTime;
+
+                // Remove pipes that are off-screen
+                if (p.x + p.width < 0) {
+                    pipes.list.splice(i, 1);
+                }
+                
+                // Score
+                if (!p.passed && p.x + p.width < bird.x) {
+                    p.passed = true;
+                    score++;
+                    document.getElementById('scoreDisplay').textContent = score;
+                }
+            }
+        }
+        
+        function checkCollisions() {
+            for (const p of pipes.list) {
+                // Check if bird is within the pipe's x-range
+                if (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + p.width) {
+                    // Check for collision with top or bottom pipe
+                    if (bird.y - bird.radius < p.topHeight || bird.y + bird.radius > p.topHeight + p.gap) {
+                        setGameOver();
+                    }
+                }
+            }
+        }
+        
+        function setGameOver() {
+            if(gameState === 'over') return;
+            gameState = 'over';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverMessage').style.display = 'block';
+
+            if (userAddress) {
+                submitScoreBtn.style.display = 'inline-block';
+            }
+        }
+
+        function resetGame() {
+            gameState = 'playing';
+            bird.y = canvas.height / 2;
+            bird.velocity = 0;
+            pipes.list = [];
+            pipes.spawnTimer = 0;
+            score = 0;
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('startMessage').style.display = 'none';
+            document.getElementById('gameOverMessage').style.display = 'none';
+            flap(); // Give an initial flap to avoid instant drop
+        }
+
+        function gameLoop(timestamp) {
+            // Guard against NaN on the first frame.
+            if (!lastTime) {
+                lastTime = timestamp;
+            }
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (gameState === 'playing') {
+                updateBird(deltaTime);
+                updatePipes(deltaTime);
+                checkCollisions();
+            } else {
+                // Make bird hover in start/over state
+                bird.y = canvas.height / 2 + Math.sin(Date.now() / 200) * 5;
+            }
+
+            drawPipes();
+            drawBird();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        function handleUserInput() {
+            if (gameState === 'start') {
+                // Deduct 5 credits from localStorage
+                let credits = parseInt(localStorage.getItem('omega_arcade_credits') || '0', 10);
+                credits = Math.max(0, credits - 5);
+                localStorage.setItem('omega_arcade_credits', credits);
+                resetGame();
+            } else if (gameState === 'playing') {
+                flap();
+            }
+        }
+
+        window.addEventListener('click', handleUserInput);
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleUserInput();
+        }, { passive: false });
+
+        toggleSizeBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from starting the game
+            if (localStorage.getItem('extendedView') === 'true') {
+                localStorage.setItem('extendedView', 'false');
+            } else {
+                localStorage.setItem('extendedView', 'true');
+            }
+            location.reload();
+        });
+
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        playAgainBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            location.reload();
+        });
+        playAgainBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            location.reload();
+        });
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                return alert('MetaMask is not detected. Please use a browser with MetaMask installed, and ensure you are running this from a local server.');
+            }
+            try {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+                userAddress = await signer.getAddress();
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+                
+                updateWalletStatus(true, userAddress);
+                alert('Wallet connected!');
+                
+                // If game is over, re-evaluate button visibility
+                if (gameState === 'over') {
+                    setGameOver();
+                }
+            } catch (error) {
+                console.error("Wallet connection failed:", error);
+                alert("Failed to connect wallet.");
+            }
+        }
+        
+        function updateWalletStatus(isConnected, address) {
+            if (isConnected) {
+                walletStatusP.textContent = `Connected: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                walletStatusP.style.display = 'block';
+                connectWalletBtn.style.display = 'none';
+            } else {
+                walletStatusP.style.display = 'none';
+                connectWalletBtn.style.display = 'block';
+            }
+        }
+
+        async function submitScore() {
+            if (!contract) return alert('Please connect your wallet first.');
+            submitScoreBtn.disabled = true;
+            submitScoreBtn.textContent = 'Submitting...';
+            try {
+                const tx = await contract.submitScore(score);
+                await tx.wait();
+                alert('Score submitted successfully!');
+                fetchLeaderboard();
+            } catch (error) {
+                console.error("Failed to submit score:", error);
+                alert('Error submitting score.');
+            } finally {
+                submitScoreBtn.disabled = false;
+                submitScoreBtn.textContent = 'Submit Score';
+            }
+        }
+
+        async function fetchLeaderboard() {
+            if (typeof ethers === 'undefined') {
+                console.error("Ethers.js not loaded. Leaderboard cannot be fetched.");
+                leaderboardBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Error loading Web3 library.</td></tr>';
+                return;
+            }
+            if (typeof window.ethereum === 'undefined') {
+                leaderboardBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">MetaMask not detected.</td></tr>';
+                return;
+            }
+            try {
+                const localProvider = new ethers.providers.Web3Provider(window.ethereum);
+                const readOnlyContract = new ethers.Contract(contractAddress, contractABI, localProvider);
+                const leaderboardData = await readOnlyContract.getLeaderboard();
+                
+                const sorted = [...leaderboardData].sort((a, b) => b.score - a.score);
+
+                leaderboardBody.innerHTML = '';
+                sorted.forEach((entry, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${index + 1}</td><td>${entry.player}</td><td>${entry.score.toString()}</td>`;
+                    leaderboardBody.appendChild(tr);
+                });
+            } catch (error) {
+                leaderboardBody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Could not load leaderboard.</td></tr>';
+                console.error("Failed to fetch leaderboard:", error);
+            }
+        }
+
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Rank,Wallet,Score\n";
+            leaderboardBody.querySelectorAll('tr').forEach(row => {
+                const rowData = Array.from(row.querySelectorAll('td')).map(col => `"${col.innerText}"`).join(',');
+                csvContent += rowData + "\n";
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "flappy-omega-leaderboard.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        connectWalletBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from starting the game
+            connectWallet();
+        });
+        submitScoreBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from bubbling up
+            submitScore();
+        });
+        exportCsvBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent click from bubbling up
+            exportToCSV();
+        });
+
+        // Arcade credit check: redirect if not enough credits
+        (function() {
+            const credits = parseInt(localStorage.getItem('omega_arcade_credits') || '0', 10);
+            if (!credits || credits < 5) {
+                window.location.href = 'https://omega-arcade.vercel.app/';
+            }
+        })();
+
+        // Initial load
+        window.addEventListener('load', () => {
+            fetchLeaderboard();
+            requestAnimationFrame(gameLoop);
+        });
+    });
+    </script>
+</body>
+</html> 

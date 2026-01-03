@@ -1,0 +1,345 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+}
+
+.window-titlebar {
+    height: 32px;
+    background: #2d2d2d;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    user-select: none;
+    -webkit-app-region: drag;
+}
+
+.window-title {
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.window-controls {
+    display: flex;
+    gap: 0;
+    -webkit-app-region: no-drag;
+}
+
+.window-control {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.window-control:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.window-control.close:hover {
+    background: #e81123;
+    color: white;
+}
+
+.window-control svg {
+    width: 12px;
+    height: 12px;
+}
+
+.app-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    overflow: hidden;
+}
+
+.toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-group {
+    display: flex;
+    gap: 4px;
+}
+
+.toolbar-btn {
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.toolbar-btn:hover {
+    background: #f0f0f0;
+    border-color: #0078d4;
+}
+
+.toolbar-btn.active {
+    background: #0078d4;
+    color: white;
+    border-color: #0078d4;
+}
+
+.toolbar-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.content-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.content-panel.active {
+    display: flex;
+}
+
+.panel-header {
+    margin-bottom: 24px;
+}
+
+.panel-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.panel-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.file-select-area {
+    border: 2px dashed #ccc;
+    border-radius: 12px;
+    padding: 48px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+}
+
+.file-select-area:hover {
+    border-color: #0078d4;
+    background: #f8f9fa;
+}
+
+.file-select-area svg {
+    width: 64px;
+    height: 64px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.file-select-area p {
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.browse-btn {
+    padding: 10px 24px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.browse-btn:hover {
+    background: #0063b1;
+}
+
+.file-info {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #666;
+}
+
+.remove-btn {
+    padding: 6px 12px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.remove-btn:hover {
+    background: #fee;
+    border-color: #e81123;
+    color: #e81123;
+}
+
+.password-section {
+    margin-bottom: 24px;
+}
+
+.password-section label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.password-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.password-input-group input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.password-input-group input:focus {
+    outline: none;
+    border-color: #0078d4;
+}
+
+.toggle-password {
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.toggle-password:hover {
+    background: #f0f0f0;
+}
+
+.toggle-password svg {
+    width: 18px;
+    height: 18px;
+}
+
+.password-strength {
+    margin-top: 8px;
+    font-size: 12px;
+    height: 20px;
+}
+
+.actions {
+    margin-bottom: 24px;
+}
+
+.action-btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-btn.primary {
+    background: #0078d4;
+    color: white;
+}
+
+.action-btn.primary:not(:disabled):hover {
+    background: #0063b1;
+}
+
+.result-area {
+    padding: 24px;
+    background: #f0f9ff;
+    border: 1px solid #0078d4;
+    border-radius: 8px;
+}
+
+.success-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #0078d4;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.success-message svg {
+    width: 24px;
+    height: 24px;
+}
+
+.result-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.result-actions .action-btn {
+    padding: 10px 20px;
+    background: white;
+    border: 1px solid #0078d4;
+    color: #0078d4;
+}
+
+.result-actions .action-btn:hover {
+    background: #0078d4;
+    color: white;
+}
+

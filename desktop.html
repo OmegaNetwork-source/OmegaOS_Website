@@ -36,17 +36,66 @@
             <div class="icon-image">💻</div>
             <div class="icon-label">Terminal</div>
         </div>
-        <div class="desktop-icon" id="wordIcon" data-app="word">
-            <div class="icon-image">📄</div>
-            <div class="icon-label">Omega Word</div>
-        </div>
-        <div class="desktop-icon" id="sheetsIcon" data-app="sheets">
-            <div class="icon-image">📊</div>
-            <div class="icon-label">Omega Sheets</div>
+        <div class="desktop-icon folder-icon" id="productivityFolder" data-folder="productivity">
+            <div class="folder-background">
+                <div class="folder-icon-grid folder-grid-4">
+                    <div class="folder-icon-item">📄</div>
+                    <div class="folder-icon-item">📊</div>
+                    <div class="folder-icon-item">📽️</div>
+                    <div class="folder-icon-item">🔢</div>
+                </div>
+            </div>
+            <div class="icon-label">Omega Productivity</div>
         </div>
         <div class="desktop-icon" id="documentsIcon" data-action="open-folder">
             <div class="icon-image">📁</div>
             <div class="icon-label">Documents</div>
+        </div>
+        <div class="desktop-icon" id="walletIcon" data-app="wallet">
+            <div class="icon-image">💰</div>
+            <div class="icon-label">Omega Wallet</div>
+        </div>
+        <div class="desktop-icon" id="identityIcon" data-app="identity">
+            <div class="icon-image identity-icon">
+                <div class="identity-circle"></div>
+            </div>
+            <div class="icon-label">Omega Identity</div>
+        </div>
+        <div class="desktop-icon" id="aiDevIcon" data-app="ai-dev">
+            <div class="icon-image binary-icon">
+                <div class="binary-row">01001000</div>
+                <div class="binary-row">01101001</div>
+                <div class="binary-row">00100000</div>
+            </div>
+            <div class="icon-label">Omega Create</div>
+        </div>
+        <div class="desktop-icon folder-icon" id="securityFolder" data-folder="security">
+            <div class="folder-background">
+                <div class="folder-icon-grid folder-grid-3">
+                    <div class="folder-icon-item">💎</div>
+                    <div class="folder-icon-item">🛡️</div>
+                    <div class="folder-icon-item">🔥</div>
+                </div>
+            </div>
+            <div class="icon-label">Omega Security</div>
+        </div>
+        <div class="desktop-icon" id="trashIcon" data-action="open-trash">
+            <div class="icon-image">🗑️</div>
+            <div class="icon-label">Trash</div>
+            <div class="trash-count" id="trashCount" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- App Folder Modal -->
+    <div class="app-folder-modal" id="appFolderModal">
+        <div class="app-folder-content">
+            <div class="app-folder-header">
+                <h2 id="folderTitle">Folder</h2>
+                <button class="app-folder-close" id="closeFolderBtn">&times;</button>
+            </div>
+            <div class="app-folder-grid" id="folderGrid">
+                <!-- Apps will be populated here -->
+            </div>
         </div>
     </div>
 
@@ -62,7 +111,7 @@
                     <circle cx="7" cy="7" r="4"/>
                     <path d="M11 11 L15 15"/>
                 </svg>
-                <input type="text" placeholder="Search" id="taskbarSearch" readonly>
+                <input type="text" placeholder="Search" id="taskbarSearch">
             </div>
         </div>
         
@@ -71,6 +120,24 @@
         </div>
         
         <div class="taskbar-tray">
+            <!-- Crypto Price Widget -->
+            <div class="crypto-widget" id="cryptoWidget" title="Click to customize">
+                <div class="crypto-item" data-coin="bitcoin">
+                    <span class="crypto-symbol">BTC</span>
+                    <span class="crypto-price" id="bitcoinPrice">$0</span>
+                    <span class="crypto-change" id="bitcoinChange">0%</span>
+                </div>
+                <div class="crypto-item" data-coin="ethereum">
+                    <span class="crypto-symbol">ETH</span>
+                    <span class="crypto-price" id="ethereumPrice">$0</span>
+                    <span class="crypto-change" id="ethereumChange">0%</span>
+                </div>
+                <div class="crypto-item" data-coin="solana">
+                    <span class="crypto-symbol">SOL</span>
+                    <span class="crypto-price" id="solanaPrice">$0</span>
+                    <span class="crypto-change" id="solanaChange">0%</span>
+                </div>
+            </div>
             <div class="tray-icon vpn-indicator" id="vpnIndicator" title="VPN Status">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -78,22 +145,61 @@
                     <circle cx="18" cy="6" r="2" fill="currentColor"/>
                 </svg>
             </div>
-            <div class="tray-icon" title="Wi-Fi">
+            <div class="tray-icon" id="lockScreenBtn" title="Lock Screen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0 M1.42 9a16 16 0 0 1 21.16 0 M8.53 16.11a6 6 0 0 1 6.95 0"/>
-                    <line x1="12" y1="20" x2="12.01" y2="20"/>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11 V7 A5 5 0 0 1 17 7 V11"/>
                 </svg>
             </div>
-            <div class="tray-icon" title="Volume">
+            <!-- System Tray (Hidden Icons) -->
+            <div class="system-tray" id="systemTray">
+                <div class="tray-icon wifi-icon" id="wifiIcon" title="Wi-Fi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0 M1.42 9a16 16 0 0 1 21.16 0 M8.53 16.11a6 6 0 0 1 6.95 0"/>
+                        <line x1="12" y1="20" x2="12.01" y2="20"/>
+                    </svg>
+                </div>
+                <div class="tray-icon volume-control" id="volumeControl" title="Volume">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                    <div class="volume-slider-popup" id="volumeSliderPopup">
+                        <input type="range" id="volumeSlider" min="0" max="100" value="50" orient="vertical">
+                        <span id="volumeValue">50%</span>
+                    </div>
+                </div>
+                <div class="tray-icon brightness-control" id="brightnessControl" title="Brightness">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <div class="brightness-slider-popup" id="brightnessSliderPopup">
+                        <input type="range" id="brightnessSlider" min="0" max="100" value="100" orient="vertical">
+                        <span id="brightnessValue">100%</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Tray Toggle Arrow -->
+            <div class="tray-toggle" id="trayToggle" title="Show hidden icons">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <path d="M18 15 L12 9 L6 15"/>
                 </svg>
             </div>
             <div class="tray-time" id="trayTime">
                 <span id="trayTimeHour">00:00</span>
                 <span class="tray-time-date" id="trayDate">12/30/2025</span>
             </div>
+            <button class="ai-assistant-btn" id="aiAssistantBtn" title="AI Assistant - Ask me anything about Omega OS">
+                <span>AI</span>
+            </button>
         </div>
     </div>
 
@@ -137,11 +243,81 @@
                     <div class="start-menu-subtitle">Spreadsheets and calculations</div>
                 </div>
             </div>
+            <div class="start-menu-item" data-app="slides">
+                <div class="start-menu-icon">📽️</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Slides</div>
+                    <div class="start-menu-subtitle">Create presentations</div>
+                </div>
+            </div>
             <div class="start-menu-item" data-action="open-folder">
                 <div class="start-menu-icon">📁</div>
                 <div class="start-menu-text">
                     <div class="start-menu-title">Documents</div>
                     <div class="start-menu-subtitle">Browse your files</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="wallet">
+                <div class="start-menu-icon">💰</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Wallet</div>
+                    <div class="start-menu-subtitle">Manage your crypto wallet</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="identity">
+                <div class="start-menu-icon identity-icon-small">
+                    <div class="identity-circle-small"></div>
+                </div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Identity</div>
+                    <div class="start-menu-subtitle">Decentralized OS identity & sync</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="integrations">
+                <div class="start-menu-icon">🔗</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Integrations</div>
+                    <div class="start-menu-subtitle">Manage plugins, extensions & webhooks</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="ai-dev">
+                <div class="start-menu-icon binary-icon-small">
+                    <div class="binary-row-small">010010</div>
+                    <div class="binary-row-small">011010</div>
+                </div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Create</div>
+                    <div class="start-menu-subtitle">Generate Python & HTML code with AI</div>
+                </div>
+            </div>
+            <div class="start-menu-divider"></div>
+            <div class="start-menu-section-title">Security & Privacy</div>
+            <div class="start-menu-item" data-app="encrypt">
+                <div class="start-menu-icon">💎</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Encrypt</div>
+                    <div class="start-menu-subtitle">Encrypt and decrypt files</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="privacy-monitor">
+                <div class="start-menu-icon">🛡️</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Privacy Monitor</div>
+                    <div class="start-menu-subtitle">Track system access</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="firewall">
+                <div class="start-menu-icon">🔥</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Omega Firewall</div>
+                    <div class="start-menu-subtitle">Network traffic control</div>
+                </div>
+            </div>
+            <div class="start-menu-item" data-app="cookie-manager">
+                <div class="start-menu-icon">🍪</div>
+                <div class="start-menu-text">
+                    <div class="start-menu-title">Cookie Manager</div>
+                    <div class="start-menu-subtitle">View and delete cookies</div>
                 </div>
             </div>
         </div>
@@ -220,6 +396,20 @@
                 <button class="vpn-action-btn" id="refreshVpnBtn">Refresh</button>
                 <button class="vpn-action-btn secondary" id="vpnInfoBtn">Change Location</button>
             </div>
+            <div class="vpn-killswitch" style="margin-top: 16px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div>
+                        <div style="font-weight: 600; color: rgba(255, 255, 255, 0.9); font-size: 13px;">VPN Kill Switch</div>
+                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6); margin-top: 2px;">Auto-disconnect if VPN drops</div>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer; -webkit-user-select: none; user-select: none;">
+                        <input type="checkbox" id="vpnKillSwitchToggle" style="position: absolute; opacity: 0; width: 44px; height: 24px; margin: 0; cursor: pointer; z-index: 1;">
+                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(100, 116, 139, 0.5); border-radius: 24px; transition: 0.3s; pointer-events: none;">
+                            <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                        </span>
+                    </label>
+                </div>
+            </div>
             <div class="vpn-fake-indicator" id="vpnFakeIndicator" style="display: none;">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="8" cy="8" r="6"/>
@@ -256,6 +446,28 @@
         </div>
     </div>
 
+    <!-- Crypto Widget Settings Modal -->
+    <div class="crypto-settings-modal" id="cryptoSettingsModal">
+        <div class="crypto-settings-content">
+            <div class="crypto-settings-header">
+                <h3>Crypto Price Widget</h3>
+                <button class="crypto-settings-close" id="closeCryptoSettings">&times;</button>
+            </div>
+            <div class="crypto-settings-body">
+                <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-bottom: 16px;">
+                    Select up to 4 cryptocurrencies to display in the taskbar widget
+                </p>
+                <div class="crypto-tokens-list" id="cryptoTokensList">
+                    <!-- Token checkboxes will be populated here -->
+                </div>
+            </div>
+            <div class="crypto-settings-footer">
+                <button class="crypto-settings-btn cancel" id="cancelCryptoSettings">Cancel</button>
+                <button class="crypto-settings-btn apply" id="applyCryptoSettings">Apply</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Background Color Picker Modal -->
     <div class="color-picker-modal" id="colorPickerModal">
         <div class="color-picker-content">
@@ -282,6 +494,125 @@
             <div class="color-picker-footer">
                 <button class="color-picker-btn cancel" id="cancelColorPicker">Cancel</button>
                 <button class="color-picker-btn apply" id="applyColorPicker">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lock Screen -->
+    <div class="lock-screen" id="lockScreen" style="display: none;">
+        <div class="lock-screen-content">
+            <div class="lock-screen-icon">Ω</div>
+            <h2>Omega OS</h2>
+            <p id="lockScreenMessage">Screen Locked</p>
+            <div class="lock-screen-input">
+                <button id="unlockBtn" type="button">Click to Unlock</button>
+            </div>
+            <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-top: 16px;">Press any key or click to unlock</p>
+        </div>
+    </div>
+    
+    <!-- Password Setup Modal -->
+    <div class="password-setup-modal" id="passwordSetupModal" style="display: none;">
+        <div class="password-setup-content">
+            <div class="password-setup-header">
+                <h3>🔒 Set Lock Screen Password</h3>
+                <button class="password-setup-close" id="closePasswordSetup">&times;</button>
+            </div>
+            <div class="password-setup-body">
+                <p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-bottom: 16px;">
+                    Create a password to secure your screen lock
+                </p>
+                <div class="wallet-form-group">
+                    <label>Password</label>
+                    <input type="password" id="setupPassword" class="wallet-input" placeholder="Enter password">
+                </div>
+                <div class="wallet-form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="setupPasswordConfirm" class="wallet-input" placeholder="Confirm password">
+                </div>
+            </div>
+            <div class="password-setup-footer">
+                <button class="password-setup-btn cancel" id="cancelPasswordSetup">Cancel</button>
+                <button class="password-setup-btn apply" id="applyPasswordSetup">Set Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trash Modal -->
+    <div class="trash-modal" id="trashModal" style="display: none;">
+        <div class="trash-modal-content">
+            <div class="trash-modal-header">
+                <h3>🗑️ Trash</h3>
+                <button class="trash-modal-close" id="closeTrashModal">&times;</button>
+            </div>
+            <div class="trash-modal-body" id="trashModalBody">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🗑️</div>
+                    <div>Trash is empty</div>
+                </div>
+            </div>
+            <div class="trash-modal-footer">
+                <button class="trash-btn secondary" id="restoreAllBtn" style="display: none;">Restore All</button>
+                <button class="trash-btn danger" id="emptyTrashBtn" style="display: none;">Empty Trash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant Modal -->
+    <div class="ai-assistant-modal" id="aiAssistantModal">
+        <div class="ai-assistant-container" id="aiAssistantContainer">
+            <div class="ai-assistant-header" id="aiAssistantHeader">
+                <div class="ai-assistant-title">
+                    <h2>Omega AI Assistant</h2>
+                </div>
+                <div class="ai-assistant-window-controls">
+                    <button class="ai-window-btn minimize" id="aiAssistantMinimize" title="Minimize">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="2" y1="8" x2="14" y2="8"/>
+                        </svg>
+                    </button>
+                    <button class="ai-window-btn close" id="aiAssistantClose" title="Close">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="4" y1="4" x2="12" y2="12"/>
+                            <line x1="12" y1="4" x2="4" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="ai-assistant-content">
+                <div class="ai-assistant-messages" id="aiAssistantMessages">
+                    <div class="ai-message">
+                        <div class="ai-avatar">Ω</div>
+                        <div class="ai-text">
+                            <p>Hi! I'm your Omega OS AI Assistant. I know everything about Omega OS features and can help you with:</p>
+                            <ul>
+                                <li>Using applications (Browser, Wallet, Terminal, etc.)</li>
+                                <li>Managing files and folders</li>
+                                <li>VPN and security settings</li>
+                                <li>Window management and shortcuts</li>
+                                <li>Customization options</li>
+                                <li>And much more!</li>
+                            </ul>
+                            <p>What would you like to know?</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-assistant-input-container">
+                    <input type="text" class="ai-assistant-input" id="aiAssistantInput" placeholder="Ask me anything about Omega OS..." autocomplete="off">
+                    <button class="ai-assistant-image" id="aiAssistantImage" title="Generate Image">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </button>
+                    <button class="ai-assistant-send" id="aiAssistantSend">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

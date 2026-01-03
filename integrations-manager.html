@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 32px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+
+        .title-bar-title {
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .title-bar-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .title-bar-btn {
+            width: 46px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .title-bar-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .title-bar-btn.close:hover {
+            background: #e81123;
+            color: white;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background: #f5f5f5;
+        }
+
+        .sidebar-item.active {
+            background: #0078d4;
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #0078d4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0063b1;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .item-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .item-description {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #0078d4;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <div class="title-bar-title">Integrations Manager</div>
+        <div class="title-bar-controls">
+            <button class="title-bar-btn minimize" id="minimizeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <rect x="0" y="5" width="12" height="1"/>
+                </svg>
+            </button>
+            <button class="title-bar-btn maximize" id="maximizeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                </svg>
+            </button>
+            <button class="title-bar-btn close" id="closeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-item active" data-section="webapps">
+                <strong>🌐 Web Apps</strong>
+            </div>
+            <div class="sidebar-item" data-section="extensions">
+                <strong>🔌 Extensions</strong>
+            </div>
+            <div class="sidebar-item" data-section="plugins">
+                <strong>🧩 Plugins</strong>
+            </div>
+            <div class="sidebar-item" data-section="api">
+                <strong>🔗 API Gateway</strong>
+            </div>
+            <div class="sidebar-item" data-section="webhooks">
+                <strong>📡 Webhooks</strong>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Web Apps Section -->
+            <div class="section active" id="webapps-section">
+                <div class="section-header">
+                    <h2>Web Apps</h2>
+                    <p>Convert web applications to desktop apps</p>
+                    <button class="btn btn-primary" id="addWebAppBtn" style="margin-top: 12px;">+ Add Web App</button>
+                </div>
+                <div class="item-list" id="webapps-list"></div>
+            </div>
+
+            <!-- Extensions Section -->
+            <div class="section" id="extensions-section">
+                <div class="section-header">
+                    <h2>Browser Extensions</h2>
+                    <p>Manage browser extensions and add-ons</p>
+                    <button class="btn btn-primary" id="addExtensionBtn" style="margin-top: 12px;">+ Add Extension</button>
+                </div>
+                <div class="item-list" id="extensions-list"></div>
+            </div>
+
+            <!-- Plugins Section -->
+            <div class="section" id="plugins-section">
+                <div class="section-header">
+                    <h2>Plugins</h2>
+                    <p>Third-party plugin system</p>
+                    <button class="btn btn-primary" id="addPluginBtn" style="margin-top: 12px;">+ Add Plugin</button>
+                </div>
+                <div class="item-list" id="plugins-list"></div>
+            </div>
+
+            <!-- API Gateway Section -->
+            <div class="section" id="api-section">
+                <div class="section-header">
+                    <h2>API Gateway</h2>
+                    <p>Connect to external services</p>
+                    <button class="btn btn-primary" id="addAPIEndpointBtn" style="margin-top: 12px;">+ Add API Endpoint</button>
+                </div>
+                <div class="item-list" id="api-list"></div>
+            </div>
+
+            <!-- Webhooks Section -->
+            <div class="section" id="webhooks-section">
+                <div class="section-header">
+                    <h2>Webhooks</h2>
+                    <p>Webhook integration manager</p>
+                    <button class="btn btn-primary" id="addWebhookBtn" style="margin-top: 12px;">+ Add Webhook</button>
+                </div>
+                <div class="item-list" id="webhooks-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be added dynamically -->
+    <div class="modal" id="modal"></div>
+
+    <script src="integrations-manager-ui.js"></script>
+</body>
+</html>
+
+

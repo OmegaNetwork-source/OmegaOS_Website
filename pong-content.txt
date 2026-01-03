@@ -1,0 +1,642 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Pong</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"
+            integrity="sha256-pmKTpqK7Te4GGmhhK+C+PFwKt+QGirjZiko1e69mTHM="
+            crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --primary-color: #FFFFFF;
+            --background-color: #000000;
+            --accent-color: #333333;
+        }
+        body {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        #game-container {
+            display: flex;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+        canvas {
+            background-color: var(--background-color);
+            display: block;
+        }
+        #ui-panel {
+            width: 250px;
+            padding: 20px;
+            background-color: var(--accent-color);
+            border-left: 2px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .ui-section {
+            margin-bottom: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            border-bottom: 1px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        #score-display, #leaderboard {
+            list-style: none;
+            padding: 0;
+        }
+        #score-display li, #leaderboard li {
+            padding: 5px 0;
+        }
+        #leaderboard li {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        button {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 10px 15px;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+        }
+        #messageBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border: 2px solid var(--primary-color);
+            text-align: center;
+            z-index: 10;
+        }
+        #mobile-controls {
+            display: none;
+            margin-top: 10px;
+        }
+        #mobile-controls button {
+             width: 100px;
+             height: 80px;
+             margin: 0 10px;
+        }
+
+        @media (max-width: 800px) {
+            #game-container {
+                flex-direction: column-reverse;
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
+            #ui-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 2px solid var(--primary-color);
+                box-sizing: border-box;
+                height: auto;
+                padding: 10px;
+            }
+            canvas {
+                width: 100%;
+                flex-grow: 1;
+            }
+            #mobile-controls {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-panel">
+            <div>
+                <h1 id="game-title">Omega Pong</h1>
+                <div class="ui-section">
+                    <h2>Score</h2>
+                    <ul id="score-display">
+                        <li>Player: <span id="player-score">0</span></li>
+                        <li>Opponent: <span id="opponent-score">0</span></li>
+                    </ul>
+                </div>
+                <div class="ui-section">
+                    <h2>Leaderboard</h2>
+                    <ul id="leaderboard"></ul>
+                </div>
+            </div>
+            <div>
+                <button id="connectWalletBtn">Connect Wallet</button>
+                <button id="submitScoreBtn" style="display: none;">Submit Score</button>
+                <button id="exportCsvBtn" style="display: none;">Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" style="display: none;">
+        <h2 id="messageTitle"></h2>
+        <p id="messageText"></p>
+        <button id="actionButton"></button>
+    </div>
+
+    <div id="mobile-controls">
+        <button id="upBtn">UP</button>
+        <button id="downBtn">DOWN</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            const playerScoreEl = document.getElementById('player-score');
+            const opponentScoreEl = document.getElementById('opponent-score');
+
+            let canvasWidth, canvasHeight;
+
+            const paddleWidth = 10;
+            const paddleHeight = 100;
+
+            let player = {
+                x: 0,
+                y: 0,
+                width: paddleWidth,
+                height: paddleHeight,
+                score: 0
+            };
+
+            let opponent = {
+                x: 0,
+                y: 0,
+                width: paddleWidth,
+                height: paddleHeight,
+                score: 0
+            };
+
+            let ball = {
+                x: 0,
+                y: 0,
+                radius: 7,
+                speed: 420, // pixels per second
+                velocityX: 300,
+                velocityY: 300
+            };
+            
+            let lastTime = 0;
+            let gameState = 'start'; // 'start', 'playing', 'over'
+
+            // Web3
+            let provider, signer, contract, userAddress;
+            const contractAddress = "0xd0739507572af804d57ecf21d368d85f49065e11";
+            const contractABI = [
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        {
+                            "indexed": true,
+                            "internalType": "address",
+                            "name": "player",
+                            "type": "address"
+                        },
+                        {
+                            "indexed": false,
+                            "internalType": "uint256",
+                            "name": "score",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "ScoreSubmitted",
+                    "type": "event"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_score",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "submitScore",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getLeaderboard",
+                    "outputs": [
+                        {
+                            "components": [
+                                {
+                                    "internalType": "address",
+                                    "name": "player",
+                                    "type": "address"
+                                },
+                                {
+                                    "internalType": "uint256",
+                                    "name": "score",
+                                    "type": "uint256"
+                                }
+                            ],
+                            "internalType": "struct Leaderboard.ScoreEntry[]",
+                            "name": "",
+                            "type": "tuple[]"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "getPlayerCount",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "",
+                            "type": "address"
+                        }
+                    ],
+                    "name": "highScores",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "players",
+                    "outputs": [
+                        {
+                            "internalType": "address",
+                            "name": "",
+                            "type": "address"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+
+            function resizeCanvas() {
+                const container = document.getElementById('game-container');
+                const isMobile = window.innerWidth <= 800;
+
+                if (isMobile) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight * 0.7; 
+                } else {
+                    canvas.width = 800;
+                    canvas.height = 600;
+                }
+                
+                canvasWidth = canvas.width;
+                canvasHeight = canvas.height;
+                
+                setGameState('start');
+            }
+
+            function drawRect(x, y, w, h, color) {
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y, w, h);
+            }
+
+            function drawCircle(x, y, r, color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            function drawNet() {
+                for (let i = 0; i <= canvas.height; i += 15) {
+                    drawRect(canvas.width / 2 - 1, i, 2, 10, 'white');
+                }
+            }
+            
+            function render() {
+                // Clear the canvas
+                drawRect(0, 0, canvas.width, canvas.height, 'black');
+                // Draw net
+                drawNet();
+                // Draw paddles
+                drawRect(player.x, player.y, player.width, player.height, 'white');
+                drawRect(opponent.x, opponent.y, opponent.width, opponent.height, 'white');
+                // Draw ball
+                drawCircle(ball.x, ball.y, ball.radius, 'white');
+            }
+
+            function update(deltaTime) {
+                if (gameState !== 'playing') return;
+
+                // Ball movement
+                ball.x += ball.velocityX * deltaTime;
+                ball.y += ball.velocityY * deltaTime;
+
+                // Ball collision with top/bottom walls
+                if(ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                    ball.velocityY = -ball.velocityY;
+                }
+
+                // Ball collision with paddles
+                let selectedPlayer = (ball.x < canvas.width / 2) ? player : opponent;
+                if(collision(ball, selectedPlayer)) {
+                    let collidePoint = (ball.y - (selectedPlayer.y + selectedPlayer.height / 2));
+                    collidePoint = collidePoint / (selectedPlayer.height / 2);
+                    
+                    let angleRad = (Math.PI / 4) * collidePoint;
+                    
+                    let direction = (ball.x < canvas.width / 2) ? 1 : -1;
+                    ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+                    ball.velocityY = ball.speed * Math.sin(angleRad);
+                    
+                    ball.speed += 10;
+                }
+
+                // Score point
+                if(ball.x - ball.radius < 0) {
+                    opponent.score++;
+                    updateScore();
+                    resetBall();
+                } else if(ball.x + ball.radius > canvas.width) {
+                    player.score++;
+                    updateScore();
+                    resetBall();
+                }
+
+                // Opponent AI
+                let targetY = ball.y - opponent.height / 2;
+                opponent.y += (targetY - opponent.y) * 0.1; // Smoothing
+                 // Clamp opponent paddle to screen
+                if (opponent.y < 0) opponent.y = 0;
+                if (opponent.y + opponent.height > canvas.height) opponent.y = canvas.height - opponent.height;
+            }
+
+            function collision(b, p) {
+                p.top = p.y;
+                p.bottom = p.y + p.height;
+                p.left = p.x;
+                p.right = p.x + p.width;
+
+                b.top = b.y - b.radius;
+                b.bottom = b.y + b.radius;
+                b.left = b.x - b.radius;
+                b.right = b.x + b.radius;
+
+                return p.left < b.right && p.top < b.bottom && p.right > b.left && p.bottom > b.top;
+            }
+            
+            function updateScore() {
+                playerScoreEl.textContent = player.score;
+                opponentScoreEl.textContent = opponent.score;
+                if(player.score >= 10 || opponent.score >= 10) {
+                    setGameState('over');
+                }
+            }
+
+            function resetGame() {
+                player.score = 0;
+                opponent.score = 0;
+                updateScore();
+                
+                player.x = 10;
+                player.y = (canvas.height - paddleHeight) / 2;
+
+                opponent.x = canvas.width - paddleWidth - 10;
+                opponent.y = (canvas.height - paddleHeight) / 2;
+
+                resetBall();
+            }
+
+            function resetBall() {
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                ball.speed = 420;
+                ball.velocityX = (ball.velocityX > 0 ? -1 : 1) * 300;
+                ball.velocityY = 300;
+            }
+
+            function setGameState(state) {
+                gameState = state;
+                const box = document.getElementById('messageBox');
+                if (state === 'start' || state === 'over') {
+                    box.style.display = 'block';
+                    if (state === 'start') {
+                        resetGame();
+                        document.getElementById('messageTitle').textContent = 'Omega Pong';
+                        document.getElementById('messageText').textContent = 'First to 10 points wins. Click to start.';
+                        document.getElementById('actionButton').textContent = 'Play';
+                        document.getElementById('actionButton').onclick = () => setGameState('playing');
+                    } else { // over
+                        document.getElementById('messageTitle').textContent = 'Game Over';
+                        document.getElementById('messageText').textContent = `Final Score: ${player.score} - ${opponent.score}`;
+                        document.getElementById('actionButton').textContent = 'Play Again';
+                        document.getElementById('actionButton').onclick = () => setGameState('start');
+                        if (userAddress && player.score > opponent.score) {
+                            document.getElementById('submitScoreBtn').style.display = 'block';
+                        }
+                    }
+                } else { // playing
+                    box.style.display = 'none';
+                    document.getElementById('submitScoreBtn').style.display = 'none';
+                }
+            }
+            
+            async function connectWallet() {
+                try {
+                    if (typeof window.ethereum === 'undefined') {
+                        alert("Please install MetaMask!");
+                        return;
+                    }
+                    
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+                    const connectWalletBtn = document.getElementById('connectWalletBtn');
+                    connectWalletBtn.textContent = `${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}`;
+                    connectWalletBtn.disabled = true;
+
+                    document.getElementById('exportCsvBtn').style.display = 'block';
+                    
+                    await fetchLeaderboard();
+
+                } catch (error) {
+                    console.error("Failed to connect wallet:", error);
+                    alert("Failed to connect wallet. See console for details.");
+                }
+            }
+
+            async function fetchLeaderboard() {
+                const leaderboardEl = document.getElementById('leaderboard');
+                leaderboardEl.innerHTML = '<li>Loading...</li>';
+                try {
+                    const scores = await contract.getLeaderboard();
+                    leaderboardEl.innerHTML = '';
+                    if (scores.length === 0) {
+                        leaderboardEl.innerHTML = '<li>No scores yet!</li>';
+                        return;
+                    }
+                    scores.forEach(score => {
+                        const li = document.createElement('li');
+                        const address = `${score.player.substring(0, 6)}...${score.player.substring(score.player.length - 4)}`;
+                        li.textContent = `${address}: ${score.score}`;
+                        leaderboardEl.appendChild(li);
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch leaderboard:", error);
+                    leaderboardEl.innerHTML = '<li>Error loading scores.</li>';
+                }
+            }
+
+            async function submitScore() {
+                if (!contract) {
+                    alert("Please connect your wallet first.");
+                    return;
+                }
+                const submitButton = document.getElementById('submitScoreBtn');
+                submitButton.textContent = 'Submitting...';
+                submitButton.disabled = true;
+
+                try {
+                    const tx = await contract.submitScore(player.score);
+                    await tx.wait();
+                    alert("Score submitted successfully!");
+                    await fetchLeaderboard();
+                } catch (error) {
+                    console.error("Failed to submit score:", error);
+                    alert("Score submission failed. See console for details.");
+                } finally {
+                    submitButton.textContent = 'Submit Score';
+                    submitButton.style.display = 'none';
+                }
+            }
+
+            function exportLeaderboardToCsv() {
+                const leaderboardEl = document.getElementById('leaderboard');
+                const rows = Array.from(leaderboardEl.querySelectorAll('li'));
+                if (rows.length === 0 || rows[0].textContent.includes("No scores")) {
+                    alert("No leaderboard data to export.");
+                    return;
+                }
+                let csvContent = "data:text/csv;charset=utf-8,Player,Score\n";
+                rows.forEach(row => {
+                    const [player, score] = row.textContent.split(': ');
+                    csvContent += `${player},${score}\n`;
+                });
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "omega-pong-leaderboard.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            function gameLoop(timestamp) {
+                const deltaTime = lastTime ? (timestamp - lastTime) / 1000 : 0;
+                update(deltaTime);
+                render();
+                lastTime = timestamp;
+                requestAnimationFrame(gameLoop);
+            }
+
+            // Controls
+            function movePaddle(event) {
+                let rect = canvas.getBoundingClientRect();
+                player.y = event.clientY - rect.top - player.height / 2;
+                 // Clamp player paddle to screen
+                if (player.y < 0) player.y = 0;
+                if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+            }
+            
+            canvas.addEventListener('mousemove', movePaddle);
+            
+            const upBtn = document.getElementById('upBtn');
+            const downBtn = document.getElementById('downBtn');
+
+            let touchInterval;
+
+            const startMoving = (direction) => {
+                if (touchInterval) clearInterval(touchInterval);
+                touchInterval = setInterval(() => {
+                    player.y += direction * 10;
+                    if (player.y < 0) player.y = 0;
+                    if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+                }, 16);
+            };
+
+            const stopMoving = () => {
+                clearInterval(touchInterval);
+            };
+
+            upBtn.addEventListener('mousedown', () => startMoving(-1));
+            upBtn.addEventListener('touchstart', () => startMoving(-1));
+            downBtn.addEventListener('mousedown', () => startMoving(1));
+            downBtn.addEventListener('touchstart', () => startMoving(1));
+            
+            upBtn.addEventListener('mouseup', stopMoving);
+            upBtn.addEventListener('touchend', stopMoving);
+            downBtn.addEventListener('mouseup', stopMoving);
+            downBtn.addEventListener('touchend', stopMoving);
+
+            // Web3 Buttons
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const submitScoreBtn = document.getElementById('submitScoreBtn');
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+            connectWalletBtn.addEventListener('click', connectWallet);
+            submitScoreBtn.addEventListener('click', submitScore);
+            exportCsvBtn.addEventListener('click', exportLeaderboardToCsv);
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+        });
+    </script>
+</body>
+</html> 
+

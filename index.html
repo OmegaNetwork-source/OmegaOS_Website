@@ -302,6 +302,150 @@
             letter-spacing: -0.03em;
         }
 
+        /* OS Preview Gallery */
+        .os-preview {
+            padding: 3rem 2rem;
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .preview-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+        }
+
+        .preview-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .preview-item:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 24px;
+            font-weight: 300;
+            z-index: 10001;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 24px;
+            z-index: 10001;
+        }
+
+        .modal-nav:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-nav.prev {
+            left: 20px;
+        }
+
+        .modal-nav.next {
+            right: 20px;
+        }
+
+        .modal-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         .section-subtitle {
             text-align: center;
             font-size: 1rem;
@@ -450,6 +594,31 @@
             .privacy {
                 padding: 6rem 1.5rem;
             }
+
+            .preview-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-nav {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+            }
+
+            .modal-nav.prev {
+                left: 10px;
+            }
+
+            .modal-nav.next {
+                right: 10px;
+            }
+
+            .modal-close {
+                width: 40px;
+                height: 40px;
+                top: 10px;
+                right: 10px;
+            }
         }
     </style>
 </head>
@@ -466,6 +635,7 @@
         </div>
         <ul class="nav-links">
             <li><a href="#features">Features</a></li>
+            <li><a href="#os-preview">OS Preview</a></li>
             <li><a href="#privacy">Privacy</a></li>
             <li><a href="#download">Download</a></li>
         </ul>
@@ -474,12 +644,12 @@
     <!-- Hero Section -->
     <section class="hero">
         <h1>Omega OS</h1>
-        <p class="tagline">Privacy-first operating system built for those who value digital freedom and security.</p>
+        <p class="tagline">Privacy-first operating system with secure AI and TOR VPN integration. Your data never leaves your computer. Powered by Omega Network.</p>
         
         <!-- Download Box -->
         <div class="download-box" id="download">
             <h2>Download Omega OS</h2>
-            <p>Experience true privacy and security. Available for Windows.</p>
+            <p>Experience true privacy and security with bundled AI and TOR VPN. Available for Windows.</p>
             <a href="#" class="download-btn" id="downloadBtn">Download Now</a>
             <div class="download-info">Version 1.0.0 • Latest Release</div>
             
@@ -495,6 +665,16 @@
         <p class="section-subtitle">Every feature designed with your security and privacy as the foundation.</p>
         <div class="features-grid">
             <div class="feature-card">
+                <h3>Secure & Private AI</h3>
+                <p>AI that never leaves your computer. Bundled AI models run completely locally using Transformers.js. No data sent to external servers, works offline, and your conversations stay private.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>TOR VPN Integration</h3>
+                <p>Built-in TOR VPN integration with bundled Tor daemon. Route all your traffic through the Tor network for maximum anonymity. No separate installation needed - works out of the box.</p>
+            </div>
+            
+            <div class="feature-card">
                 <h3>Privacy First</h3>
                 <p>Built from the ground up with privacy as the core principle. No telemetry, no tracking, no data collection. Your data remains yours.</p>
             </div>
@@ -505,26 +685,73 @@
             </div>
             
             <div class="feature-card">
-                <h3>Lightweight Performance</h3>
-                <p>Optimized for performance without sacrificing security. Runs smoothly on modern hardware with minimal resource usage.</p>
-            </div>
-            
-            <div class="feature-card">
                 <h3>Built-in Browser</h3>
-                <p>Privacy-focused browser included with ad-blocking, tracker prevention, and secure extensions support.</p>
+                <p>Privacy-focused browser included with ad-blocking, tracker prevention, and secure extensions support. Full web browsing with AI chat assistant built-in.</p>
             </div>
             
             <div class="feature-card">
                 <h3>Integrated Tools</h3>
-                <p>Complete suite of productivity tools including encrypted file manager, password manager, secure vault, and more.</p>
+                <p>Complete suite of productivity tools including encrypted file manager, password manager, secure vault, word processor, and spreadsheet with AI assistance.</p>
             </div>
             
             <div class="feature-card">
                 <h3>Omega Wallet</h3>
-                <p>The only wallet that enables cold storage for maximum safety. Keep your assets secure with advanced cold storage capabilities.</p>
+                <p>The only wallet that enables cold storage for maximum safety. Multi-chain support (Solana) with MetaMask and Phantom extension integration. Keep your assets secure.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>AI Assistant</h3>
+                <p>Desktop AI assistant for system-wide help. Natural language queries, smart file organization, and productivity enhancements - all running locally on your device.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Lightweight Performance</h3>
+                <p>Optimized for performance without sacrificing security. Runs smoothly on modern hardware with minimal resource usage.</p>
             </div>
         </div>
     </section>
+
+    <!-- OS Preview Section -->
+    <section class="os-preview" id="os-preview">
+        <h2 class="section-title">OS Preview</h2>
+        <p class="section-subtitle">See Omega OS in action. Click any image to view full size.</p>
+        <div class="preview-gallery" id="previewGallery">
+            <div class="preview-item" data-index="0">
+                <img src="screenshots/1.png" alt="Omega OS Desktop" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="1">
+                <img src="screenshots/2.png" alt="Omega Word with AI Assistant" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="2">
+                <img src="screenshots/3.png" alt="Omega Create AI Code Generator" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="3">
+                <img src="screenshots/4.png" alt="Omega AI Assistant" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="4">
+                <img src="screenshots/5.png" alt="Omega OS Feature" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="5">
+                <img src="screenshots/6.png" alt="Omega OS Feature" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="6">
+                <img src="screenshots/7.png" alt="Omega OS Feature" loading="lazy">
+            </div>
+            <div class="preview-item" data-index="7">
+                <img src="screenshots/8.png" alt="Omega OS Feature" loading="lazy">
+            </div>
+        </div>
+    </section>
+
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <button class="modal-nav prev" id="modalPrev">&#8249;</button>
+        <button class="modal-nav next" id="modalNext">&#8250;</button>
+        <div class="modal-content">
+            <img class="modal-image" id="modalImage" src="" alt="">
+        </div>
+    </div>
 
     <!-- Privacy Section -->
     <section class="privacy" id="privacy">
@@ -539,6 +766,8 @@
                 and every design decision prioritizes your privacy and security above all else.
             </p>
             <p>
+                <strong>Secure AI that never leaves your computer.</strong> Our bundled AI models run entirely locally - no cloud, no data collection, no privacy concerns. 
+                <strong>TOR VPN integration</strong> routes your traffic through the Tor network for maximum anonymity. 
                 No tracking. No telemetry. No backdoors. Just a secure, private operating system that respects your autonomy.
             </p>
         </div>
@@ -603,6 +832,84 @@
                     }, 500);
                 });
             });
+
+            // Image Modal Functionality
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalClose = document.getElementById('modalClose');
+            const modalPrev = document.getElementById('modalPrev');
+            const modalNext = document.getElementById('modalNext');
+            const previewItems = document.querySelectorAll('.preview-item');
+            let currentImageIndex = 0;
+            const images = Array.from(previewItems).map(item => ({
+                src: item.querySelector('img').src,
+                alt: item.querySelector('img').alt
+            }));
+
+            // Open modal when clicking preview item
+            previewItems.forEach(function(item, index) {
+                item.addEventListener('click', function() {
+                    currentImageIndex = index;
+                    showImage(currentImageIndex);
+                });
+            });
+
+            // Show image in modal
+            function showImage(index) {
+                if (index < 0 || index >= images.length) return;
+                currentImageIndex = index;
+                modalImage.src = images[index].src;
+                modalImage.alt = images[index].alt;
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                updateNavButtons();
+            }
+
+            // Update navigation buttons
+            function updateNavButtons() {
+                modalPrev.disabled = currentImageIndex === 0;
+                modalNext.disabled = currentImageIndex === images.length - 1;
+            }
+
+            // Close modal
+            function closeModal() {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Event listeners
+            modalClose.addEventListener('click', closeModal);
+            modalPrev.addEventListener('click', function() {
+                if (currentImageIndex > 0) {
+                    showImage(currentImageIndex - 1);
+                }
+            });
+            modalNext.addEventListener('click', function() {
+                if (currentImageIndex < images.length - 1) {
+                    showImage(currentImageIndex + 1);
+                }
+            });
+
+            // Close on background click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (!modal.classList.contains('active')) return;
+                
+                if (e.key === 'Escape') {
+                    closeModal();
+                } else if (e.key === 'ArrowLeft' && currentImageIndex > 0) {
+                    showImage(currentImageIndex - 1);
+                } else if (e.key === 'ArrowRight' && currentImageIndex < images.length - 1) {
+                    showImage(currentImageIndex + 1);
+                }
+            });
+
         });
     </script>
 </body>

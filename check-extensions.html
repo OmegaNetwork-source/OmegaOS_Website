@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Extensions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+        .success {
+            background: #1a4d1a;
+            border-color: #2d7a2d;
+        }
+        .error {
+            background: #4d1a1a;
+            border-color: #7a2d2d;
+        }
+        h1 { color: #fff; }
+        h2 { color: #ccc; margin-top: 30px; }
+        code {
+            background: #2a2a2a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #3a8eef;
+        }
+        .info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #4a9eff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔌 Extension Status Check</h1>
+    
+    <div class="info">
+        <strong>Note:</strong> In Electron browsers, extensions don't show toolbar icons like in Chrome.
+        They work in the background. If you see connection popups on dApp sites, the extensions ARE working!
+    </div>
+
+    <h2>MetaMask Status</h2>
+    <div id="metamask-status" class="status">
+        <p>Checking...</p>
+    </div>
+
+    <h2>Phantom Status</h2>
+    <div id="phantom-status" class="status">
+        <p>Checking...</p>
+    </div>
+
+    <button onclick="checkExtensions()">🔄 Re-check Extensions</button>
+    <button onclick="window.location.href='https://app.uniswap.org'">🧪 Test on Uniswap</button>
+    <button onclick="window.location.href='https://phantom.app'">🧪 Test on Phantom</button>
+
+    <h2>How to Use Extensions</h2>
+    <div class="info">
+        <p><strong>MetaMask:</strong> Visit any Ethereum dApp (like Uniswap) and click "Connect Wallet" → "MetaMask"</p>
+        <p><strong>Phantom:</strong> Visit any Solana dApp and click "Connect Wallet" → "Phantom"</p>
+        <p>The extensions will show popups when websites request connection (like you saw on Uniswap).</p>
+    </div>
+
+    <script>
+        function checkExtensions() {
+            // Check MetaMask
+            const metamaskDiv = document.getElementById('metamask-status');
+            if (typeof window.ethereum !== 'undefined') {
+                const isMetaMask = window.ethereum.isMetaMask || false;
+                metamaskDiv.className = 'status success';
+                metamaskDiv.innerHTML = `
+                    <h3>✅ MetaMask is AVAILABLE and WORKING!</h3>
+                    <p><code>window.ethereum</code> is defined</p>
+                    <p>Is MetaMask: ${isMetaMask}</p>
+                    <p>Provider: ${window.ethereum.constructor.name}</p>
+                    <p><strong>Status:</strong> Extension is active and ready to use!</p>
+                `;
+            } else {
+                metamaskDiv.className = 'status error';
+                metamaskDiv.innerHTML = `
+                    <h3>❌ MetaMask NOT FOUND</h3>
+                    <p><code>window.ethereum</code> is undefined</p>
+                    <p><strong>Note:</strong> Extensions may not be loaded yet, or there's an issue.</p>
+                    <p>Check the console for extension loading messages.</p>
+                `;
+            }
+
+            // Check Phantom
+            const phantomDiv = document.getElementById('phantom-status');
+            if (typeof window.solana !== 'undefined') {
+                const isPhantom = window.solana.isPhantom || false;
+                phantomDiv.className = 'status success';
+                phantomDiv.innerHTML = `
+                    <h3>✅ Phantom is AVAILABLE and WORKING!</h3>
+                    <p><code>window.solana</code> is defined</p>
+                    <p>Is Phantom: ${isPhantom}</p>
+                    <p>Provider: ${window.solana.constructor.name}</p>
+                    <p><strong>Status:</strong> Extension is active and ready to use!</p>
+                `;
+            } else {
+                phantomDiv.className = 'status error';
+                phantomDiv.innerHTML = `
+                    <h3>❌ Phantom NOT FOUND</h3>
+                    <p><code>window.solana</code> is undefined</p>
+                    <p><strong>Note:</strong> Extensions may not be loaded yet, or there's an issue.</p>
+                    <p>Check the console for extension loading messages.</p>
+                `;
+            }
+        }
+
+        // Check on page load
+        window.addEventListener('load', () => {
+            setTimeout(checkExtensions, 500);
+        });
+
+        // Also check after a delay (extensions might inject after page load)
+        setTimeout(checkExtensions, 2000);
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Create - Omega OS</title>
+    <link rel="stylesheet" href="ai-dev.css">
+</head>
+<body>
+    <div class="title-bar">
+        <div class="window-titlebar-left">
+            <div class="file-menu-container">
+                <button class="file-menu-btn" id="fileMenuBtn">File</button>
+                <div class="file-menu-dropdown" id="fileMenuDropdown">
+                    <div class="file-menu-item" id="fileMenuNew">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        <span>New Project</span>
+                        <span class="file-menu-shortcut">Ctrl+N</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuSave">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save</span>
+                        <span class="file-menu-shortcut">Ctrl+S</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuSaveAs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save As...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="title-bar-title">Omega Create</div>
+        </div>
+        <div class="title-bar-controls">
+            <button class="title-bar-btn minimize" id="minimizeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <rect x="0" y="5" width="12" height="1"/>
+                </svg>
+            </button>
+            <button class="title-bar-btn maximize" id="maximizeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                </svg>
+            </button>
+            <button class="title-bar-btn close" id="closeBtn">
+                <svg width="12" height="12" viewBox="0 0 12 12">
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Omega Create</h2>
+                <p class="sidebar-subtitle">Generate code with AI</p>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Step 1: Setup -->
+                <div class="sidebar-card">
+                    <div class="card-header">
+                        <div class="step-number">1</div>
+                        <div class="card-title">Choose Your Setup</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M2 4 L8 1 L14 4 M2 4 L2 12 L8 15 L14 12 L14 4 M8 1 L8 15"/>
+                                </svg>
+                                Language
+                            </label>
+                            <div class="language-tabs">
+                                <button class="lang-tab active" data-lang="html" title="HTML/CSS/JavaScript">
+                                    <span>HTML</span>
+                                </button>
+                                <button class="lang-tab" data-lang="python" title="Python">
+                                    <span>Python</span>
+                                </button>
+                                <button class="lang-tab" data-lang="solidity" title="Solidity">
+                                    <span>Solidity</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="2" y="2" width="12" height="12" rx="2"/>
+                                    <path d="M6 2 L6 14 M10 2 L10 14"/>
+                                </svg>
+                                Project Type
+                            </label>
+                            <select id="projectType" class="select-input">
+                                <option value="website">Website</option>
+                                <option value="game">Game</option>
+                                <option value="utility">Utility</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates (shown conditionally) -->
+                <div class="sidebar-card" id="templatesCard" style="display: none;">
+                    <div class="card-header">
+                        <div class="step-number">2</div>
+                        <div class="card-title">Start from Template</div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Game Templates -->
+                        <div id="gameTemplateSection" style="display: none;">
+                            <div class="game-templates-grid" id="gameTemplatesGrid"></div>
+                        </div>
+                        <!-- Website Template -->
+                        <div id="websiteTemplateSection" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M8 2 L8 14 M2 8 L14 8"/>
+                                        <circle cx="8" cy="8" r="6"/>
+                                    </svg>
+                                    Website URL
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="websiteTemplateInput" 
+                                    class="url-input" 
+                                    placeholder="https://example.com"
+                                />
+                                <button id="loadWebsiteTemplateBtn" class="btn-secondary btn-full">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M8 2 L8 10 M4 6 L8 2 L12 6"/>
+                                        <path d="M2 12 L2 14 L14 14 L14 12"/>
+                                    </svg>
+                                    Extract & Load HTML
+                                </button>
+                                <small class="form-hint">Enter a website URL to extract its HTML code</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Prompt -->
+                <div class="sidebar-card">
+                    <div class="card-header">
+                        <div class="step-number">3</div>
+                        <div class="card-title">Describe What You Want</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <textarea 
+                                id="promptInput" 
+                                class="prompt-input" 
+                                placeholder="Example: Create a calculator with buttons for numbers and operations..."
+                                rows="6"
+                            ></textarea>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="generateBtn" class="btn-primary btn-full" style="flex: 1;">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 9 L16 9 M9 2 L16 9 L9 16"/>
+                                </svg>
+                                Generate Code
+                            </button>
+                            <button id="generateImageBtn" class="btn-secondary" style="flex-shrink: 0; padding: 12px 16px;" title="Generate Image">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Actions (shown after generation) -->
+                <div class="sidebar-card" id="codeActionsCard" style="display: none;">
+                    <div class="card-header">
+                        <div class="step-number">4</div>
+                        <div class="card-title">Refine Your Code</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group" id="feedbackSection" style="display: none;">
+                            <label class="form-label">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2 L8 14 M2 8 L14 8"/>
+                                </svg>
+                                What needs improvement?
+                            </label>
+                            <textarea 
+                                id="feedbackInput" 
+                                class="prompt-input" 
+                                placeholder="Example: Make the background green, add a navigation bar..."
+                                rows="3"
+                            ></textarea>
+                            <button id="fixWithFeedbackBtn" class="btn-secondary btn-full" style="display: none; margin-top: 8px;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M2 8 L6 12 L14 4"/>
+                                </svg>
+                                Apply Fix
+                            </button>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button id="autoFixBtn" class="btn-action" style="display: none;" title="Auto-fix issues">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2 L10 6 L14 7 L11 10 L12 14 L8 12 L4 14 L5 10 L2 7 L6 6 Z"/>
+                                </svg>
+                                <span>Auto-Fix</span>
+                            </button>
+                            <button id="auditBtn" class="btn-action" style="display: none;" title="Audit code quality">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M8 2 L10 6 L14 7 L11 10 L12 14 L8 12 L4 14 L5 10 L2 7 L6 6 Z"/>
+                                    <path d="M8 6 L8 10 M8 12 L8 12.5"/>
+                                </svg>
+                                <span>Audit</span>
+                            </button>
+                            <button id="clearBtn" class="btn-action btn-danger" title="Clear all">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M4 4 L12 12 M12 4 L4 12"/>
+                                </svg>
+                                <span>Clear</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings (collapsible) -->
+                <div class="sidebar-card sidebar-card-collapsed">
+                    <div class="card-header card-header-clickable" id="settingsToggle">
+                        <div class="card-title">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="8" cy="8" r="2"/>
+                                <path d="M8 2 L8 4 M8 12 L8 14 M2 8 L4 8 M12 8 L14 8 M4.34 4.34 L5.76 5.76 M10.24 10.24 L11.66 11.66 M4.34 11.66 L5.76 10.24 M10.24 5.76 L11.66 4.34"/>
+                            </svg>
+                            Settings
+                        </div>
+                        <svg class="card-toggle" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 4.5 L6 7.5 L9 4.5"/>
+                        </svg>
+                    </div>
+                    <div class="card-body" id="settingsContent" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">AI Model</label>
+                            <select id="modelSelect" class="select-input">
+                                <option value="auto">Auto (Best for Code)</option>
+                            </select>
+                            <small class="form-hint">
+                                <span id="modelStatus">Loading models...</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Indicator -->
+            <div class="sidebar-footer">
+                <div class="status-indicator" id="statusIndicator">
+                    <div class="status-dot"></div>
+                    <span>Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Code Editor -->
+            <div class="code-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span id="codeTitle">Code Editor</span>
+                        <span id="lineCount" class="line-count" style="margin-left: 12px; color: #888; font-size: 0.85em; font-weight: normal;">0 lines</span>
+                    </div>
+                    <div class="panel-actions">
+                        <button id="copyCodeBtn" class="icon-btn" title="Copy Code">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="4" y="4" width="8" height="8" rx="1"/>
+                                <path d="M4 8 L2 8 L2 14 L10 14 L10 12"/>
+                            </svg>
+                        </button>
+                        <button id="saveCodeBtn" class="icon-btn" title="Save Code">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 14 L14 14 L14 8 L8 8 L8 2 L2 2 Z"/>
+                                <path d="M8 2 L8 8 L14 8"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="code-editor-container">
+                    <pre id="codeEditor" class="code-editor" contenteditable="true" spellcheck="false"></pre>
+                </div>
+            </div>
+
+            <!-- Preview Panel (for HTML) -->
+            <div class="preview-panel" id="previewPanel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>Preview</span>
+                    </div>
+                    <div class="panel-actions">
+                        <button id="fullscreenPreviewBtn" class="icon-btn" title="Fullscreen Preview">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 2 L6 2 L6 6 M10 2 L14 2 L14 6 M14 14 L10 14 L10 10 M6 14 L2 14 L2 10"/>
+                            </svg>
+                        </button>
+                        <button id="refreshPreviewBtn" class="icon-btn" title="Refresh Preview">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 8 L3 6 L3 10 L1 8 Z"/>
+                                <path d="M15 8 L13 10 L13 6 L15 8 Z"/>
+                                <path d="M3 8 C3 5 5 3 8 3 C10 3 11.5 4 12.5 5.5"/>
+                                <path d="M13 8 C13 11 11 13 8 13 C6 13 4.5 12 3.5 10.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <iframe id="previewFrame" class="preview-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Preview Modal -->
+    <div class="fullscreen-preview" id="fullscreenPreview" style="display: none;">
+        <div class="fullscreen-header">
+            <div class="fullscreen-title">Preview</div>
+            <div class="fullscreen-actions">
+                <button id="exitFullscreenBtn" class="icon-btn" title="Exit Fullscreen">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 2 L14 14 M14 2 L2 14"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <iframe id="fullscreenPreviewFrame" class="fullscreen-preview-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Generating code with AI...</div>
+    </div>
+
+    <script src="game-templates.js"></script>
+    <script src="ai-dev.js"></script>
+</body>
+</html>
+

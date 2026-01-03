@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Omega-Man</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+    :root {
+      --bg: #111;
+      --fg: #fff;
+      --accent: #fff;
+      --danger: #f33;
+      --panel-bg: #181818;
+      --panel-fg: #fff;
+      --panel-width: 320px;
+      --maze-wall: #fff;
+      --maze-bg: #222;
+      --dot: #fff;
+      --power: #0ff; /* Cyan */
+      --omega: #fff;
+      --ghost1: #f33; /* Red */
+      --ghost2: #3cf; /* Blue */
+      --ghost3: #fc3; /* Yellow */
+      --ghost4: #9f3; /* Green */
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      overflow: hidden;
+    }
+    #game-container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start; /* Align canvas and panel to the top */
+      gap: 30px;
+    }
+    canvas {
+      background: var(--maze-bg);
+      border: 2px solid var(--accent);
+      border-radius: 5px;
+    }
+    #sidePanel {
+      width: var(--panel-width);
+      padding: 20px;
+      background: var(--panel-bg);
+      border-radius: 5px;
+      border: 2px solid var(--accent);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    #sidePanel h1 {
+      margin: 0 0 10px 0;
+      text-align: center;
+      font-size: 3rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    #wallet-section button {
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        padding: 10px;
+        font-family: 'VT323', monospace;
+        font-size: 1.2rem;
+        width: 100%;
+        cursor: pointer;
+    }
+    #wallet-section button:disabled {
+        background: #555;
+        cursor: not-allowed;
+    }
+    #leaderboard {
+        border-top: 1px solid var(--accent);
+        padding-top: 20px;
+    }
+    #leaderboard h2 {
+        margin-top: 0;
+    }
+    #leaderboard ol {
+        padding-left: 20px;
+        margin: 0;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+    #leaderboard li {
+        margin-bottom: 5px;
+    }
+    .mobile-controls {
+        display: none; /* Hidden by default */
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 150px;
+    }
+    .mobile-btn {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #message-box h2 {
+        margin-top: 0;
+    }
+    #end-game-controls button {
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        padding: 10px 20px;
+        font-family: 'VT323', monospace;
+        font-size: 1.2rem;
+        cursor: pointer;
+        margin: 10px;
+        transition: background 0.2s;
+    }
+    #end-game-controls button:hover:not(:disabled) {
+        background: #ccc;
+    }
+    #end-game-controls button:disabled {
+        background: #555;
+        color: #999;
+        cursor: not-allowed;
+    }
+    @media (max-width: 900px) {
+      body {
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding-top: 20px;
+      }
+      #game-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      .mobile-controls {
+        display: block;
+      }
+    }
+    </style>
+</head>
+<body style="margin:0; background:#111; min-height:100vh; display:flex; align-items:center; justify-content:center;">
+    <!-- Mode Selection Modal -->
+    <div id="mode-modal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:2000;display:flex;align-items:center;justify-content:center;">
+      <div style="background:#181818;padding:48px 32px;border-radius:16px;box-shadow:0 0 32px #0008;text-align:center;min-width:320px;">
+        <h2 style="color:#fff;font-size:2.2rem;margin-bottom:32px;">How do you want to play?</h2>
+        <button id="play-points-btn" style="background:linear-gradient(90deg,#0ff,#fff);color:#111;font-size:1.3rem;padding:16px 32px;margin:12px 0;width:100%;border:none;border-radius:8px;cursor:pointer;font-family:'VT323',monospace;">Play For Points</button>
+        <div style="color:#aaa;margin:12px 0;">or</div>
+        <button id="play-free-btn" style="background:#222;color:#fff;font-size:1.3rem;padding:16px 32px;width:100%;border:1px solid #fff;border-radius:8px;cursor:pointer;font-family:'VT323',monospace;">Play For Free</button>
+        <div id="arcade-deposit-notice" style="color:#f33;font-size:1.1rem;margin-top:12px;display:none;">You must deposit at least 5 ARCADE tokens to play for points.</div>
+      </div>
+    </div>
+    <div id="game-container">
+      <canvas id="gameCanvas"></canvas>
+      <div id="sidePanel">
+        <h1>OMEGA-MAN</h1>
+        <!-- Arcade Credits Section (hidden by default) -->
+        <div id="arcade-credits-section" style="display:none;flex-direction:column;align-items:center;margin-bottom:18px;">
+          <div style="color:#0ff;font-size:1.1rem;margin-bottom:6px;">Arcade Credits: <span id="arcade-credits">0</span></div>
+          <div style="color:#fff;font-size:1rem;margin-bottom:6px;">ARCADE Balance: <span id="arcade-balance">0</span></div>
+          <input id="arcade-deposit-amount" type="number" min="1" placeholder="Amount" style="width:120px;padding:8px 12px;font-size:1.2rem;margin-bottom:8px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;" />
+          <button id="arcade-deposit-btn" style="background:linear-gradient(90deg,#0ff,#fff);color:#111;border:none;border-radius:6px;padding:8px 18px;font-size:1.1rem;cursor:pointer;">Deposit</button>
+          <div id="arcade-deposit-status" style="color:#aaa;font-size:0.95rem;margin-top:4px;"></div>
+        </div>
+        <div id="insert-token-container" style="display: flex; flex-direction: column; align-items: center; margin-bottom: 18px;">
+          <button id="insert-token-btn" style="background: linear-gradient(90deg, #0ff, #fff); border: none; border-radius: 50%; width: 64px; height: 64px; box-shadow: 0 0 16px #0ff8, 0 0 4px #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 8px; transition: box-shadow 0.2s;">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="18" cy="18" r="16" stroke="#111" stroke-width="4" fill="#fff"/>
+              <circle cx="18" cy="18" r="10" stroke="#0ff" stroke-width="3" fill="none"/>
+              <rect x="15" y="10" width="6" height="16" rx="3" fill="#0ff"/>
+            </svg>
+          </button>
+          <span style="color: #0ff; font-size: 1.1rem; letter-spacing: 1px;">Insert Token</span>
+        </div>
+        <div id="score">Score: 0</div>
+        <div id="lives">Lives: 3</div>
+        <div id="wallet-section">
+          <div><b>Wallet:</b> <span id="wallet-status">Not Connected</span></div>
+          <button id="connect-wallet">Connect Wallet</button>
+        </div>
+        <div id="leaderboard">
+            <h2>Leaderboard</h2>
+            <button id="export-leaderboard-csv" style="margin-bottom:10px;background:#222;color:#0ff;border:1px solid #0ff;border-radius:6px;padding:6px 14px;font-family:'VT323',monospace;font-size:1.1rem;cursor:pointer;">Export as CSV</button>
+            <ol id="leaderboard-list">
+                <li>Connect wallet to see scores.</li>
+            </ol>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mobile-controls">
+        <button class="mobile-btn" id="btn-up" style="left: 50%; bottom: 80px; transform: translateX(-50%);">▲</button>
+        <button class="mobile-btn" id="btn-left" style="left: 25%; bottom: 10px; transform: translateX(-50%);">◀</button>
+        <button class="mobile-btn" id="btn-down" style="left: 50%; bottom: 10px; transform: translateX(-50%);">▼</button>
+        <button class="mobile-btn" id="btn-right" style="right: 25%; bottom: 10px; transform: translateX(50%);">▶</button>
+    </div>
+
+    <div id="message-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; text-align: center; z-index: 1000;">
+        <div id="message-box" style="background: #181818; padding: 40px; border-radius: 10px; border: 1px solid var(--accent);">
+            <div id="message"></div>
+            <div id="end-game-controls" style="display: none; margin-top: 20px;">
+                <button id="submit-score-btn">Submit Score</button>
+                <button id="new-game-btn">Play Again</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const TILE_S = 20;
+    const MAZE_W = 28;
+    const MAZE_H = 36;
+    
+    const CANVAS_W = TILE_S * MAZE_W;
+    const CANVAS_H = TILE_S * MAZE_H;
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+
+    // 1=wall, 2=dot, 3=power pellet, 0=empty, 4=ghost house door
+    const MAZE = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,3,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,3,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0], // Tunnel
+        [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,1,1,1,1,1],
+        [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+        [1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,1,1,2,2,2,3,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+        [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+        [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+        [1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], // Connector Row
+        [1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], // Connector Row
+        [1,2,2,2,1,2,1,2,2,2,2,1,1,2,2,2,2,1,2,1,2,2,2,2,1,2,2,1],
+        [1,2,1,2,1,2,1,2,1,1,2,1,1,2,1,1,2,1,2,1,2,1,2,1,1,2,1,1],
+        [1,2,1,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,2,1,1,2,2,1],
+        [1,3,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,3,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+    let originalMaze; // To store the initial state for resets
+
+    // --- GAME STATE ---
+    let score = 0;
+    let lives = 3;
+    let dots = 0;
+    let totalDots = 0;
+    let gameOver = false;
+    let gamePaused = false;
+    
+    let omega = {};
+    let ghosts = [];
+    let powerPellet = { active: false, timer: 0 };
+    
+    const DIRS = [ {x:0, y:-1}, {x:1, y:0}, {x:0, y:1}, {x:-1, y:0} ]; // Up, Right, Down, Left
+
+    // --- WEB3 STATE ---
+    const contractAddress = "0x6801d29b5939174ad32f347c7120a99e72858ea4";
+    const contractABI = [
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"player","type":"address"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"}],"name":"ScoreSubmitted","type":"event"},
+        {"inputs":[{"internalType":"uint256","name":"_score","type":"uint256"}],"name":"submitScore","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[],"name":"getLeaderboard","outputs":[{"components":[{"internalType":"address","name":"player","type":"address"},{"internalType":"uint256","name":"score","type":"uint256"}],"internalType":"struct Leaderboard.ScoreEntry[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"}
+    ];
+    let provider, signer, leaderboardContract, userAccount;
+    
+    // --- ARCADE TOKEN/DEPOSIT CONFIG ---
+    const arcadeDepositAddress = "0x78e40a706fe36eaa94c5388600f1667dd92bb2c6";
+    const arcadeTokenAddress = "0xFF3fD61427d3485c8e33cb5f5999EAd9639C56a5";
+    const arcadeDepositABI = [
+      {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+      {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"TokenDeposited","type":"event"},
+      {"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"arcadeToken","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"}
+    ];
+    const erc20ABI = [
+      {"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"},
+      {"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+      {"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"type":"function"},
+      {"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"type":"function"},
+      {"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"type":"function"}
+    ];
+    let arcadeDepositContract, arcadeTokenContract;
+    let arcadeCredits = 0;
+    let playMode = null; // 'points' or 'free'
+
+    // Add a global flag to track if user can play for points
+    let canPlayForPoints = false;
+
+    // --- DRAWING ---
+    function draw() {
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        drawMaze();
+        drawOmega();
+        drawGhosts();
+    }
+
+    function drawMaze() {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--maze-bg').trim();
+        ctx.fillRect(0,0,CANVAS_W, CANVAS_H);
+
+        for (let y = 0; y < MAZE_H; y++) {
+            for (let x = 0; x < MAZE_W; x++) {
+                const tile = MAZE[y][x];
+                if (tile === 1) { // Wall
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--maze-wall').trim();
+                    ctx.fillRect(x * TILE_S, y * TILE_S, TILE_S, TILE_S);
+                } else if (tile === 2) { // Dot
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--dot').trim();
+                    ctx.beginPath();
+                    ctx.arc(x * TILE_S + TILE_S / 2, y * TILE_S + TILE_S / 2, TILE_S / 6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (tile === 3) { // Power Pellet
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--power').trim();
+                    ctx.beginPath();
+                    ctx.arc(x * TILE_S + TILE_S / 2, y * TILE_S + TILE_S / 2, TILE_S / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (tile === 4) { // Ghost door
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--power').trim();
+                    ctx.fillRect(x * TILE_S, y * TILE_S + TILE_S / 2 - 2, TILE_S, 4);
+                }
+            }
+        }
+    }
+
+    function drawOmega() {
+        ctx.save();
+        ctx.translate(omega.x * TILE_S + TILE_S / 2, omega.y * TILE_S + TILE_S / 2);
+        
+        // Rotate mouth to match movement direction
+        const angle = (omega.dir - 1) * Math.PI / 2;
+        ctx.rotate(angle);
+
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--omega').trim();
+        ctx.beginPath();
+        const mouthAngle = (Date.now() % 400 < 200) ? Math.PI / 4 : Math.PI / 6;
+        ctx.arc(0, 0, TILE_S / 2 - 2, mouthAngle, -mouthAngle);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawGhosts() {
+        ghosts.forEach(ghost => {
+            const isFrightened = powerPellet.active;
+            const isFlashing = isFrightened && powerPellet.timer < 3 && (Date.now() % 400 < 200);
+
+            if (ghost.eatenTimer > 0) { // Draw as eyes only
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ghost.x * TILE_S + TILE_S * 0.3, ghost.y * TILE_S + TILE_S / 2, TILE_S / 8, 0, Math.PI * 2);
+                ctx.arc(ghost.x * TILE_S + TILE_S * 0.7, ghost.y * TILE_S + TILE_S / 2, TILE_S / 8, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = isFrightened 
+                    ? (isFlashing ? '#fff' : getComputedStyle(document.documentElement).getPropertyValue('--power').trim())
+                    : getComputedStyle(document.documentElement).getPropertyValue(`--ghost${ghost.id}`).trim();
+                
+                const x = ghost.x * TILE_S;
+                const y = ghost.y * TILE_S;
+                const r = TILE_S / 2;
+                
+                ctx.beginPath();
+                ctx.arc(x + r, y + r, r, Math.PI, 0);
+                ctx.lineTo(x + TILE_S, y + TILE_S);
+                ctx.lineTo(x, y + TILE_S);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x + TILE_S * 0.3, y + TILE_S * 0.4, TILE_S/5, 0, Math.PI * 2);
+                ctx.arc(x + TILE_S * 0.7, y + TILE_S * 0.4, TILE_S/5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pupils
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x + TILE_S * 0.3, y + TILE_S * 0.4, TILE_S/10, 0, Math.PI * 2);
+                ctx.arc(x + TILE_S * 0.7, y + TILE_S * 0.4, TILE_S/10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+    }
+
+    // --- GAME LOGIC ---
+    function update(dt) {
+        updateOmega(dt);
+        updateGhosts(dt);
+        checkCollisions();
+        checkWinCondition();
+    }
+
+    function canMove(x, y, isGhost = false) {
+        if (x < 0 || x >= MAZE_W || y < 0 || y >= MAZE_H) return false;
+        const tile = MAZE[y][x];
+        if (isGhost) {
+            return tile !== 1;
+        }
+        return tile !== 1 && tile !== 4;
+    }
+
+    function updateOmega(dt) {
+        omega.moveTimer -= dt;
+        if (omega.moveTimer > 0) return;
+        omega.moveTimer = 0.15;
+
+        let nx = omega.x + DIRS[omega.nextDir].x;
+        let ny = omega.y + DIRS[omega.nextDir].y;
+        if (canMove(nx, ny)) {
+            omega.dir = omega.nextDir;
+        }
+        
+        nx = omega.x + DIRS[omega.dir].x;
+        ny = omega.y + DIRS[omega.dir].y;
+        
+        // Handle tunnel
+        if (ny === 14) {
+            if (nx < 0) nx = MAZE_W - 1;
+            if (nx >= MAZE_W) nx = 0;
+        }
+
+        if (canMove(nx, ny)) {
+            omega.x = nx;
+            omega.y = ny;
+        }
+        
+        // Check for dot collection
+        const currentTile = MAZE[omega.y][omega.x];
+        if (currentTile === 2) {
+            MAZE[omega.y][omega.x] = 0; // Eat dot
+            score += 10;
+            dots--;
+            updateScoreDisplay();
+        } else if (currentTile === 3) {
+            MAZE[omega.y][omega.x] = 0; // Eat power pellet
+            score += 50;
+            dots--;
+            powerPellet.active = true;
+            powerPellet.timer = 7; // 7 seconds of power
+            updateScoreDisplay();
+        }
+    }
+    
+    function updateGhosts(dt) {
+        if (powerPellet.active) {
+            powerPellet.timer -= dt;
+            if (powerPellet.timer <= 0) {
+                powerPellet.active = false;
+            }
+        }
+
+        ghosts.forEach(ghost => {
+            if (ghost.eatenTimer > 0) {
+                ghost.eatenTimer -= dt;
+                if (ghost.eatenTimer <= 0) {
+                    ghost.x = ghost.startX;
+                    ghost.y = ghost.startY;
+                }
+                return;
+            }
+
+            ghost.moveTimer -= dt;
+            if (ghost.moveTimer > 0) return;
+            ghost.moveTimer = powerPellet.active ? 0.3 : 0.22; // Slower when frightened
+
+            // AI Logic
+            let validMoves = [];
+            for (let i = 0; i < 4; i++) {
+                // Prevent reversing direction
+                if (i === (ghost.dir + 2) % 4) continue;
+                
+                let nx = ghost.x + DIRS[i].x;
+                let ny = ghost.y + DIRS[i].y;
+                if (canMove(nx, ny, true)) {
+                    validMoves.push(i);
+                }
+            }
+
+            if (validMoves.length > 0) {
+                ghost.dir = validMoves[Math.floor(Math.random() * validMoves.length)];
+            }
+            
+            ghost.x += DIRS[ghost.dir].x;
+            ghost.y += DIRS[ghost.dir].y;
+        });
+    }
+
+    function checkCollisions() {
+        for (const ghost of ghosts) {
+            if (ghost.eatenTimer > 0) continue;
+
+            if (ghost.x === omega.x && ghost.y === omega.y) {
+                if (powerPellet.active) {
+                    score += 200;
+                    updateScoreDisplay();
+                    ghost.eatenTimer = 3; // Respawn after 3 seconds
+                    // Move ghost back to start immediately to prevent re-collision
+                    ghost.x = ghost.startX; 
+                    ghost.y = ghost.startY;
+                } else {
+                    lives--;
+                    updateLivesDisplay();
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        resetPositions();
+                    }
+                    return; // Stop processing collisions for this frame
+                }
+            }
+        }
+    }
+
+    function checkWinCondition() {
+        if (dots === 0 && !gameOver) {
+            endGame();
+        }
+    }
+
+    function resetPositions() {
+        omega.x = 13;
+        omega.y = 22;
+        ghosts.forEach(g => {
+            g.x = g.startX;
+            g.y = g.startY;
+        });
+    }
+
+    // --- UI & STATE MANAGEMENT ---
+    const messageEl = document.getElementById('message');
+    const overlayEl = document.getElementById('message-overlay');
+    
+    function updateScoreDisplay() {
+        document.getElementById('score').textContent = `Score: ${score}`;
+    }
+
+    function updateLivesDisplay() {
+        document.getElementById('lives').textContent = `Lives: ${lives}`;
+    }
+
+    function resetGame() {
+        // First, restore the maze from the original copy
+        for(let y = 0; y < MAZE_H; y++) {
+            for(let x = 0; x < MAZE_W; x++) {
+                MAZE[y][x] = originalMaze[y][x];
+            }
+        }
+
+        score = 0;
+        lives = 3;
+        dots = totalDots;
+        gameOver = false;
+        gamePaused = false;
+        powerPellet.active = false;
+        
+        resetPositions();
+        
+        updateScoreDisplay();
+        updateLivesDisplay();
+        overlayEl.style.display = 'none';
+        if (playMode === 'points') {
+            document.getElementById('wallet-section').style.display = '';
+            document.getElementById('arcade-credits-section').style.display = 'flex';
+            document.getElementById('leaderboard').style.display = '';
+            // If not enough deposit, show overlay and block game
+            if (!canPlayForPoints) {
+                showBlockPlayOverlay();
+            } else {
+                hideBlockPlayOverlay();
+            }
+        } else {
+            document.getElementById('wallet-section').style.display = 'none';
+            document.getElementById('arcade-credits-section').style.display = 'none';
+            document.getElementById('leaderboard').style.display = 'none';
+            hideBlockPlayOverlay();
+        }
+    }
+
+    function endGame() {
+        gameOver = true;
+        gamePaused = true;
+        const controlsEl = document.getElementById('end-game-controls');
+        const submitBtn = document.getElementById('submit-score-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+
+        const win = dots === 0;
+        messageEl.innerHTML = `<h2>${win ? 'You Win!' : 'Game Over'}</h2><p>Final Score: ${score}</p>`;
+        
+        submitBtn.disabled = !userAccount;
+        submitBtn.textContent = 'Submit Score';
+        newGameBtn.disabled = false;
+        controlsEl.style.display = 'block';
+
+        overlayEl.style.display = 'flex';
+    }
+
+    // --- WEB3 ---
+    async function initWallet() {
+        const connectWalletBtn = document.getElementById('connect-wallet');
+        if (window.ethereum) {
+            connectWalletBtn.disabled = false;
+            connectWalletBtn.addEventListener('click', connectWallet);
+
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length > 0) {
+                    updateWalletStatus(accounts[0]);
+                } else {
+                    updateWalletStatus(null);
+                }
+            });
+
+        } else {
+            document.getElementById('wallet-status').textContent = 'No wallet found';
+        }
+    }
+    
+    async function connectWallet() {
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            updateWalletStatus(accounts[0]);
+        } catch (err) {
+            console.error(err.message);
+            document.getElementById('wallet-status').textContent = 'Connection failed';
+        }
+    }
+
+    function updateWalletStatus(account) {
+        const walletStatusEl = document.getElementById('wallet-status');
+        const connectWalletBtn = document.getElementById('connect-wallet');
+        
+        if (account) {
+            userAccount = account;
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+            leaderboardContract = new ethers.Contract(contractAddress, contractABI, provider);
+            
+            const truncated = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+            walletStatusEl.textContent = truncated;
+            connectWalletBtn.textContent = 'Connected';
+            connectWalletBtn.disabled = true;
+            if (playMode === 'points') updateArcadeBalances();
+            updateLeaderboard();
+        } else {
+            userAccount = null;
+            walletStatusEl.textContent = 'Not Connected';
+            connectWalletBtn.textContent = 'Connect Wallet';
+            connectWalletBtn.disabled = false;
+        }
+    }
+
+    async function updateLeaderboard() {
+        const leaderboardListEl = document.getElementById('leaderboard-list');
+        if (!leaderboardContract) {
+            leaderboardListEl.innerHTML = '<li>Connect wallet to see scores.</li>';
+            return;
+        }
+        leaderboardListEl.innerHTML = '<li>Loading...</li>';
+        try {
+            const scores = await leaderboardContract.getLeaderboard();
+            if (scores.length === 0) {
+                leaderboardListEl.innerHTML = '<li>No scores yet. Be the first!</li>';
+                return;
+            }
+            const sortedScores = [...scores].sort((a, b) => b.score - a.score);
+            leaderboardListEl.innerHTML = sortedScores.map(entry => 
+                `<li>${entry.player.substring(0, 6)}...${entry.player.substring(entry.player.length - 4)}: ${entry.score}</li>`
+            ).join('');
+        } catch (error) {
+            console.error("Leaderboard fetch failed:", error);
+            leaderboardListEl.innerHTML = '<li>Error loading scores.</li>';
+        }
+    }
+    
+    async function submitScore(finalScore) {
+        if (playMode !== 'points') {
+            alert("You must Play For Points and deposit ARCADE tokens to submit your score.");
+            return;
+        }
+        if (!canPlayForPoints) {
+            alert("You must deposit at least 5 ARCADE tokens to submit your score.");
+            return;
+        }
+        if (!leaderboardContract || !signer) {
+            alert("Please connect your wallet to submit your score.");
+            return;
+        }
+        const submitBtn = document.getElementById('submit-score-btn');
+        const newGameBtn = document.getElementById('new-game-btn');
+        submitBtn.disabled = true;
+        newGameBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const contractWithSigner = leaderboardContract.connect(signer);
+        try {
+            const tx = await contractWithSigner.submitScore(finalScore);
+            submitBtn.textContent = 'Confirming...';
+            await tx.wait();
+            submitBtn.textContent = 'Score Submitted!';
+            newGameBtn.disabled = false; 
+            await updateLeaderboard();
+        } catch (error) {
+            console.error("Score submission failed:", error);
+            alert("Score submission failed. See console for details.");
+            submitBtn.textContent = 'Submission Failed';
+            setTimeout(() => {
+                if (gameOver) {
+                    submitBtn.disabled = !userAccount;
+                    newGameBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Score';
+                }
+            }, 2000);
+        }
+    }
+
+    // --- CONTROLS ---
+    window.addEventListener('keydown', e => {
+        if (['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'].includes(e.key)) {
+            if (playMode === 'points' && !canPlayForPoints) return;
+            e.preventDefault();
+            const keyMap = { 'ArrowUp': 0, 'ArrowRight': 1, 'ArrowDown': 2, 'ArrowLeft': 3 };
+            omega.nextDir = keyMap[e.key];
+        }
+    });
+
+    function handleMobile(dir) {
+        if (playMode === 'points' && !canPlayForPoints) return;
+        omega.nextDir = dir;
+    }
+
+    document.getElementById('btn-up').addEventListener('touchstart', (e) => { e.preventDefault(); handleMobile(0); });
+    document.getElementById('btn-left').addEventListener('touchstart', (e) => { e.preventDefault(); handleMobile(3); });
+    document.getElementById('btn-down').addEventListener('touchstart', (e) => { e.preventDefault(); handleMobile(2); });
+    document.getElementById('btn-right').addEventListener('touchstart', (e) => { e.preventDefault(); handleMobile(1); });
+
+    // --- GAME INIT & LOOP ---
+    let lastTime = 0;
+    
+    function gameLoop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const dt = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+
+        if (!gamePaused) {
+            if (playMode === 'points' && !canPlayForPoints) {
+                // Block game update
+            } else {
+                update(dt);
+            }
+        }
+        
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function init() {
+        // Deep copy of the initial maze state for resetting the game
+        originalMaze = JSON.parse(JSON.stringify(MAZE));
+        MAZE.forEach(row => {
+            row.forEach(tile => {
+                if (tile === 2 || tile === 3) {
+                    totalDots++;
+                }
+            });
+        });
+        dots = totalDots;
+
+        omega = { x: 13, y: 22, dir: 0, nextDir: 0, moveTimer: 0 };
+        ghosts = [
+            { id: 1, x: 13, y: 14, startX: 13, startY: 14, dir: 2, eatenTimer: 0, moveTimer: 0 },
+            { id: 2, x: 14, y: 14, startX: 14, startY: 14, dir: 2, eatenTimer: 0, moveTimer: 0.1 },
+            { id: 3, x: 12, y: 14, startX: 12, startY: 14, dir: 2, eatenTimer: 0, moveTimer: 0.2 },
+            { id: 4, x: 15, y: 14, startX: 15, startY: 14, dir: 2, eatenTimer: 0, moveTimer: 0.3 }
+        ];
+
+        initWallet();
+        resetGame();
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.getElementById('new-game-btn').addEventListener('click', () => {
+        resetGame();
+        // Deduct 5 Arcade Credits if playing for points
+        if (playMode === 'points') {
+            arcadeCredits -= 5;
+            if (arcadeCredits < 0) arcadeCredits = 0;
+            document.getElementById('arcade-credits').textContent = arcadeCredits;
+            updateArcadeBalances();
+            if (arcadeCredits < 5) {
+                canPlayForPoints = false;
+                showBlockPlayOverlay();
+            }
+        }
+    });
+
+    document.getElementById('submit-score-btn').addEventListener('click', () => {
+        submitScore(score);
+    });
+
+    // --- MODE SELECTION LOGIC ---
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('mode-modal').style.display = 'flex';
+      document.getElementById('play-points-btn').onclick = () => selectMode('points');
+      document.getElementById('play-free-btn').onclick = () => selectMode('free');
+      // Add deposit notice
+      let notice = document.createElement('div');
+      notice.id = 'arcade-deposit-notice';
+      notice.style = 'color:#f33;font-size:1.1rem;margin-top:12px;display:none;';
+      notice.textContent = 'You must deposit at least 5 ARCADE tokens to play for points.';
+      document.getElementById('mode-modal').querySelector('div').appendChild(notice);
+    });
+
+    function selectMode(mode) {
+      playMode = mode;
+      document.getElementById('mode-modal').style.display = 'none';
+      if (mode === 'points') {
+        document.getElementById('wallet-section').style.display = '';
+        document.getElementById('arcade-credits-section').style.display = 'flex';
+        document.getElementById('leaderboard').style.display = '';
+        initWallet();
+        initArcadeContracts();
+        updateArcadeBalances();
+        canPlayForPoints = arcadeCredits >= 5;
+      } else {
+        document.getElementById('wallet-section').style.display = 'none';
+        document.getElementById('arcade-credits-section').style.display = 'none';
+        document.getElementById('leaderboard').style.display = 'none';
+        canPlayForPoints = true;
+      }
+      resetGame();
+    }
+
+    // --- ARCADE CONTRACTS INIT ---
+    function initArcadeContracts() {
+      if (window.ethereum) {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        arcadeDepositContract = new ethers.Contract(arcadeDepositAddress, arcadeDepositABI, signer);
+        arcadeTokenContract = new ethers.Contract(arcadeTokenAddress, erc20ABI, signer);
+        updateArcadeBalances();
+      }
+      document.getElementById('arcade-deposit-btn').onclick = handleArcadeDeposit;
+    }
+
+    async function updateArcadeBalances() {
+      if (!userAccount || !arcadeTokenContract) return;
+      const decimals = await arcadeTokenContract.decimals();
+      const bal = await arcadeTokenContract.balanceOf(userAccount);
+      document.getElementById('arcade-balance').textContent = ethers.utils.formatUnits(bal, decimals);
+      document.getElementById('arcade-credits').textContent = arcadeCredits;
+      const playBtn = document.getElementById('play-points-btn');
+      const depositNotice = document.getElementById('arcade-deposit-notice');
+      if (playBtn && depositNotice) {
+        if (arcadeCredits < 5) {
+          playBtn.disabled = true;
+          depositNotice.style.display = 'block';
+          canPlayForPoints = false;
+        } else {
+          playBtn.disabled = false;
+          depositNotice.style.display = 'none';
+          canPlayForPoints = true;
+        }
+      }
+    }
+
+    async function handleArcadeDeposit() {
+      const statusEl = document.getElementById('arcade-deposit-status');
+      const amountInput = document.getElementById('arcade-deposit-amount');
+      let amount = amountInput.value;
+      if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        statusEl.textContent = 'Enter a valid amount.';
+        return;
+      }
+      if (Number(amount) < 5) {
+        statusEl.textContent = 'Minimum deposit is 5 ARCADE tokens.';
+        return;
+      }
+      amount = ethers.utils.parseUnits(amount, 18);
+      try {
+        statusEl.textContent = 'Approving...';
+        const tx1 = await arcadeTokenContract.approve(arcadeDepositAddress, amount);
+        await tx1.wait();
+        statusEl.textContent = 'Depositing...';
+        const tx2 = await arcadeDepositContract.deposit(amount);
+        await tx2.wait();
+        statusEl.textContent = 'Deposit successful!';
+        arcadeCredits += Number(ethers.utils.formatUnits(amount, 18));
+        updateArcadeBalances();
+        if (arcadeCredits >= 5) {
+          canPlayForPoints = true;
+          hideBlockPlayOverlay();
+        }
+      } catch (e) {
+        statusEl.textContent = 'Deposit failed.';
+        console.error(e);
+      }
+    }
+
+    // Overlay to block play if not enough deposit
+    function showBlockPlayOverlay() {
+      let overlay = document.getElementById('block-play-overlay');
+      const canvas = document.getElementById('gameCanvas');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'block-play-overlay';
+        overlay.style = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:30;display:flex;align-items:center;justify-content:center;pointer-events:auto;';
+        overlay.innerHTML = '<div style="background:#181818;padding:48px 32px;border-radius:16px;box-shadow:0 0 32px #0008;text-align:center;min-width:320px;"><h2 style="color:#fff;font-size:2.2rem;margin-bottom:32px;">Deposit Required</h2><div style="color:#f33;font-size:1.2rem;">You must deposit at least 5 ARCADE tokens to play for points.</div></div>';
+        // Insert overlay as a sibling to the canvas, absolutely positioned over it
+        const gameContainer = document.getElementById('game-container');
+        gameContainer.style.position = 'relative';
+        canvas.parentNode.insertBefore(overlay, canvas.nextSibling);
+        // Position overlay over the canvas
+        overlay.style.width = canvas.offsetWidth + 'px';
+        overlay.style.height = canvas.offsetHeight + 'px';
+        overlay.style.left = canvas.offsetLeft + 'px';
+        overlay.style.top = canvas.offsetTop + 'px';
+      } else {
+        overlay.style.display = 'flex';
+        // Reposition overlay in case of resize
+        overlay.style.width = canvas.offsetWidth + 'px';
+        overlay.style.height = canvas.offsetHeight + 'px';
+        overlay.style.left = canvas.offsetLeft + 'px';
+        overlay.style.top = canvas.offsetTop + 'px';
+      }
+    }
+    function hideBlockPlayOverlay() {
+      let overlay = document.getElementById('block-play-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    // Add window resize handler to reposition overlay if visible
+    window.addEventListener('resize', () => {
+      let overlay = document.getElementById('block-play-overlay');
+      const canvas = document.getElementById('gameCanvas');
+      if (overlay && overlay.style.display !== 'none') {
+        overlay.style.width = canvas.offsetWidth + 'px';
+        overlay.style.height = canvas.offsetHeight + 'px';
+        overlay.style.left = canvas.offsetLeft + 'px';
+        overlay.style.top = canvas.offsetTop + 'px';
+      }
+    });
+
+    // Add CSV export logic after updateLeaderboard()
+    document.getElementById('export-leaderboard-csv').addEventListener('click', async () => {
+      if (!leaderboardContract) {
+        alert('Connect wallet to load leaderboard.');
+        return;
+      }
+      try {
+        const scores = await leaderboardContract.getLeaderboard();
+        if (!scores.length) {
+          alert('No scores to export.');
+          return;
+        }
+        let csv = 'Player,Score\n';
+        for (const entry of scores) {
+          csv += `${entry.player},${entry.score}\n`;
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'omega-man-leaderboard.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('Failed to export leaderboard.');
+        console.error(e);
+      }
+    });
+
+    init();
+
+    </script>
+</body>
+</html>

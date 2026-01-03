@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Slides</title>
+    <link rel="stylesheet" href="slides.css">
+</head>
+<body>
+    <!-- Window Title Bar -->
+    <div class="window-titlebar">
+        <div class="window-titlebar-left">
+            <div class="file-menu-container">
+                <button class="file-menu-btn" id="fileMenuBtn">File</button>
+                <div class="file-menu-dropdown" id="fileMenuDropdown">
+                    <div class="file-menu-item" id="fileMenuNew">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        <span>New</span>
+                        <span class="file-menu-shortcut">Ctrl+N</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuOpen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Open</span>
+                        <span class="file-menu-shortcut">Ctrl+O</span>
+                    </div>
+                    <div class="file-menu-divider"></div>
+                    <div class="file-menu-item" id="fileMenuSave">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save</span>
+                        <span class="file-menu-shortcut">Ctrl+S</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuSaveAs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save As...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="window-title">Omega Slides</div>
+        </div>
+        <div class="window-controls">
+            <button class="window-control minimize" id="minimizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="0" y1="6" x2="12" y2="6"/>
+                </svg>
+            </button>
+            <button class="window-control maximize" id="maximizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="8" height="8"/>
+                </svg>
+            </button>
+            <button class="window-control close" id="closeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="2" y1="2" x2="10" y2="10"/>
+                    <line x1="10" y1="2" x2="2" y2="10"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="newBtn" title="New Presentation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="12" y1="8" x2="12" y2="16"/>
+                    <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="openBtn" title="Open">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="saveBtn" title="Save">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="addSlideBtn" title="Add Slide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="12" rx="2"/>
+                    <line x1="9" y1="9" x2="15" y2="9"/>
+                    <line x1="12" y1="6" x2="12" y2="12"/>
+                    <rect x="3" y="17" width="18" height="4" rx="1"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="deleteSlideBtn" title="Delete Slide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="prevSlideBtn" title="Previous Slide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="nextSlideBtn" title="Next Slide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </button>
+            <span class="slide-counter" id="slideCounter">Slide 1 of 1</span>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="boldBtn" title="Bold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                    <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="italicBtn" title="Italic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="4" x2="10" y2="4"/>
+                    <line x1="14" y1="20" x2="5" y2="20"/>
+                    <line x1="15" y1="4" x2="9" y2="20"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="underlineBtn" title="Underline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/>
+                    <line x1="4" y1="21" x2="20" y2="21"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <select class="toolbar-select" id="fontFamilySelect" title="Font Family">
+                <option value="Arial" selected>Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Impact">Impact</option>
+            </select>
+            <select class="toolbar-select" id="fontSizeSelect" title="Font Size">
+                <option value="12">12</option>
+                <option value="14">14</option>
+                <option value="16">16</option>
+                <option value="18" selected>18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+                <option value="36">36</option>
+                <option value="48">48</option>
+                <option value="72">72</option>
+            </select>
+            <input type="color" class="toolbar-color" id="fontColorPicker" value="#000000" title="Font Color">
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="textBoxBtn" title="Add Text Box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <line x1="7" y1="8" x2="17" y2="8"/>
+                    <line x1="7" y1="12" x2="17" y2="12"/>
+                    <line x1="7" y1="16" x2="13" y2="16"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="imageBtn" title="Insert Image">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="shapeBtn" title="Insert Shape">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="themeBtn" title="Change Theme">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="duplicateSlideBtn" title="Duplicate Slide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn ai-btn" id="aiBtn" title="AI Assistant">
+                <span style="font-size: 12px; font-weight: 500;">AI</span>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="alignLeftBtn" title="Align Left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="21" y1="10" x2="7" y2="10"/>
+                    <line x1="21" y1="6" x2="3" y2="6"/>
+                    <line x1="21" y1="14" x2="3" y2="14"/>
+                    <line x1="21" y1="18" x2="7" y2="18"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="alignCenterBtn" title="Align Center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="10" x2="6" y2="10"/>
+                    <line x1="21" y1="6" x2="3" y2="6"/>
+                    <line x1="21" y1="14" x2="3" y2="14"/>
+                    <line x1="18" y1="18" x2="6" y2="18"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" id="alignRightBtn" title="Align Right">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="21" y1="10" x2="3" y2="10"/>
+                    <line x1="21" y1="6" x2="3" y2="6"/>
+                    <line x1="21" y1="14" x2="3" y2="14"/>
+                    <line x1="21" y1="18" x2="17" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-group">
+            <button class="toolbar-btn" id="presentBtn" title="Start Presentation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Hidden file input for images -->
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+    <!-- Main Content Area -->
+    <div class="slides-container">
+        <!-- Slide Thumbnails Sidebar -->
+        <div class="slides-sidebar" id="slidesSidebar">
+            <div class="slides-list" id="slidesList">
+                <!-- Slide thumbnails will be added here -->
+            </div>
+        </div>
+
+        <!-- Slide Editor -->
+        <div class="slide-editor-area">
+            <div class="slide-canvas-container">
+                <div class="slide-canvas" id="slideCanvas">
+                    <div class="slide" id="currentSlide">
+                        <!-- Slide content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Sidebar -->
+        <div class="ai-sidebar" id="aiSidebar">
+            <div class="ai-sidebar-header">
+                <h3>AI Assistant</h3>
+                <button class="ai-sidebar-toggle" id="aiSidebarToggle" title="Toggle AI Sidebar">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10 4 L6 8 L10 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="ai-chat-container">
+                <div class="ai-chat-messages" id="aiChatMessages">
+                    <div class="ai-welcome-message">
+                        <p>AI Assistant Ready</p>
+                        <p class="subtitle">Ask me to write or improve text for your slides. Example: "Write content for a slide about space exploration"</p>
+                    </div>
+                </div>
+                <div class="ai-chat-input-container">
+                    <textarea class="ai-chat-input" id="aiChatInput" placeholder="Ask AI to write or improve text... (Shift+Enter for new line)" rows="2"></textarea>
+                    <button class="ai-chat-send" id="aiChatSend">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3 L8 10 M15 3 L10 15 L8 10 M15 3 L2 8"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shape Selection Modal -->
+    <div class="modal-overlay" id="shapeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Insert Shape</h3>
+                <button class="modal-close" id="closeShapeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shape-grid">
+                    <div class="shape-option" data-shape="rect">
+                        <div class="shape-preview" style="width: 80px; height: 60px; background: #0078d4; border-radius: 4px; margin: 0 auto;"></div>
+                        <span>Rectangle</span>
+                    </div>
+                    <div class="shape-option" data-shape="circle">
+                        <div class="shape-preview" style="width: 60px; height: 60px; background: #0078d4; border-radius: 50%; margin: 0 auto;"></div>
+                        <span>Circle</span>
+                    </div>
+                    <div class="shape-option" data-shape="line">
+                        <div class="shape-preview" style="width: 80px; height: 4px; background: #333; margin: 28px auto;"></div>
+                        <span>Line</span>
+                    </div>
+                    <div class="shape-option" data-shape="arrow">
+                        <div class="shape-preview" style="font-size: 40px; text-align: center; color: #0078d4; line-height: 60px;">→</div>
+                        <span>Arrow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Selection Modal -->
+    <div class="modal-overlay" id="themeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Choose Theme</h3>
+                <button class="modal-close" id="closeThemeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="theme-categories">
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Professional</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="corporate">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);"></div>
+                                <span>Corporate Blue</span>
+                            </div>
+                            <div class="theme-option" data-theme="professional">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);"></div>
+                                <span>Professional Gray</span>
+                            </div>
+                            <div class="theme-option" data-theme="royal">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);"></div>
+                                <span>Royal Gold</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Modern & Vibrant</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="modern">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                                <span>Modern Gradient</span>
+                            </div>
+                            <div class="theme-option" data-theme="vibrant">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #45b7d1 100%);"></div>
+                                <span>Vibrant Rainbow</span>
+                            </div>
+                            <div class="theme-option" data-theme="energy">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);"></div>
+                                <span>Energy Red</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Nature & Fresh</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="nature">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);"></div>
+                                <span>Nature Green</span>
+                            </div>
+                            <div class="theme-option" data-theme="fresh">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"></div>
+                                <span>Fresh Mint</span>
+                            </div>
+                            <div class="theme-option" data-theme="forest">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);"></div>
+                                <span>Forest Green</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Dark & Tech</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="tech">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);"></div>
+                                <span>Tech Dark</span>
+                            </div>
+                            <div class="theme-option" data-theme="midnight">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);"></div>
+                                <span>Midnight Blue</span>
+                            </div>
+                            <div class="theme-option" data-theme="ocean">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);"></div>
+                                <span>Ocean Depth</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Warm & Cool</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="sunset">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff6b6b 100%);"></div>
+                                <span>Sunset Orange</span>
+                            </div>
+                            <div class="theme-option" data-theme="warm">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%);"></div>
+                                <span>Warm Sunset</span>
+                            </div>
+                            <div class="theme-option" data-theme="cool">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                                <span>Cool Blue</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-category-section">
+                        <h4 class="theme-category-title">Minimal & Elegant</h4>
+                        <div class="theme-grid">
+                            <div class="theme-option" data-theme="default">
+                                <div class="theme-preview-large" style="background: white; border: 2px solid #e0e0e0;"></div>
+                                <span>Default</span>
+                            </div>
+                            <div class="theme-option" data-theme="minimal">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);"></div>
+                                <span>Minimal Light</span>
+                            </div>
+                            <div class="theme-option" data-theme="elegant">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #434343 0%, #000000 100%);"></div>
+                                <span>Elegant Purple</span>
+                            </div>
+                            <div class="theme-option" data-theme="pastel">
+                                <div class="theme-preview-large" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);"></div>
+                                <span>Pastel Dream</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="slides.js"></script>
+</body>
+</html>
+

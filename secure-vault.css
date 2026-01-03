@@ -1,0 +1,391 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+}
+
+.window-titlebar {
+    height: 32px;
+    background: #2d2d2d;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    user-select: none;
+    -webkit-app-region: drag;
+}
+
+.window-title {
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.window-controls {
+    display: flex;
+    gap: 0;
+    -webkit-app-region: no-drag;
+}
+
+.window-control {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.window-control:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.window-control.close:hover {
+    background: #e81123;
+    color: white;
+}
+
+.window-control svg {
+    width: 12px;
+    height: 12px;
+}
+
+.app-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: white;
+}
+
+.sidebar {
+    width: 240px;
+    background: #f8f9fa;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    font-size: 32px;
+}
+
+.sidebar-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.sidebar-actions {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid #e0e0e0;
+}
+
+.sidebar-btn:hover {
+    background: #f0f0f0;
+    border-color: #0078d4;
+}
+
+.sidebar-btn.primary {
+    background: #0078d4;
+    color: white;
+    border-color: #0078d4;
+}
+
+.sidebar-btn.primary:hover {
+    background: #0063b1;
+}
+
+.sidebar-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.vault-stats {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-header {
+    padding: 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.content-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.content-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.lock-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.lock-icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+}
+
+.lock-screen h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.lock-screen p {
+    color: #666;
+    margin-bottom: 32px;
+}
+
+.password-input {
+    display: flex;
+    gap: 8px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.password-input input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.password-input input:focus {
+    outline: none;
+    border-color: #0078d4;
+}
+
+.unlock-btn {
+    padding: 12px 24px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.unlock-btn:hover {
+    background: #0063b1;
+}
+
+.setup-link {
+    margin-top: 16px;
+}
+
+.setup-link a {
+    color: #0078d4;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.setup-link a:hover {
+    text-decoration: underline;
+}
+
+.vault-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.breadcrumb {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.breadcrumb-item {
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.breadcrumb-item:hover {
+    color: #0078d4;
+}
+
+.breadcrumb-item.active {
+    color: #333;
+    font-weight: 500;
+    cursor: default;
+}
+
+.breadcrumb-item::after {
+    content: ' / ';
+    margin-left: 8px;
+    color: #ccc;
+}
+
+.breadcrumb-item:last-child::after {
+    display: none;
+}
+
+.file-grid {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.file-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.file-item:hover {
+    background: #f8f9fa;
+    border-color: #e0e0e0;
+}
+
+.file-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.file-name {
+    font-size: 12px;
+    text-align: center;
+    color: #333;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.empty-state.hidden {
+    display: none;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 14px;
+}
+
+.file-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.file-grid::-webkit-scrollbar-track {
+    background: #f5f5f5;
+}
+
+.file-grid::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.file-grid::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+

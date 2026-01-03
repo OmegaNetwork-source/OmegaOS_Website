@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Identity</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="identity.css">
+</head>
+<body>
+    <div class="identity-window">
+        <div class="identity-header">
+            <h2>Omega Identity</h2>
+            <div class="identity-window-controls">
+                <button class="identity-window-btn" id="minimizeBtn" title="Minimize">−</button>
+                <button class="identity-window-btn" id="maximizeBtn" title="Maximize">□</button>
+                <button class="identity-close" id="closeBtn" title="Close">×</button>
+            </div>
+        </div>
+
+        <div class="identity-body">
+            <!-- Identity Status -->
+            <div id="identityStatus" class="identity-section">
+                <div class="identity-card">
+                    <h3>Your Omega Identity</h3>
+                    <div id="identityInfo" class="identity-info">
+                        <p class="loading">Loading identity...</p>
+                    </div>
+                    <button id="initializeIdentityBtn" class="identity-btn primary" style="display: none;">
+                        Initialize Identity
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cross-Device Sync -->
+            <div class="identity-section">
+                <div class="identity-card">
+                    <h3>Cross-Device Sync</h3>
+                    <p class="section-description">Sync your documents across all your Omega OS devices</p>
+                    <div id="syncStatus" class="sync-status">
+                        <p>Sync is ready when identity is initialized</p>
+                    </div>
+                    <div id="syncedDocuments" class="synced-documents">
+                        <!-- Synced documents will appear here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Licensing -->
+            <div class="identity-section">
+                <div class="identity-card">
+                    <h3>App Licensing</h3>
+                    <p class="section-description">Manage your app licenses on Omega Network</p>
+                    <div id="licensesList" class="licenses-list">
+                        <div class="license-item">
+                            <div class="license-info">
+                                <span class="license-name">Omega OS Pro</span>
+                                <span class="license-status" id="proLicenseStatus">Checking...</span>
+                            </div>
+                            <button id="purchaseProBtn" class="identity-btn secondary" style="display: none;">
+                                Purchase License
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secure Login -->
+            <div class="identity-section">
+                <div class="identity-card">
+                    <h3>Secure Login</h3>
+                    <p class="section-description">Authenticate using your Omega Identity</p>
+                    <div class="login-demo">
+                        <button id="testLoginBtn" class="identity-btn primary">
+                            Test Authentication
+                        </button>
+                        <div id="loginResult" class="login-result" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="identity.js"></script>
+</body>
+</html>
+

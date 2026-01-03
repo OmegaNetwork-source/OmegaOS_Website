@@ -1,0 +1,16 @@
+# Extensions Directory
+
+Place bundled Chrome extensions here:
+- extensions/phantom/ - Phantom Wallet extension
+- extensions/metamask/ - MetaMask extension
+
+Each extension folder should contain:
+- manifest.json
+- All other extension files
+
+To bundle extensions, run:
+  npm run extensions:bundle
+
+See EXTENSIONS_README.md for detailed instructions.
+
+

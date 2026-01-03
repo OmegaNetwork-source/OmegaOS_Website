@@ -72,6 +72,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            position: relative;
         }
 
         .toolbar-btn {
@@ -172,6 +173,136 @@
         .empty-state-text {
             font-size: 16px;
         }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            padding: 4px 0;
+            z-index: 1000;
+            min-width: 180px;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .context-menu-item.disabled {
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .context-menu-item.disabled:hover {
+            background: transparent;
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+
+        .file-item.selected {
+            background: #e3f2fd;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: #d0d0d0;
+            margin: 0 8px;
+        }
+
+        .sort-menu, .view-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            padding: 4px 0;
+            display: none;
+            z-index: 1000;
+            min-width: 150px;
+            margin-top: 2px;
+        }
+
+        .sort-menu.show, .view-menu.show {
+            display: block;
+        }
+
+        .sort-menu-item, .view-menu-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #333;
+            transition: background 0.1s;
+        }
+
+        .sort-menu-item:hover, .view-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .sort-menu-item.active, .view-menu-item.active {
+            background: #e3f2fd;
+            color: #0078d4;
+        }
+
+        .sort-menu-separator {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 4px 0;
+        }
+
+        .file-list.grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+        }
+
+        .file-list.grid-view .file-item {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .file-list.grid-view .file-icon {
+            font-size: 48px;
+            width: auto;
+            height: auto;
+        }
+
+        .file-list.grid-view .file-info {
+            width: 100%;
+        }
+
+        .file-list.grid-view .file-name {
+            white-space: normal;
+            word-break: break-word;
+            margin-top: 8px;
+        }
+
+        .file-list.grid-view .file-details {
+            margin-top: 4px;
+        }
+
+        .file-list.grid-view .file-size {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -198,6 +329,22 @@
 
     <div class="toolbar">
         <button class="toolbar-btn" id="refreshBtn">Refresh</button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn" id="sortBtn">Sort ▾</button>
+        <div class="sort-menu" id="sortMenu">
+            <div class="sort-menu-item" data-sort="name">Sort by Name</div>
+            <div class="sort-menu-item" data-sort="date">Sort by Date</div>
+            <div class="sort-menu-item" data-sort="size">Sort by Size</div>
+            <div class="sort-menu-item" data-sort="type">Sort by Type</div>
+            <div class="sort-menu-separator"></div>
+            <div class="sort-menu-item" data-sort="asc">Ascending</div>
+            <div class="sort-menu-item" data-sort="desc">Descending</div>
+        </div>
+        <button class="toolbar-btn" id="viewBtn">View ▾</button>
+        <div class="view-menu" id="viewMenu">
+            <div class="view-menu-item active" data-view="list">List View</div>
+            <div class="view-menu-item" data-view="grid">Grid View</div>
+        </div>
         <div class="toolbar-path" id="pathDisplay">Documents</div>
     </div>
 
@@ -208,8 +355,35 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" id="contextOpen">
+            <span>📂</span>
+            <span>Open</span>
+        </div>
+        <div class="context-menu-item" id="contextRename">
+            <span>✏️</span>
+            <span>Rename</span>
+        </div>
+        <div class="context-menu-item" id="contextCopy">
+            <span>📋</span>
+            <span>Copy</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="contextDelete">
+            <span>🗑️</span>
+            <span>Delete</span>
+        </div>
+    </div>
+
     <script>
         let windowId = null;
+        let selectedFile = null;
+        let clipboardFile = null;
+        let currentSort = 'name';
+        let sortOrder = 'asc';
+        let currentView = 'list';
+        let allFiles = [];
 
         // Get window ID
         if (window.electronAPI) {
@@ -217,6 +391,133 @@
                 windowId = id;
             });
         }
+
+        // Context menu
+        const contextMenu = document.getElementById('contextMenu');
+        let contextMenuFile = null;
+
+        // Hide context menu when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.style.display = 'none';
+            }
+        });
+
+        // Hide context menu on scroll
+        document.getElementById('fileList').addEventListener('scroll', () => {
+            contextMenu.style.display = 'none';
+        });
+
+        // Context menu actions
+        document.getElementById('contextOpen').addEventListener('click', () => {
+            if (contextMenuFile && window.electronAPI && window.electronAPI.openFileInApp) {
+                if (!contextMenuFile.isDirectory) {
+                    window.electronAPI.openFileInApp(contextMenuFile.path).then(result => {
+                        if (!result.success) {
+                            alert('Failed to open file: ' + result.error);
+                        }
+                    });
+                }
+            }
+            contextMenu.style.display = 'none';
+        });
+
+        document.getElementById('contextRename').addEventListener('click', async () => {
+            if (!contextMenuFile || !window.electronAPI || !window.electronAPI.renameFile) {
+                contextMenu.style.display = 'none';
+                return;
+            }
+
+            const newName = prompt('Enter new name:', contextMenuFile.name);
+            if (newName && newName.trim() && newName.trim() !== contextMenuFile.name) {
+                try {
+                    const success = await window.electronAPI.renameFile(contextMenuFile.path, newName.trim());
+                    if (success) {
+                        loadFiles();
+                    } else {
+                        alert('Failed to rename file');
+                    }
+                } catch (error) {
+                    alert('Failed to rename file: ' + error.message);
+                }
+            }
+            contextMenu.style.display = 'none';
+        });
+
+        document.getElementById('contextCopy').addEventListener('click', async () => {
+            if (contextMenuFile && window.electronAPI && window.electronAPI.copyFile) {
+                try {
+                    // Create copy with "Copy of" prefix
+                    const fileName = contextMenuFile.name;
+                    const fileDir = contextMenuFile.path.substring(0, Math.max(
+                        contextMenuFile.path.lastIndexOf('\\'),
+                        contextMenuFile.path.lastIndexOf('/')
+                    ));
+                    const lastDot = fileName.lastIndexOf('.');
+                    const ext = lastDot >= 0 ? fileName.substring(lastDot) : '';
+                    const baseName = lastDot >= 0 ? fileName.substring(0, lastDot) : fileName;
+                    
+                    // Get directory separator
+                    const separator = contextMenuFile.path.includes('\\') ? '\\' : '/';
+                    
+                    let copyName = `Copy of ${baseName}${ext}`;
+                    let copyPath = fileDir + separator + copyName;
+                    
+                    // Handle duplicate copies
+                    let counter = 1;
+                    while (await checkFileExists(copyPath)) {
+                        copyName = `Copy (${counter}) of ${baseName}${ext}`;
+                        copyPath = fileDir + separator + copyName;
+                        counter++;
+                    }
+                    
+                    const success = await window.electronAPI.copyFile(contextMenuFile.path, copyPath);
+                    if (success) {
+                        loadFiles();
+                    } else {
+                        alert('Failed to copy file');
+                    }
+                } catch (error) {
+                    alert('Failed to copy file: ' + error.message);
+                }
+            }
+            contextMenu.style.display = 'none';
+        });
+
+        // Helper to check if file exists (simple check via listDocuments)
+        async function checkFileExists(filePath) {
+            try {
+                const files = await window.electronAPI.listDocuments();
+                return files.some(f => f.path === filePath);
+            } catch {
+                return false;
+            }
+        }
+
+        document.getElementById('contextDelete').addEventListener('click', async () => {
+            if (!contextMenuFile || !window.electronAPI || !window.electronAPI.deleteFile) {
+                contextMenu.style.display = 'none';
+                return;
+            }
+
+            const confirmMsg = contextMenuFile.isDirectory 
+                ? `Are you sure you want to delete the folder "${contextMenuFile.name}"?`
+                : `Are you sure you want to delete "${contextMenuFile.name}"?`;
+            
+            if (confirm(confirmMsg)) {
+                try {
+                    const success = await window.electronAPI.deleteFile(contextMenuFile.path);
+                    if (success) {
+                        loadFiles();
+                    } else {
+                        alert('Failed to delete file');
+                    }
+                } catch (error) {
+                    alert('Failed to delete file: ' + error.message);
+                }
+            }
+            contextMenu.style.display = 'none';
+        });
 
         // Title bar controls
         document.getElementById('minimizeBtn').addEventListener('click', () => {
@@ -266,22 +567,57 @@
             return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Load files
-        async function loadFiles() {
+        // Sort files
+        function sortFiles(files) {
+            const sorted = [...files];
+            sorted.sort((a, b) => {
+                let comparison = 0;
+                
+                // Directories first
+                if (a.isDirectory && !b.isDirectory) return -1;
+                if (!a.isDirectory && b.isDirectory) return 1;
+                
+                switch (currentSort) {
+                    case 'name':
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case 'date':
+                        comparison = (a.modified || 0) - (b.modified || 0);
+                        break;
+                    case 'size':
+                        comparison = (a.size || 0) - (b.size || 0);
+                        break;
+                    case 'type':
+                        const aExt = a.extension || '';
+                        const bExt = b.extension || '';
+                        if (aExt !== bExt) {
+                            comparison = aExt.localeCompare(bExt);
+                        } else {
+                            comparison = a.name.localeCompare(b.name);
+                        }
+                        break;
+                }
+                
+                return sortOrder === 'asc' ? comparison : -comparison;
+            });
+            
+            return sorted;
+        }
+
+        // Render files
+        function renderFiles(files) {
             const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Loading files...</div></div>';
-
-            try {
-                if (window.electronAPI && window.electronAPI.listDocuments) {
-                    const files = await window.electronAPI.listDocuments();
-                    
-                    if (files.length === 0) {
-                        fileList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">This folder is empty</div></div>';
-                        return;
-                    }
-
-                    fileList.innerHTML = '';
-                    files.forEach(file => {
+            fileList.innerHTML = '';
+            
+            // Apply view class
+            fileList.className = currentView === 'grid' ? 'file-list grid-view' : 'file-list';
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">This folder is empty</div></div>';
+                return;
+            }
+            
+            files.forEach(file => {
                         const item = document.createElement('div');
                         item.className = 'file-item';
                         item.innerHTML = `
@@ -292,6 +628,43 @@
                             </div>
                             ${!file.isDirectory ? `<div class="file-size">${formatFileSize(file.size)}</div>` : ''}
                         `;
+
+                        // Click to select
+                        item.addEventListener('click', (e) => {
+                            if (e.button === 0) { // Left click
+                                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
+                                item.classList.add('selected');
+                                selectedFile = file;
+                            }
+                        });
+
+                        // Right-click for context menu
+                        item.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                            contextMenuFile = file;
+                            
+                            // Position context menu
+                            const rect = item.getBoundingClientRect();
+                            const menuWidth = 180;
+                            const menuHeight = 200;
+                            let left = e.clientX;
+                            let top = e.clientY;
+                            
+                            // Adjust if menu would go off screen
+                            if (left + menuWidth > window.innerWidth) {
+                                left = window.innerWidth - menuWidth - 10;
+                            }
+                            if (top + menuHeight > window.innerHeight) {
+                                top = window.innerHeight - menuHeight - 10;
+                            }
+                            
+                            contextMenu.style.left = left + 'px';
+                            contextMenu.style.top = top + 'px';
+                            contextMenu.style.display = 'block';
+                            
+                            // Update menu item states
+                            document.getElementById('contextOpen').classList.toggle('disabled', file.isDirectory);
+                        });
 
                         // Double-click to open
                         item.addEventListener('dblclick', () => {
@@ -306,11 +679,83 @@
 
                         fileList.appendChild(item);
                     });
+        }
+
+        // Load files
+        async function loadFiles() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Loading files...</div></div>';
+
+            try {
+                if (window.electronAPI && window.electronAPI.listDocuments) {
+                    allFiles = await window.electronAPI.listDocuments();
+                    const sorted = sortFiles(allFiles);
+                    renderFiles(sorted);
                 }
             } catch (error) {
                 fileList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">Error loading files: ${error.message}</div></div>`;
             }
         }
+
+        // Sort menu
+        const sortBtn = document.getElementById('sortBtn');
+        const sortMenu = document.getElementById('sortMenu');
+        const viewBtn = document.getElementById('viewBtn');
+        const viewMenu = document.getElementById('viewMenu');
+        
+        sortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortMenu.classList.toggle('show');
+            viewMenu.classList.remove('show');
+        });
+        
+        viewBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewMenu.classList.toggle('show');
+            sortMenu.classList.remove('show');
+        });
+        
+        // Close menus when clicking outside
+        document.addEventListener('click', () => {
+            sortMenu.classList.remove('show');
+            viewMenu.classList.remove('show');
+        });
+        
+        // Sort menu items
+        document.querySelectorAll('.sort-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sortType = item.dataset.sort;
+                
+                if (sortType === 'asc' || sortType === 'desc') {
+                    sortOrder = sortType;
+                } else {
+                    currentSort = sortType;
+                    document.querySelectorAll('.sort-menu-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                }
+                
+                const sorted = sortFiles(allFiles);
+                renderFiles(sorted);
+                sortMenu.classList.remove('show');
+            });
+        });
+        
+        // View menu items
+        document.querySelectorAll('.view-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentView = item.dataset.view;
+                document.querySelectorAll('.view-menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                renderFiles(sortFiles(allFiles));
+                viewMenu.classList.remove('show');
+            });
+        });
+        
+        // Set initial active sort
+        document.querySelector('.sort-menu-item[data-sort="name"]').classList.add('active');
 
         // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', loadFiles);
@@ -320,4 +765,5 @@
     </script>
 </body>
 </html>
+
 

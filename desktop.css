@@ -121,6 +121,15 @@ body {
     text-overflow: ellipsis;
 }
 
+.vpn-status-badge-location .vpn-ip-address {
+    filter: blur(4px);
+    transition: filter 0.2s ease;
+}
+
+.vpn-status-badge:hover .vpn-status-badge-location .vpn-ip-address {
+    filter: blur(0px);
+}
+
 .vpn-status-badge-icon {
     width: 16px;
     height: 16px;
@@ -193,6 +202,138 @@ body {
     backdrop-filter: blur(10px);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+/* Fix emoji vertical centering - emojis have baseline offset that pushes them down */
+.desktop-icon .icon-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Specific fix for emoji content - shift up to compensate for baseline */
+.desktop-icon .icon-image > * {
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+    transform: translateY(-6px);
+    margin: 0;
+    padding: 0;
+}
+
+/* Binary Icon Styles */
+.binary-icon {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 8px;
+    line-height: 1.2;
+    color: #00ff00;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    transform: none !important;
+}
+
+.binary-row {
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.binary-icon-small {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 3px;
+    line-height: 1;
+    color: #00ff00;
+    text-shadow: 0 0 1px rgba(0, 255, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 1px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 0, 0.3);
+    transform: none !important;
+    width: 48px;
+    height: 48px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.binary-row-small {
+    letter-spacing: 0.2px;
+    font-weight: 600;
+    font-size: 3px;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.binary-row-small {
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Omega Identity Icon - Custom Black Logo with White Circle */
+.identity-icon {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: none !important;
+    position: relative;
+}
+
+.identity-icon > * {
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.identity-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 0 0 24px rgba(255, 255, 255, 0.3);
+    display: block;
+    margin: 0;
+    padding: 0;
+    transform: none !important;
+}
+
+/* Omega Identity Icon - Start Menu */
+.identity-icon-small {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.identity-circle-small {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6), 0 0 12px rgba(255, 255, 255, 0.3);
+    display: block;
+    margin: 0;
+    padding: 0;
 }
 
 .icon-label {
@@ -202,6 +343,193 @@ body {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     max-width: 80px;
     word-wrap: break-word;
+}
+
+/* App Folder Icons (iOS-style) */
+.folder-icon .folder-background {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.folder-icon-grid {
+    display: grid;
+    gap: 3px;
+    padding: 6px;
+    width: 100%;
+    height: 100%;
+}
+
+.folder-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.folder-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.folder-grid-5 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.folder-icon-item {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Adjust for 3-item grid - make first item span 2 columns */
+.folder-grid-3 .folder-icon-item:first-child {
+    grid-column: span 2;
+    font-size: 18px;
+}
+
+/* App Folder Modal */
+.app-folder-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50000;
+    animation: fadeIn 0.2s ease;
+}
+
+.app-folder-modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.app-folder-content {
+    background: rgba(30, 30, 30, 0.95);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.app-folder-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.app-folder-header h2 {
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.app-folder-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 24px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.app-folder-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.app-folder-grid {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    overflow-y: auto;
+    max-height: calc(80vh - 80px);
+}
+
+.folder-app-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.folder-app-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.folder-app-item .icon-image {
+    width: 64px;
+    height: 64px;
+    font-size: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.folder-app-item .icon-label {
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    max-width: 80px;
 }
 
 /* Taskbar - Windows 11 Style */
@@ -374,6 +702,227 @@ body {
     height: 40px;
 }
 
+/* Crypto Price Widget */
+.crypto-widget {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 12px;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    height: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.crypto-widget:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.crypto-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.crypto-symbol {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.crypto-price {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    margin: 0 2px;
+}
+
+.crypto-change {
+    font-weight: 600;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 2px;
+}
+
+.crypto-change.positive {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.15);
+}
+
+.crypto-change.negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.crypto-change.neutral {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Crypto Settings Modal */
+.crypto-settings-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50000;
+}
+
+.crypto-settings-modal.active {
+    display: flex;
+}
+
+.crypto-settings-content {
+    background: rgba(30, 30, 30, 0.98);
+    backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.crypto-settings-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.crypto-settings-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.crypto-settings-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 24px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.crypto-settings-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.crypto-settings-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.crypto-tokens-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.crypto-token-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.crypto-token-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.crypto-token-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #4ade80;
+}
+
+.crypto-token-item label {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.crypto-token-symbol {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.crypto-token-name {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.crypto-settings-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.crypto-settings-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.crypto-settings-btn.cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.crypto-settings-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.crypto-settings-btn.apply {
+    background: #4ade80;
+    color: white;
+}
+
+.crypto-settings-btn.apply:hover {
+    background: #22c55e;
+}
+
 .tray-icon {
     width: 24px;
     height: 24px;
@@ -384,10 +933,65 @@ body {
     cursor: pointer;
     transition: all 0.15s ease;
     color: rgba(255, 255, 255, 0.9);
+    position: relative;
 }
 
 .tray-icon:hover {
     background: rgba(255, 255, 255, 0.08);
+}
+
+/* System Tray (Hidden Icons) - Windows Style */
+.system-tray {
+    display: none !important;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    margin: 0;
+    height: 40px;
+}
+
+.system-tray.expanded {
+    display: flex !important;
+}
+
+.system-tray .tray-icon {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 0;
+    margin: 0;
+}
+
+.tray-toggle {
+    width: 20px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.2s;
+    padding: 0 4px;
+    margin: 0 2px;
+    border-radius: 2px;
+}
+
+.tray-toggle:hover {
+    color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tray-toggle svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s;
+    stroke-width: 3;
+    font-weight: bold;
+}
+
+.tray-toggle.expanded svg {
+    transform: rotate(180deg);
 }
 
 .tray-icon svg {
@@ -1162,5 +1766,825 @@ body {
 
 .vpn-location-btn.secondary:hover {
     background: rgba(255, 255, 255, 0.15);
+}
+
+/* Trash Icon */
+.trash-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #e81123;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    min-width: 18px;
+    text-align: center;
+    border: 2px solid var(--taskbar-bg);
+}
+
+/* Volume/Brightness Controls */
+.volume-control, .brightness-control {
+    position: relative;
+}
+
+.volume-slider-popup, .brightness-slider-popup {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    padding: 12px 8px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 40px;
+    z-index: 10000;
+    pointer-events: auto;
+    margin-bottom: 4px; /* Small gap to prevent immediate hide */
+}
+
+.volume-control:hover .volume-slider-popup,
+.volume-slider-popup:hover,
+.brightness-control:hover .brightness-slider-popup,
+.brightness-slider-popup:hover {
+    display: flex !important;
+}
+
+/* Ensure the icon itself is still clickable */
+.volume-control, .brightness-control {
+    position: relative;
+    pointer-events: auto;
+}
+
+.volume-control:hover, .brightness-control:hover {
+    pointer-events: auto;
+}
+
+.volume-slider-popup input[type="range"],
+.brightness-slider-popup input[type="range"] {
+    writing-mode: bt-lr; /* IE */
+    -webkit-appearance: slider-vertical; /* WebKit */
+    appearance: slider-vertical; /* Standard */
+    width: 8px;
+    height: 100px;
+    cursor: pointer;
+}
+
+.volume-slider-popup span,
+.brightness-slider-popup span {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Lock Screen */
+.lock-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lock-screen-content {
+    text-align: center;
+    color: white;
+    padding: 120px 160px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 24px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: visible;
+    min-width: 800px;
+    min-height: 600px;
+}
+
+.lock-screen-content::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 24px;
+    border: 1.5px solid transparent;
+    z-index: -1;
+}
+
+.lock-screen-content::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.6);
+    animation: traceBorder 4s linear infinite;
+    z-index: 1;
+}
+
+@keyframes traceBorder {
+    0% {
+        top: -10px;
+        left: -10px;
+        transform: translate(0, 0);
+    }
+    25% {
+        top: -10px;
+        left: calc(100% - 10px);
+        transform: translate(0, 0);
+    }
+    50% {
+        top: calc(100% - 10px);
+        left: calc(100% - 10px);
+        transform: translate(0, 0);
+    }
+    75% {
+        top: calc(100% - 10px);
+        left: -10px;
+        transform: translate(0, 0);
+    }
+    100% {
+        top: -10px;
+        left: -10px;
+        transform: translate(0, 0);
+    }
+}
+
+.lock-screen-icon {
+    font-size: 80px;
+    margin-bottom: 24px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.lock-screen-content h2 {
+    font-size: 32px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.lock-screen-content p {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 32px;
+}
+
+.lock-screen-input {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.lock-screen-input input {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+}
+
+.lock-screen-input input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.lock-screen-input button {
+    padding: 14px 32px;
+    background: transparent;
+    color: white;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 200px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+.lock-screen-input button:hover {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 24px rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Trash Modal */
+.trash-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trash-modal-content {
+    background: var(--start-menu-bg);
+    border-radius: 12px;
+    width: 600px;
+    max-width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.trash-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trash-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.trash-modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    border-radius: 6px;
+}
+
+.trash-modal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.trash-modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 200px;
+}
+
+.trash-item {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trash-item-info {
+    flex: 1;
+}
+
+.trash-item-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.trash-item-path {
+    font-size: 12px;
+    color: #666;
+}
+
+.trash-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.trash-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.trash-btn.secondary {
+    background: #0078d4;
+    color: white;
+}
+
+.trash-btn.secondary:hover {
+    background: #0063b1;
+}
+
+.trash-btn.danger {
+    background: #e81123;
+    color: white;
+}
+
+.trash-btn.danger:hover {
+    background: #c50e1f;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.trash-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Window Snapping */
+.app-window.snapping {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-window.snapped-left {
+    left: 0 !important;
+    width: 50% !important;
+    top: 0 !important;
+    height: 100% !important;
+}
+
+.app-window.snapped-right {
+    left: 50% !important;
+    width: 50% !important;
+    top: 0 !important;
+    height: 100% !important;
+}
+
+.app-window.snapped-top {
+    left: 0 !important;
+    width: 100% !important;
+    top: 0 !important;
+    height: 50% !important;
+}
+
+.app-window.snapped-bottom {
+    left: 0 !important;
+    width: 100% !important;
+    top: 50% !important;
+    height: 50% !important;
+}
+
+.app-window.snapped-full {
+    left: 0 !important;
+    width: 100% !important;
+    top: 0 !important;
+    height: 100% !important;
+}
+
+/* Multiple Desktops */
+.desktop-switcher {
+    position: fixed;
+    bottom: calc(var(--taskbar-height) + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 8px;
+    display: none;
+    gap: 8px;
+    z-index: 15000;
+}
+
+.desktop-switcher.active {
+    display: flex;
+}
+
+/* AI Assistant Button */
+.ai-assistant-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+.ai-assistant-btn:hover {
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 24px rgba(255, 255, 255, 0.3);
+}
+
+.ai-assistant-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.3), 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.ai-assistant-btn svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    display: none; /* Hide the icon */
+}
+
+.ai-assistant-btn span {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    color: white;
+}
+
+/* AI Assistant Modal */
+.ai-assistant-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    z-index: 50000;
+    pointer-events: none;
+}
+
+.ai-assistant-modal.active {
+    display: block;
+    pointer-events: all;
+}
+
+.ai-assistant-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 600px;
+    min-width: 400px;
+    min-height: 300px;
+    max-width: 95vw;
+    max-height: 95vh;
+    background: #1e1e1e;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2), 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    resize: both;
+    cursor: default;
+}
+
+.ai-assistant-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.15) 30%, rgba(255, 255, 255, 0.15) 50%, transparent 50%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 70%, transparent 70%);
+    cursor: nwse-resize;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.ai-assistant-container:hover::after {
+    background: linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.25) 30%, rgba(255, 255, 255, 0.25) 50%, transparent 50%, transparent 50%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.25) 70%, transparent 70%);
+}
+
+.ai-assistant-container.minimized {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    resize: none;
+    overflow: visible;
+}
+
+.ai-assistant-container.minimized .ai-assistant-content {
+    display: none !important;
+    height: 0 !important;
+    flex: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.ai-assistant-container.minimized .ai-assistant-header {
+    border-bottom: none;
+    border-radius: 12px;
+    margin: 0;
+}
+
+.ai-assistant-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #252525;
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.ai-assistant-header:active {
+    cursor: grabbing;
+}
+
+.ai-assistant-window-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ai-assistant-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    flex: 1;
+}
+
+.ai-assistant-title svg {
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.ai-assistant-title h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.ai-window-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.ai-window-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.ai-window-btn.close:hover {
+    background: #e81123;
+    color: white;
+}
+
+.ai-assistant-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.ai-assistant-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ai-message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.ai-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.ai-text {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.ai-text p {
+    margin: 0 0 8px 0;
+}
+
+.ai-text ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.ai-text li {
+    margin: 4px 0;
+}
+
+.user-message {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    flex-direction: row-reverse;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.user-text {
+    background: black;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ai-assistant-input-container {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 12px;
+    background: #252525;
+}
+
+.ai-assistant-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+}
+
+.ai-assistant-input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 24px rgba(255, 255, 255, 0.3);
+}
+
+.ai-assistant-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ai-assistant-image {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: black;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.ai-assistant-image:hover {
+    background: #1a1a1a;
+    transform: translateY(-1px);
+}
+
+.ai-assistant-image:active {
+    transform: translateY(0);
+    background: #0a0a0a;
+}
+
+.ai-assistant-send {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: black;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.ai-assistant-send:hover {
+    background: #1a1a1a;
+    transform: translateY(-1px);
+}
+
+.ai-assistant-send:active {
+    transform: translateY(0);
+    background: #0a0a0a;
+}
+
+.ai-generated-image {
+    margin-top: 12px;
+}
+
+.ai-generated-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.desktop-thumbnail {
+    width: 120px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.desktop-thumbnail:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.desktop-thumbnail.active {
+    border-color: #0078d4;
+}
+
+/* Desktop Folder Styles */
+.desktop-folder-icon {
+    position: relative;
+}
+
+.desktop-folder-preview {
+    position: absolute;
+    top: -200px;
+    left: 0;
+    width: 300px;
+    background: var(--start-menu-bg);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    display: none;
+    z-index: 1000;
+}
+
+.desktop-icon:hover .desktop-folder-preview {
+    display: block;
+}
+
+.desktop-folder-preview-item {
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+
+.desktop-folder-preview-item:hover {
+    background: rgba(0, 0, 0, 0.1);
 }
 

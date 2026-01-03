@@ -1,0 +1,1529 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Escape</title>
+  <style>
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(ellipse at center, #181830 0%, #050510 100%);
+      color: #90f9ff;
+      font-family: 'Orbitron', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .title {
+      text-align: center;
+      font-size: 3em;
+      letter-spacing: 0.1em;
+      margin-top: 60px;
+      text-shadow: 0 0 20px #08f, 0 0 40px #fff8;
+      font-weight: bold;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1.5em;
+      color: #a0e0ff;
+      margin-bottom: 40px;
+      text-shadow: 0 0 10px #070e22;
+    }
+    .ship-select {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin: 0 auto 40px auto;
+      max-width: 900px;
+    }
+    .ship {
+      background: none;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      cursor: pointer;
+      transition: none;
+      position: relative;
+    }
+    .ship img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      filter: none;
+      pointer-events: none;
+      background: none;
+      border-radius: 0;
+    }
+    .ship.selected {
+      border: 2.5px solid #6ffeff;
+      box-shadow: 0 0 32px #91e6ff, 0 0 8px #fffbb7c7;
+      transform: scale(1.11);
+      z-index: 2;
+    }
+    .ship:hover {
+      /* No hover styling at all */
+    }
+    .play-btn {
+      display: block;
+      margin: 40px auto 0 auto;
+      background: linear-gradient(90deg, #25caff 40%, #ccfe55 100%);
+      color: #18313a;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.5em;
+      font-weight: 900;
+      padding: 16px 56px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 0 24px #80faff70, 0 0 4px #faffabcc;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      outline: none;
+    }
+    .play-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 10px #83ffd9bb;
+    }
+    .control-scheme-selector {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin: 20px auto 0 auto;
+      max-width: 500px;
+    }
+    .control-option {
+      flex: 1;
+      padding: 12px 20px;
+      background: rgba(16, 32, 48, 0.6);
+      border: 2px solid #4a7a9a;
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 0.95em;
+      color: #a0d0ff;
+      transition: all 0.2s;
+    }
+    .control-option.selected {
+      border-color: #6ffeff;
+      background: rgba(46, 252, 255, 0.15);
+      box-shadow: 0 0 20px #91e6ff66;
+      color: #fff;
+    }
+    .control-option:hover {
+      border-color: #8ffeff;
+      background: rgba(46, 252, 255, 0.1);
+    }
+    .top-right-buttons {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      z-index: 200;
+    }
+    #leaderboardBtnTop {
+      padding: 10px 20px;
+      font-size: 0.95em;
+      margin: 0;
+      min-width: 140px;
+    }
+    #connectWalletBtnTop {
+      padding: 10px 20px;
+      font-size: 0.95em;
+      margin: 0;
+      min-width: 160px;
+    }
+    #gameCanvas {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      margin: 0; border: none; z-index: 10;
+      box-shadow: none; background: none; display:none;
+    }
+    #gameOverOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 6, 15, 0.86);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    #gameOverOverlay .panel {
+      text-align: center;
+      padding: 32px 40px;
+      border-radius: 24px;
+      background: rgba(13,24,48,0.95);
+      border: 1.5px solid #5bf4ff80;
+      box-shadow: 0 0 44px #5ffaff82;
+      color: #d0faff;
+      min-width: 280px;
+    }
+    #gameOverOverlay .panel h2 {
+      margin: 0 0 12px 0;
+      font-size: 2.4em;
+      color: #ffe05b;
+    }
+    #gameOverOverlay .panel .stat {
+      font-size: 1.25em;
+      margin-bottom: 12px;
+    }
+    #goSubmitBtn,
+    #goConnectBtn,
+    #goPlayAgainBtn {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      font-size: 1.05em;
+      background: linear-gradient(90deg, #25caff 40%, #ccfe55 100%);
+      color: #122838;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      cursor: pointer;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 700;
+      box-shadow: 0 0 16px #7ef7ff6b;
+    }
+    #goPlayAgainBtn {
+      background: linear-gradient(90deg, #ffe55b 20%, #ffaf3d 100%);
+      color: #2a1c00;
+    }
+    .menu {
+      width: 90%;
+      max-width: 1100px;
+      background: #151536cc;
+      border-radius: 28px;
+      box-shadow: 0 0 66px 0 #0ff8, 0 0 6px 2px #90f8ff44;
+      padding: 38px 8px 22px 8px;
+      border: 1.5px solid #49f3fb55;
+      z-index: 15;
+      margin: 0;
+      /* Remove margin-top to allow centering via flexbox */
+    }
+    .title, .subtitle, .ship-select, .play-btn { position: relative; z-index: 20; }
+    #leaderboardOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 6, 15, 0.88);
+      z-index: 850;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    #leaderboardOverlay .panel {
+      background: rgba(12, 26, 52, 0.96);
+      border-radius: 24px;
+      padding: 28px 36px;
+      border: 1.5px solid #64f3ff80;
+      box-shadow: 0 0 42px #5bf6ff77;
+      color: #d9f9ff;
+      min-width: 320px;
+      max-height: 70vh;
+      overflow-y: auto;
+      text-align: center;
+    }
+    #leaderboardOverlay h2 {
+      margin: 0 0 14px 0;
+      color: #ffe05b;
+      font-size: 2em;
+    }
+    #leaderboardList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #leaderboardList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #3a536b;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 0.95em;
+    }
+    #leaderboardClose {
+      margin-top: 18px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 600;
+      background: linear-gradient(90deg, #ff8c5b 0%, #ffd05b 100%);
+      color: #1d1302;
+      box-shadow: 0 0 18px #ffdf8a63;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="top-right-buttons">
+    <button id="connectWalletBtnTop" class="play-btn">CONNECT METAMASK</button>
+    <button id="leaderboardBtnTop" class="play-btn">LEADERBOARD</button>
+  </div>
+  <div id="walletStatus" style="position:fixed;top:70px;right:20px;font-size:0.9em;color:#9cf;z-index:200;display:none;background:rgba(0,0,0,0.7);padding:8px 12px;border-radius:8px;"></div>
+  <div class="menu">
+    <div class="title">SPACE ESCAPE</div>
+    <div class="subtitle">Select Your Spaceship</div>
+    <div class="ship-select" id="shipSelect">
+      <div class="ship"><img src="assets/ship1redone.png" alt="Ship 1"></div>
+      <div class="ship"><img src="assets/8.png" alt="Ship 8"></div>
+      <div class="ship"><img src="assets/9.png" alt="Ship 9"></div>
+    </div>
+    <div class="control-scheme-selector" style="margin-top:30px;">
+      <div class="control-option selected" data-scheme="arrows" id="controlArrows">
+        <div style="font-weight:bold;margin-bottom:4px;">Arrow Keys</div>
+        <div style="font-size:0.85em;opacity:0.8;">â†‘â†“â†â†’ Move, Space Shoot</div>
+      </div>
+      <div class="control-option" data-scheme="wasd" id="controlWASD">
+        <div style="font-weight:bold;margin-bottom:4px;">WASD</div>
+        <div style="font-size:0.85em;opacity:0.8;">WASD Move, Space Shoot</div>
+      </div>
+    </div>
+    <button id="playBtn" class="play-btn" style="margin-top:30px;display:none;opacity:0.45;pointer-events:none;">PLAY</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <div id="gameOverOverlay">
+    <div class="panel">
+      <h2>GAME OVER</h2>
+      <div class="stat">Time Survived: <span id="goTime">0.0s</span></div>
+      <div class="stat">Level: <span id="goLevel">1</span></div>
+      <button id="goConnectBtn">Connect Wallet to Submit</button>
+      <button id="goSubmitBtn">Submit Score</button>
+      <button id="goPlayAgainBtn">Play Again</button>
+    </div>
+  </div>
+  <div id="leaderboardOverlay">
+    <div class="panel">
+      <h2>Top Pilots</h2>
+      <ul id="leaderboardList"></ul>
+      <button id="leaderboardClose">Close</button>
+    </div>
+  </div>
+  <!-- Mute Toggle Button -->
+  <div id="muteToggle" style="position: fixed; bottom: 20px; left: 20px; z-index: 200; cursor: pointer; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; border: 2px solid #49f3fb;">
+    <span id="muteIcon" style="font-size: 24px; color: #49f3fb;">ðŸ”Š</span>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script>
+    let muted = false;
+    let currentShipImg = null;
+    let selectedShipImg = '';
+    let controlScheme = localStorage.getItem('spaceEscapeControls') || 'arrows';
+    
+    // Web Audio API for sound generation
+    let audioContext = null;
+    let audioInitialized = false;
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      console.warn('Web Audio API not supported');
+    }
+    
+    // Resume audio context on first user interaction (required by some browsers)
+    function initAudio() {
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          audioInitialized = true;
+        }).catch(e => {
+          console.warn('Could not resume audio context:', e);
+        });
+      } else if (audioContext) {
+        audioInitialized = true;
+      }
+    }
+    
+    // Initialize audio on any user interaction
+    ['click', 'keydown', 'touchstart'].forEach(event => {
+      document.addEventListener(event, initAudio, { once: true });
+    });
+    
+    function playSound(type) {
+      if (muted || !audioContext) return;
+      
+      // Try to resume if suspended
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      try {
+        const now = audioContext.currentTime;
+        
+        if (type === 'sfxLaser') {
+          // Player laser sound - high pitched beep
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(800, now);
+          oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.1);
+          
+        } else if (type === 'sfxExplosion') {
+          // Explosion sound - deep rumble
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          
+          oscillator.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(200, now);
+          
+          oscillator.frequency.setValueAtTime(100, now);
+          oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+          oscillator.type = 'sawtooth';
+          
+          gainNode.gain.setValueAtTime(0.4, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.3);
+          
+        } else if (type === 'sfxEnemyShoot') {
+          // Enemy bullet sound - lower pitch than player
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(400, now);
+          oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+          oscillator.type = 'square';
+          
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.08);
+          
+        } else if (type === 'sfxPowerUp') {
+          // Power-up collection - ascending chime
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(400, now);
+          oscillator.frequency.linearRampToValueAtTime(800, now + 0.15);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.15);
+          
+        } else if (type === 'sfxShield') {
+          // Shield hit - metallic ping
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          const filter = audioContext.createBiquadFilter();
+          
+          oscillator.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1000, now);
+          filter.Q.setValueAtTime(10, now);
+          
+          oscillator.frequency.setValueAtTime(600, now);
+          oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.25, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          
+          oscillator.start(now);
+          oscillator.stop(now + 0.2);
+          
+        } else if (type === 'sfxLevelUp') {
+          // Level up - triumphant chord
+          for (let i = 0; i < 3; i++) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const freq = 400 + (i * 200);
+            oscillator.frequency.setValueAtTime(freq, now + (i * 0.1));
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.2, now + (i * 0.1));
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4 + (i * 0.1));
+            
+            oscillator.start(now + (i * 0.1));
+            oscillator.stop(now + 0.4 + (i * 0.1));
+          }
+        }
+      } catch (e) {
+        console.warn('Error playing sound:', e);
+      }
+    }
+    
+    // Initialize mute toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const muteToggle = document.getElementById('muteToggle');
+      const muteIcon = document.getElementById('muteIcon');
+      if (muteToggle && muteIcon) {
+        muteToggle.onclick = function() {
+          muted = !muted;
+          muteIcon.textContent = muted ? 'ðŸ”‡' : 'ðŸ”Š';
+          muteIcon.style.color = muted ? '#888' : '#49f3fb';
+        };
+      }
+    });
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        // --- Menu Ship Selection ---
+        const ships = document.querySelectorAll('.ship');
+        const playBtn = document.getElementById('playBtn');
+        if (!playBtn) {
+          console.error('Play button not found!');
+          return;
+        }
+        
+        ships.forEach((ship) => {
+          ship.addEventListener('click', () => {
+            ships.forEach(s => s.classList.remove('selected'));
+            ship.classList.add('selected');
+            const imgElem = ship.querySelector('img');
+            if (imgElem) {
+              selectedShipImg = imgElem.getAttribute('src');
+              if (playBtn) {
+                playBtn.style.display = 'block';
+                playBtn.style.opacity = '1';
+                playBtn.style.pointerEvents = 'auto';
+              }
+            }
+          });
+        });
+        
+        if (playBtn) {
+          playBtn.addEventListener('click', () => {
+            if (!selectedShipImg) {
+              alert('Please select a spaceship first!');
+              return;
+            }
+            document.querySelector('.menu').style.display = 'none';
+            const gameCanvas = document.getElementById('gameCanvas');
+            if (gameCanvas) {
+              gameCanvas.style.display = 'block';
+              currentShipImg = selectedShipImg;
+              startGame(selectedShipImg);
+            }
+          });
+        }
+
+        // Control Scheme Selection
+        const controlArrows = document.getElementById('controlArrows');
+        const controlWASD = document.getElementById('controlWASD');
+        if (controlArrows && controlWASD) {
+          [controlArrows, controlWASD].forEach(opt => {
+            opt.addEventListener('click', function() {
+              [controlArrows, controlWASD].forEach(o => o.classList.remove('selected'));
+              this.classList.add('selected');
+              controlScheme = this.dataset.scheme;
+              localStorage.setItem('spaceEscapeControls', controlScheme);
+            });
+          });
+          if (controlScheme === 'wasd') {
+            controlWASD.classList.add('selected');
+            controlArrows.classList.remove('selected');
+          }
+        }
+        // Initialize wallet connection buttons
+        connectBtn = document.getElementById('connectWalletBtnTop');
+        walletStatus = document.getElementById('walletStatus');
+        
+        if (connectBtn) {
+          connectBtn.onclick = async function() {
+            try {
+              await connectWallet();
+              if (userAddress) await getContract();
+            } catch (e) {
+              console.error('Connect wallet error:', e);
+              if (walletStatus) {
+                walletStatus.innerText = 'Error: ' + (e.message || e);
+                walletStatus.style.display = 'block';
+              }
+            }
+          };
+        } else {
+          console.error('Connect wallet button not found!');
+        }
+        
+        // Initialize leaderboard button
+        const leaderboardBtn = document.getElementById('leaderboardBtnTop');
+        const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const leaderboardClose = document.getElementById('leaderboardClose');
+        if (leaderboardBtn && leaderboardOverlay) {
+          leaderboardBtn.onclick = async function(){
+            await showLeaderboard();
+          };
+          if (leaderboardClose) {
+            leaderboardClose.onclick = function(){
+              leaderboardOverlay.style.display = 'none';
+            };
+          }
+        }
+        
+      } catch (e) {
+        console.error('Error initializing menu:', e);
+      }
+    });
+
+    let userAddress = null;
+    
+    // MetaMask connect logic
+    async function connectWallet() {
+      console.log('[Wallet] connectWallet called');
+      if (!window.ethereum) {
+        if (walletStatus) {
+          walletStatus.innerText = 'MetaMask not detected. Please install MetaMask.';
+          walletStatus.style.display = 'block';
+        }
+        if (connectBtn) connectBtn.style.display = 'block';
+        if (typeof goConnectBtn !== 'undefined' && goConnectBtn) {
+          goConnectBtn.disabled = false;
+          goConnectBtn.innerText = 'MetaMask Required';
+        }
+        if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('[Wallet] Accounts returned:', accounts);
+        if (accounts && accounts[0]) {
+          userAddress = accounts[0];
+          if (walletStatus) {
+            walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+            walletStatus.style.display = 'block';
+          }
+          if (connectBtn) connectBtn.style.display = 'none';
+          // Try to set up contract, but don't fail if network switch is rejected
+          try {
+            await getContract();
+          } catch (contractErr) {
+            console.warn('[Wallet] Contract setup failed (network switch may have been rejected):', contractErr);
+            if (walletStatus) {
+              walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4) + ' (Switch to Somnia to submit scores)';
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Wallet] Connection rejected or failed:', err);
+        if (walletStatus) {
+          walletStatus.innerText = err && err.message ? err.message : 'Connection rejected.';
+          walletStatus.style.display = 'block';
+        }
+      } finally {
+        if (typeof goConnectBtn !== 'undefined' && goConnectBtn) {
+          goConnectBtn.disabled = false;
+          goConnectBtn.innerText = 'Connect Wallet to Submit';
+        }
+        if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
+      }
+    }
+    // --- Smart contract integration ---
+    const CONTRACT_ADDRESS = "0x4ea34737f049214ea1cefe0212da2dfd6bcccfbc";
+    const CONTRACT_ABI = [
+      {
+        "anonymous": false,
+        "inputs": [
+          {"indexed": true, "internalType": "address", "name": "player", "type": "address"},
+          {"indexed": false, "internalType": "uint256", "name": "centiSeconds", "type": "uint256"}
+        ],
+        "name": "NewHighScore",
+        "type": "event"
+      },
+      {"inputs": [{"internalType": "uint256", "name": "centiSeconds", "type": "uint256"}], "name": "submitScore", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
+      {"inputs": [{"internalType": "address", "name": "", "type": "address"}], "name": "bestScore", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"},
+      {"inputs": [], "name": "getAllBestScores", "outputs": [ {"internalType": "address[]","name": "","type": "address[]"}, {"internalType": "uint256[]","name": "","type": "uint256[]"} ], "stateMutability": "view", "type": "function" },
+      {"inputs": [{"internalType": "uint256","name": "","type": "uint256"}], "name": "leaderboardPlayers", "outputs": [{"internalType": "address", "name": "", "type": "address"}], "stateMutability": "view", "type": "function"}
+    ];
+    const SOMNIA_PARAMS = {
+      chainId: '0x13A7',
+      chainName: 'Somnia Mainnet',
+      nativeCurrency: {
+        name: 'Somnia',
+        symbol: 'SOMI',
+        decimals: 18
+      },
+      rpcUrls: ['https://api.infra.mainnet.somnia.network/'],
+      blockExplorerUrls: ['https://explorer.somnia.network']
+    };
+    let contractInstance = null, provider = null;
+    let lastGameOverScore = 0;
+    let readonlyProvider = new ethers.providers.JsonRpcProvider(SOMNIA_PARAMS.rpcUrls[0]);
+    let cleanupCurrentGame = null;
+
+    async function ensureSomniaNetwork() {
+      if (!window.ethereum) throw new Error('MetaMask required');
+      const currentChain = await window.ethereum.request({ method: 'eth_chainId' });
+      if (currentChain === SOMNIA_PARAMS.chainId) return;
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: SOMNIA_PARAMS.chainId }]
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [SOMNIA_PARAMS]
+          });
+        } else {
+          throw switchError;
+        }
+      }
+    }
+    async function getContract() {
+      if (!window.ethereum) throw new Error('MetaMask required');
+      await ensureSomniaNetwork();
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+      contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    }
+    
+    // On page load, try autoconnect if already authorized (runs after main DOMContentLoaded)
+    setTimeout(async () => {
+      if (window.ethereum && window.ethereum.selectedAddress && connectBtn && walletStatus) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts[0]) {
+            userAddress = accounts[0];
+            walletStatus.innerText = 'Connected: ' + userAddress.substring(0,6) + '...' + userAddress.substring(userAddress.length-4);
+            walletStatus.style.display = 'block';
+            connectBtn.style.display = 'none';
+            await getContract();
+            if (typeof updateOverlayButtons === 'function') updateOverlayButtons();
+          }
+        } catch (e) {
+          console.warn('Auto-connect failed:', e);
+        }
+      }
+    }, 100);
+
+    // ---- SPACE ESCAPE GAME CORE ----
+    function startGame(shipImgSrc) {
+      if (!shipImgSrc) return;
+      currentShipImg = shipImgSrc;
+      if (cleanupCurrentGame) {
+        cleanupCurrentGame();
+      }
+      const canvas = document.getElementById('gameCanvas');
+      // --- Responsive canvas ---
+      function resize() {
+        // Maintain 16:9 or fill window if smaller
+        const w = window.innerWidth, h = window.innerHeight;
+        let arw = w, arh = h;
+        if(w/h > 16/9) arw = h*16/9;
+        else arh = w*9/16;
+        canvas.width = arw; canvas.height = arh;
+        canvas.style.width = w+'px';
+        canvas.style.height = h+'px';
+      }
+      window.addEventListener('resize', resize);
+      resize();
+      const ctx = canvas.getContext('2d');
+      const shipImg = new Image();
+      shipImg.src = shipImgSrc;
+
+      let enemySpawnInt;
+      let hazardSpawnInt;
+      let keyHandlers = { down: null, up: null };
+
+      // Player ship state
+      let player = {
+        x: canvas.width/2,
+        y: canvas.height-100,
+        w: 66,
+        h: 66,
+        speed: 7,
+        img: shipImg,
+      };
+      let score = 0;
+      let gameOver = false;
+      let timeStart = Date.now();
+      let timeSurvived = 0;
+      let pausedTime = 0; // Accumulated paused time
+      let pauseStartTime = 0; // When the pause started
+      let isPaused = false; // Whether the game is currently paused
+      let level = 1;
+      let nextLevelTime = 60000; // 1 minute in ms
+
+      // Keyboard input
+      let keys = {};
+      keyHandlers.down = e => { keys[e.code] = true; };
+      keyHandlers.up = e => { keys[e.code] = false; };
+      document.addEventListener('keydown', keyHandlers.down);
+      document.addEventListener('keyup', keyHandlers.up);
+
+      // Handle window/tab visibility changes to pause timer
+      // Use only visibility API for reliability
+      function handleVisibilityChange() {
+        if (document.hidden || document.visibilityState === 'hidden') {
+          // Window/tab became hidden - pause timer
+          if (!isPaused) {
+            pauseStartTime = Date.now();
+            isPaused = true;
+          }
+        } else {
+          // Window/tab became visible - resume timer
+          if (isPaused && pauseStartTime > 0) {
+            pausedTime += Date.now() - pauseStartTime;
+            isPaused = false;
+            pauseStartTime = 0;
+          }
+        }
+      }
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      // Initialize enemy state before spawner logic
+      const enemyImg = new Image();
+      enemyImg.src = 'assets/evil.png';
+      enemyImg.onerror = () => { console.error('Could not load enemy image at: assets/evil.png'); };
+      let enemies = [];
+
+      // Villain ship system
+      const villainImg = new Image();
+      villainImg.src = 'assets/villian.png';
+      villainImg.onerror = () => { console.error('Could not load villain image at: assets/villian.png'); };
+      let villain = null;
+      let lastVillainSpawnCheck = 0;
+      const VILLAIN_SPAWN_CHANCE = 0.002; // 0.2% chance per frame (roughly every 10-15 seconds)
+      const VILLAIN_MAX_HEALTH = 5; // Takes 5 hits to destroy
+
+      // Lasers
+      let lasers = [];
+      let canShoot = true;
+      let shootInterval;
+      function shoot() {
+        const currentTime = Date.now();
+        const hasRapidFire = activePowerUps.rapidFire > currentTime;
+        const hasTripleShot = activePowerUps.tripleShot > currentTime;
+        const cooldown = hasRapidFire ? 60 : 120;
+        if (canShoot) {
+          if (hasTripleShot) {
+            lasers.push({ x: player.x - 15, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+            lasers.push({ x: player.x, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+            lasers.push({ x: player.x + 15, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+          } else {
+            lasers.push({ x: player.x, y: player.y - 40, w: 5, h: 20, color: '#fffd30' });
+          }
+          canShoot = false;
+          shootInterval = setTimeout(() => canShoot = true, cooldown);
+          playSound('sfxLaser');
+        }
+      }
+
+      // Enemies - use adjustable speed/spawn for scaling
+      let enemySpeed = 1.8;
+      let enemySpawnRate = 1200;
+      let enemyBullets = [];
+      function spawnEnemy() {
+        enemies.push({
+          x: Math.random() * (canvas.width-46) + 23,
+          y: -40,
+          w: 50,
+          h: 50,
+          vy: enemySpeed + Math.random()*0.8,
+          alive: true,
+          lastShot: Date.now() - 1000, // Start with some time already passed so they shoot sooner
+          shootCooldown: 1500 + Math.random() * 1000
+        });
+      }
+      // Enemy spawner: always clear interval first, even if not set
+      function setEnemySpawner() {
+        if (enemySpawnInt) { clearInterval(enemySpawnInt); enemySpawnInt = null; }
+        enemySpawnInt = setInterval(spawnEnemy, enemySpawnRate);
+      }
+      setEnemySpawner();
+
+      // Power-ups
+      let powerUps = [];
+      let activePowerUps = {
+        shield: 0,
+        rapidFire: 0,
+        tripleShot: 0
+      };
+      function dropPowerUp(x, y) {
+        const type = Math.random();
+        if (type < 0.4) {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'shield', color: '#00ffff', collected: false });
+        } else if (type < 0.7) {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'rapidFire', color: '#ffff00', collected: false });
+        } else {
+          powerUps.push({ x, y, w: 40, h: 40, type: 'tripleShot', color: '#ff00ff', collected: false });
+        }
+      }
+
+      // Space debris/asteroids/comets
+      let hazards = [];
+      // Hazards - use adjustable speed/spawn for scaling
+      let hazardSpeed = 2.2;
+      let hazardSpawnRate = 1100;
+      function spawnHazard() {
+        const type = Math.random();
+        let speedAdj = hazardSpeed + Math.random();
+        if (type < 1/3) {
+          // Comet
+          hazards.push({ x: Math.random()*canvas.width, y: -24, r: 28+Math.random()*12, vy: speedAdj+0.9, comet: true });
+        } else if (type < 2/3) {
+          // Satellite
+          hazards.push({ x: Math.random()*canvas.width, y: -24, r: 35+Math.random()*16, vy: speedAdj+0.7, sat: true });
+        } else {
+          // Alien
+          let rotInit = Math.random() * Math.PI * 2;
+          let rotSpeed = 0.015 + Math.random() * 0.008;
+          hazards.push({ x: Math.random()*canvas.width, y: -28, r: 32+Math.random()*17, vy: speedAdj+0.5, alien: true, rot: rotInit, rotSpeed });
+        }
+      }
+      // Hazards
+      function setHazardSpawner() {
+        if (hazardSpawnInt) { clearInterval(hazardSpawnInt); hazardSpawnInt = null; }
+        hazardSpawnInt = setInterval(spawnHazard, hazardSpawnRate);
+      }
+      setHazardSpawner();
+
+      // Star field for scrolling effect
+      let stars = Array.from({length: 48}, () => ({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*2+0.5,
+        v: Math.random()*1+0.2
+      }));
+      function drawStars() {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = '#bfffff';
+        for (let s of stars) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+          ctx.fill();
+          s.y += s.v;
+          if (s.y > canvas.height) { s.y = 0; s.x = Math.random()*canvas.width; }
+        }
+        ctx.restore();
+      }
+
+      function isColliding(a, b) {
+        return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+      }
+      function isCircleShipColliding(circle, ship) {
+        // Ship = rect. Closest point
+        let rx = Math.max(ship.x-ship.w/2, Math.min(circle.x, ship.x+ship.w/2));
+        let ry = Math.max(ship.y-ship.h/2, Math.min(circle.y, ship.y+ship.h/2));
+        let dx = circle.x - rx, dy = circle.y - ry;
+        return (dx*dx + dy*dy) <= circle.r*circle.r;
+      }
+      function isRectCircleColliding(rect, circle) {
+        // rect: {x, y, w, h}; circle: {x, y, r}
+        let rx = Math.max(rect.x, Math.min(circle.x, rect.x+rect.w));
+        let ry = Math.max(rect.y, Math.min(circle.y, rect.y+rect.h));
+        let dx = circle.x - rx, dy = circle.y - ry;
+        return (dx*dx + dy*dy) <= (circle.r+2)*(circle.r+2); // +2 "padding" for generosity
+      }
+
+      // Hold game over score globally to use in button
+      // Helper: always get latest connected account
+      async function getMetaMaskAccount() {
+        if (!window.ethereum) return null;
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        return accounts && accounts[0] ? accounts[0] : null;
+      }
+      // Listen for account change
+      if (window.ethereum) {
+        window.ethereum.on('accountsChanged', async function(accounts) {
+          userAddress = accounts[0] || null;
+          if (userAddress) await getContract();
+        });
+      }
+      // Utility to remove submit button always
+      function removeSubmitButton() {
+        let btn=document.getElementById('submitScoreBtn');
+        if(btn) btn.remove();
+      }
+      // Utility to remove both buttons
+      function removeGameOverButtons() {
+        let b1 = document.getElementById('submitScoreBtn');
+        let b2 = document.getElementById('connectWalletBtnGo');
+        if(b1) b1.remove();
+        if(b2) b2.remove();
+      }
+      // Update showGameOver for clean logic
+      function showGameOver() {
+        console.log('[GameOver] Display overlay with score', timeSurvived, 'level', level);
+        if (cleanupCurrentGame) {
+          cleanupCurrentGame();
+          cleanupCurrentGame = null;
+        }
+        lastGameOverScore = timeSurvived;
+        goTime.innerText = timeSurvived.toFixed(1)+'s';
+        goLevel.innerText = level;
+        updateOverlayButtons();
+        goOverlay.style.display = 'flex';
+      }
+      function restart() {window.location.reload();}
+
+      let explosions = []; // {x, y, start, duration}
+
+      function gameLoop() {
+        try {
+          ctx.clearRect(0,0,canvas.width,canvas.height);
+          drawStars();
+        // Score/Time/Level display - account for paused time
+        let currentPausedTime = pausedTime || 0;
+        if (isPaused && pauseStartTime > 0) {
+          currentPausedTime += Date.now() - pauseStartTime;
+        }
+        timeSurvived = Math.max(0, (Date.now() - timeStart - currentPausedTime) / 1000);
+        ctx.save();
+        ctx.font = '1.22em Orbitron, Arial';
+        ctx.fillStyle = '#cfffff';
+        ctx.textAlign = 'left';
+        ctx.fillText('Time Survived: '+timeSurvived.toFixed(1)+'s', 28, 44);
+        ctx.fillText('Level: '+level, 28, 72);
+        // Power-up status
+        const currentTime = Date.now();
+        let puY = 100;
+        if (activePowerUps.shield > currentTime) {
+          ctx.fillStyle = '#00ffff';
+          ctx.fillText('ðŸ›¡ï¸ Shield', 28, puY);
+          puY += 28;
+        }
+        if (activePowerUps.rapidFire > currentTime) {
+          ctx.fillStyle = '#ffff00';
+          ctx.fillText('âš¡ Rapid Fire', 28, puY);
+          puY += 28;
+        }
+        if (activePowerUps.tripleShot > currentTime) {
+          ctx.fillStyle = '#ff00ff';
+          ctx.fillText('ðŸ’¥ Triple Shot', 28, puY);
+        }
+        ctx.restore();
+        // Difficulty scaling
+        if (timeSurvived*1000 > level*nextLevelTime) {
+          level++;
+          playSound('sfxLevelUp');
+          enemySpeed += 0.58;
+          hazardSpeed += 0.51;
+          enemySpawnRate = Math.max(340, enemySpawnRate-160);
+          hazardSpawnRate = Math.max(280, hazardSpawnRate-100);
+          setEnemySpawner();
+          setHazardSpawner();
+        }
+        // Clamp movement so ship cannot leave visible area
+        if (controlScheme === 'wasd') {
+          if (keys['KeyA']) player.x = Math.max(player.x - player.speed, player.w/2);
+          if (keys['KeyD']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
+          if (keys['KeyW']) player.y = Math.max(player.y - player.speed, player.h/2);
+          if (keys['KeyS']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        } else {
+          if (keys['ArrowLeft']) player.x = Math.max(player.x - player.speed, player.w/2);
+          if (keys['ArrowRight']) player.x = Math.min(player.x + player.speed, canvas.width - player.w/2);
+          if (keys['ArrowUp']) player.y = Math.max(player.y - player.speed, player.h/2);
+          if (keys['ArrowDown']) player.y = Math.min(player.y + player.speed, canvas.height - player.h/2);
+        }
+        if (keys['Space']) shoot();
+        // Only draw player if image is loaded
+        if (player.img && player.img.complete && player.img.naturalHeight !== 0) {
+          ctx.drawImage(player.img, player.x-player.w/2, player.y-player.h/2, player.w, player.h);
+        }
+        // Lasers
+        ctx.save();
+        for (let laser of lasers) ctx.fillStyle = laser.color, ctx.fillRect(laser.x-2, laser.y, laser.w, laser.h);
+        ctx.restore();
+        lasers = lasers.filter(l => l.y > -24); for(let laser of lasers){ laser.y -= 11; }
+        
+        // Villain spawn check (random chance)
+        if (!villain && Math.random() < VILLAIN_SPAWN_CHANCE) {
+          villain = {
+            x: Math.random() * (canvas.width - 100) + 50,
+            y: Math.random() * (canvas.height * 0.4) + 50, // Spawn in upper portion
+            w: 80,
+            h: 80,
+            vx: (Math.random() - 0.5) * 3, // Random horizontal movement
+            vy: (Math.random() - 0.5) * 2, // Random vertical movement
+            health: VILLAIN_MAX_HEALTH,
+            maxHealth: VILLAIN_MAX_HEALTH,
+            lastShot: Date.now() - 500,
+            shootCooldown: 1000 + Math.random() * 500
+          };
+        }
+        
+        // Enemies
+        for (let enemy of enemies) {
+          if (!enemy.alive) continue;
+          if (enemyImg && enemyImg.complete && enemyImg.naturalHeight !== 0) {
+            ctx.drawImage(enemyImg, enemy.x-enemy.w/2, enemy.y-enemy.h/2, enemy.w, enemy.h);
+          }
+          enemy.y += enemy.vy;
+          // Enemy shooting
+          if (Date.now() - enemy.lastShot > enemy.shootCooldown && enemy.y > 50 && enemy.y < canvas.height - 100) {
+            enemyBullets.push({ x: enemy.x, y: enemy.y + enemy.h/2, w: 6, h: 16, vy: 5 + Math.random()*2, color: '#ff0000' });
+            enemy.lastShot = Date.now();
+            enemy.shootCooldown = 1500 + Math.random() * 1000;
+            playSound('sfxEnemyShoot');
+          }
+          if(isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: enemy.x-enemy.w/2, y: enemy.y-enemy.h/2, w: enemy.w, h: enemy.h}
+          )) { 
+            const currentTime = Date.now();
+            if (activePowerUps.shield > currentTime) {
+              activePowerUps.shield = 0; // Shield absorbs one hit
+              playSound('sfxShield');
+            } else {
+              gameOver = true;
+            }
+          }
+        }
+        // Enemy bullets
+        for (let bullet of enemyBullets) {
+          ctx.save();
+          ctx.fillStyle = bullet.color;
+          ctx.fillRect(bullet.x-3, bullet.y, bullet.w, bullet.h);
+          // Add glow effect
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#ff0000';
+          ctx.fillRect(bullet.x-3, bullet.y, bullet.w, bullet.h);
+          ctx.restore();
+          bullet.y += bullet.vy;
+          // Handle villain bullets that can move in any direction
+          if (bullet.vx !== undefined) {
+            bullet.x += bullet.vx;
+          }
+          // Collision with player
+          if (isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: bullet.x-3, y: bullet.y, w: bullet.w, h: bullet.h}
+          )) {
+            const currentTime = Date.now();
+            if (activePowerUps.shield > currentTime) {
+              activePowerUps.shield = 0; // Shield absorbs one hit
+              playSound('sfxShield');
+            } else {
+              gameOver = true;
+            }
+            bullet.y = canvas.height + 100;
+          }
+        }
+        enemyBullets = enemyBullets.filter(b => {
+          // Keep bullets that are on screen (either moving down or in any direction)
+          if (b.vx !== undefined) {
+            return b.x > -50 && b.x < canvas.width + 50 && b.y > -50 && b.y < canvas.height + 50;
+          }
+          return b.y < canvas.height + 50;
+        });
+        
+        // Villain rendering and logic
+        if (villain && villain.health > 0) {
+          // Draw villain with glow effect
+          ctx.save();
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#ff0000';
+          if (villainImg.complete && villainImg.naturalHeight !== 0) {
+            ctx.drawImage(villainImg, villain.x - villain.w/2, villain.y - villain.h/2, villain.w, villain.h);
+          } else {
+            // Draw placeholder if image not loaded
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(villain.x - villain.w/2, villain.y - villain.h/2, villain.w, villain.h);
+          }
+          ctx.shadowBlur = 0;
+          ctx.restore();
+          
+          // Villain movement - flies around, bounces off edges
+          villain.x += villain.vx;
+          villain.y += villain.vy;
+          
+          // Bounce off screen edges
+          if (villain.x <= villain.w/2 || villain.x >= canvas.width - villain.w/2) {
+            villain.vx = -villain.vx;
+            villain.x = Math.max(villain.w/2, Math.min(canvas.width - villain.w/2, villain.x));
+          }
+          if (villain.y <= villain.h/2 || villain.y >= canvas.height - villain.h/2) {
+            villain.vy = -villain.vy;
+            villain.y = Math.max(villain.h/2, Math.min(canvas.height - villain.h/2, villain.y));
+          }
+          
+          // Villain health bar
+          const barWidth = 120;
+          const barHeight = 8;
+          const barX = villain.x - barWidth/2;
+          const barY = villain.y - villain.h/2 - 20;
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+          ctx.fillRect(barX, barY, barWidth, barHeight);
+          const healthPercent = villain.health / villain.maxHealth;
+          ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : healthPercent > 0.3 ? '#ffff00' : '#ff0000';
+          ctx.fillRect(barX, barY, healthPercent * barWidth, barHeight);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(barX, barY, barWidth, barHeight);
+          ctx.font = 'bold 0.8em Orbitron, Arial';
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.fillText(`HP: ${villain.health}/${villain.maxHealth}`, villain.x, barY - 5);
+          ctx.restore();
+          
+          // Villain shooting at player
+          if (Date.now() - villain.lastShot > villain.shootCooldown) {
+            // Calculate direction to player
+            const dx = player.x - villain.x;
+            const dy = player.y - villain.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const speed = 4;
+            
+            // Prevent division by zero
+            if (distance > 0.1) {
+              enemyBullets.push({
+                x: villain.x,
+                y: villain.y + villain.h/2,
+                w: 8,
+                h: 20,
+                vx: (dx / distance) * speed,
+                vy: (dy / distance) * speed,
+                color: '#ff6600'
+              });
+              villain.lastShot = Date.now();
+              villain.shootCooldown = 1000 + Math.random() * 500;
+              playSound('sfxEnemyShoot');
+            }
+          }
+          
+          // Villain collision with player
+          if(isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: villain.x-villain.w/2, y: villain.y-villain.h/2, w: villain.w, h: villain.h}
+          )) { 
+            const currentTime = Date.now();
+            if (activePowerUps.shield > currentTime) {
+              activePowerUps.shield = 0;
+              playSound('sfxShield');
+            } else {
+              gameOver = true;
+            }
+          }
+        }
+        
+        // Lasers hit enemy ships
+        for (let laser of lasers) { for (let enemy of enemies) {
+            if (!enemy.alive) continue;
+            let enemyRect = {x: enemy.x-enemy.w/2, y: enemy.y-enemy.h/2, w: enemy.w, h: enemy.h};
+            let laserRect = {x: laser.x-2, y: laser.y, w: laser.w, h: laser.h};
+            if (isColliding(laserRect, enemyRect)) {
+              // Explosion on hit
+              explosions.push({x: enemy.x, y: enemy.y, start: performance.now(), duration: 350});
+              enemy.alive = false;
+              laser.y = -100;
+              playSound('sfxExplosion');
+              // Chance to drop power-up (50%)
+              if (Math.random() < 0.5) {
+                dropPowerUp(enemy.x, enemy.y);
+              }
+            }
+        }}
+        enemies = enemies.filter(e => e.y < canvas.height+22 && e.alive);
+        
+        // Lasers hit villain
+        if (villain && villain.health > 0) {
+          for (let laser of lasers) {
+            let villainRect = {x: villain.x-villain.w/2, y: villain.y-villain.h/2, w: villain.w, h: villain.h};
+            let laserRect = {x: laser.x-2, y: laser.y, w: laser.w, h: laser.h};
+            if (isColliding(laserRect, villainRect)) {
+              villain.health--;
+              laser.y = -100;
+              playSound('sfxExplosion');
+              explosions.push({x: villain.x, y: villain.y, start: performance.now(), duration: 250});
+              
+              // Villain destroyed
+              if (villain.health <= 0) {
+                explosions.push({x: villain.x, y: villain.y, start: performance.now(), duration: 600});
+                playSound('sfxExplosion');
+                // Guaranteed power-up drops
+                dropPowerUp(villain.x, villain.y);
+                dropPowerUp(villain.x - 30, villain.y);
+                dropPowerUp(villain.x + 30, villain.y);
+                villain = null;
+              }
+            }
+          }
+        }
+        
+        // Lasers hit hazard (comet, sat, alien): circle collision
+        for (let laser of lasers) {
+          for (let debris of hazards) {
+            if (debris.gone) continue;
+            if (debris.comet || debris.sat || debris.alien) {
+              let lrect = {x: laser.x-2, y: laser.y, w: laser.w, h: laser.h};
+              let ccirc = {x: debris.x, y: debris.y, r: debris.r};
+              if (isRectCircleColliding(lrect, ccirc)) {
+                explosions.push({x: debris.x, y: debris.y, start: performance.now(), duration: 350});
+                debris.gone = true;
+                laser.y = -110;
+                playSound('sfxExplosion');
+              }
+            }
+          }
+        }
+        hazards = hazards.filter(d => d.y < canvas.height+60 && !d.gone);
+        // Power-ups
+        for (let pu of powerUps) {
+          if (pu.collected) continue;
+          // Draw power-up with pulsing effect
+          ctx.save();
+          const pulse = Math.sin(Date.now() / 200) * 0.2 + 0.8;
+          ctx.globalAlpha = pulse;
+          // Add glow effect
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = pu.color;
+          ctx.fillStyle = pu.color;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pu.w/2, 0, Math.PI*2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.restore();
+          pu.y += 2;
+          // Collection
+          if (isColliding(
+            {x: player.x-player.w/2, y: player.y-player.h/2, w: player.w, h: player.h},
+            {x: pu.x-pu.w/2, y: pu.y-pu.h/2, w: pu.w, h: pu.h}
+          )) {
+            pu.collected = true;
+            playSound('sfxPowerUp');
+            if (pu.type === 'shield') {
+              activePowerUps.shield = Date.now() + 10000; // 10 seconds
+            } else if (pu.type === 'rapidFire') {
+              activePowerUps.rapidFire = Date.now() + 8000; // 8 seconds
+            } else if (pu.type === 'tripleShot') {
+              activePowerUps.tripleShot = Date.now() + 12000; // 12 seconds
+            }
+          }
+        }
+        powerUps = powerUps.filter(pu => pu.y < canvas.height + 50 && !pu.collected);
+        // Update power-up timers
+        const nowTime = Date.now();
+        if (activePowerUps.shield > 0 && activePowerUps.shield < nowTime) activePowerUps.shield = 0;
+        if (activePowerUps.rapidFire > 0 && activePowerUps.rapidFire < nowTime) activePowerUps.rapidFire = 0;
+        if (activePowerUps.tripleShot > 0 && activePowerUps.tripleShot < nowTime) activePowerUps.tripleShot = 0;
+        // Draw shield effect
+        const shieldTime = Date.now();
+        if (activePowerUps.shield > shieldTime) {
+          ctx.save();
+          ctx.globalAlpha = 0.4;
+          ctx.strokeStyle = '#00ffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(player.x, player.y, player.w/2 + 8, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        // Draw explosions LAST so they're on top
+        let now = performance.now();
+        for (let i = explosions.length - 1; i >= 0; --i) {
+          let ex = explosions[i];
+          let t = (now - ex.start) / ex.duration;
+          if (t > 1) { explosions.splice(i, 1); continue; }
+          let r1 = 14 + 20 * (1-t), r2 = 6 + 8*(1-t);
+          ctx.save();
+          ctx.globalAlpha = 0.6 * (1-t);
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r1, 0, Math.PI*2);
+          ctx.fillStyle = 'orange'; ctx.fill();
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r2, 0, Math.PI*2);
+          ctx.fillStyle = 'yellow'; ctx.fill();
+          ctx.globalAlpha = 0.22 * (1-t);
+          ctx.beginPath(); ctx.arc(ex.x, ex.y, r1*2, 0, Math.PI*2);
+          ctx.fillStyle = 'red'; ctx.fill();
+          ctx.restore();
+        }
+        if (gameOver) { showGameOver(); return; }
+        requestAnimationFrame(gameLoop);
+        } catch (error) {
+          console.error('Game loop error:', error);
+          // Continue game loop even if there's an error
+          requestAnimationFrame(gameLoop);
+        }
+      }
+      const cometImg = new Image();
+      cometImg.src = 'assets/commet.png';
+      cometImg.onerror = () => { console.error('Could not load comet image at: assets/commet.png'); };
+      const satImg = new Image();
+      satImg.src = 'assets/sat.png';
+      satImg.onerror = () => { console.error('Could not load satellite image at: assets/sat.png'); };
+      const alienImg = new Image();
+      alienImg.src = 'assets/alien.png';
+      alienImg.onerror = () => { console.error('Could not load alien image at: assets/alien.png'); };
+      cleanupCurrentGame = function(){
+        if (enemySpawnInt) clearInterval(enemySpawnInt);
+        if (hazardSpawnInt) clearInterval(hazardSpawnInt);
+        document.removeEventListener('keydown', keyHandlers.down);
+        document.removeEventListener('keyup', keyHandlers.up);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        enemySpawnInt = null;
+        hazardSpawnInt = null;
+      };
+      shipImg.onload = () => { gameLoop(); };
+    }
+    // Add score submit flow
+    async function submitScoreToContract(scoreSec) {
+      if (!userAddress || !contractInstance) throw new Error('Wallet not connected');
+      await ensureSomniaNetwork();
+      const centiSec = Math.round(scoreSec * 100);
+      try {
+        playBtn.innerText = "Submitting score...";
+        playBtn.disabled = true;
+        let tx = await contractInstance.submitScore(centiSec);
+        await tx.wait();
+        setTimeout(()=>{
+          alert('Score submitted! Your best: '+scoreSec.toFixed(2)+'s');
+        }, 200);
+      } catch (e) {
+        console.error("Score submit failed:", e);
+        alert('Failed to submit score! '+(e && e.message ? e.message : ''));
+      } finally {
+        playBtn.innerText = "PLAY AGAIN";
+        playBtn.disabled = false;
+      }
+    }
+    const goOverlay = document.getElementById('gameOverOverlay');
+    const goTime = document.getElementById('goTime');
+    const goLevel = document.getElementById('goLevel');
+    const goConnectBtn = document.getElementById('goConnectBtn');
+    const goSubmitBtn = document.getElementById('goSubmitBtn');
+    const goPlayAgainBtn = document.getElementById('goPlayAgainBtn');
+    const leaderboardBtn = document.getElementById('leaderboardBtnTop');
+    const leaderboardOverlay = document.getElementById('leaderboardOverlay');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const leaderboardClose = document.getElementById('leaderboardClose');
+    function updateOverlayButtons() {
+      const hasMM = !!window.ethereum;
+      console.log('[Overlay] updateOverlayButtons - hasMetaMask?', hasMM, 'userAddress:', userAddress);
+      if (!hasMM) {
+        goConnectBtn.style.display = 'none';
+        goSubmitBtn.style.display = 'none';
+        return;
+      }
+      if (userAddress) {
+        goConnectBtn.style.display = 'none';
+        goSubmitBtn.style.display = 'block';
+        goSubmitBtn.disabled = false;
+        goSubmitBtn.innerText = 'Submit Score';
+      } else {
+        goConnectBtn.style.display = 'block';
+        goConnectBtn.disabled = false;
+        goConnectBtn.innerText = 'Connect Wallet to Submit';
+        goSubmitBtn.style.display = 'none';
+      }
+    }
+    goConnectBtn.onclick = async function(){
+      goConnectBtn.disabled = true;
+      goConnectBtn.innerText = 'Connecting...';
+      await connectWallet();
+      updateOverlayButtons();
+    };
+    goSubmitBtn.onclick = async function(){
+      if (!userAddress || !contractInstance) return;
+      goSubmitBtn.disabled = true;
+      goSubmitBtn.innerText = 'Submitting...';
+      try {
+        await submitScoreToContract(lastGameOverScore);
+        goSubmitBtn.innerText = 'Submitted!';
+      } catch(e) {
+        goSubmitBtn.innerText = 'Submit Score';
+        goSubmitBtn.disabled = false;
+        alert('Failed to submit: ' + (e.message || e));
+      }
+    };
+    goPlayAgainBtn.onclick = function(){
+      goOverlay.style.display = 'none';
+      if (currentShipImg) {
+        startGame(currentShipImg);
+      } else {
+        window.location.reload();
+      }
+    };
+    leaderboardBtn.onclick = async function(){
+      await showLeaderboard();
+    };
+    leaderboardClose.onclick = function(){
+      leaderboardOverlay.style.display = 'none';
+    };
+    async function showLeaderboard() {
+      try {
+        let lbContract;
+        if (contractInstance) {
+          lbContract = contractInstance;
+        } else {
+          lbContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readonlyProvider);
+        }
+        const [addresses, scores] = await lbContract.getAllBestScores();
+        const entries = addresses.map((addr, idx) => ({
+          address: addr,
+          score: scores[idx] ? scores[idx].toNumber() : 0
+        })).filter(e => e.score > 0);
+        entries.sort((a,b)=>b.score - a.score);
+        const top = entries.slice(0,10);
+        leaderboardList.innerHTML = '';
+        if (!top.length) {
+          const li = document.createElement('li');
+          li.style.justifyContent = 'center';
+          li.innerText = 'No scores yet';
+          leaderboardList.appendChild(li);
+        } else {
+          top.forEach((entry, idx) => {
+            const li = document.createElement('li');
+            const left = document.createElement('span');
+            left.innerText = `${idx+1}. ${entry.address.substring(0,6)}...${entry.address.substring(entry.address.length-4)}`;
+            const right = document.createElement('span');
+            right.innerText = (entry.score/100).toFixed(2)+'s';
+            li.appendChild(left);
+            li.appendChild(right);
+            leaderboardList.appendChild(li);
+          });
+        }
+        leaderboardOverlay.style.display = 'flex';
+      } catch (err) {
+        alert('Failed to load leaderboard: '+(err.message||err));
+      }
+    }
+  </script>
+</body>
+</html>
+
