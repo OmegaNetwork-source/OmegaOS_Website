@@ -331,11 +331,6 @@ function setupEventListeners() {
     // Generate button
     document.getElementById('generateBtn').addEventListener('click', generateCode);
     
-    // Image generation button
-    const generateImageBtn = document.getElementById('generateImageBtn');
-    if (generateImageBtn) {
-        generateImageBtn.addEventListener('click', generateImage);
-    }
 
     // Auto-fix button
     document.getElementById('autoFixBtn').addEventListener('click', autoFixCode);
@@ -2173,127 +2168,6 @@ function showLoading(show) {
     overlay.style.display = show ? 'flex' : 'none';
 }
 
-// Image generation function
-async function generateImage() {
-    const promptInput = document.getElementById('promptInput');
-    const prompt = promptInput.value.trim();
-    
-    if (!prompt) {
-        alert('Please enter a description of the image you want to generate.');
-        return;
-    }
-    
-    if (!window.electronAPI) {
-        alert('Electron API not available');
-        return;
-    }
-    
-    try {
-        // Disable button
-        const btn = document.getElementById('generateImageBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6 L12 12 L16 14"/></svg>';
-        
-        updateStatusIndicator('loading');
-        
-        // Check if SD is ready
-        const check = await window.electronAPI.sdCheckReady();
-        if (!check.available) {
-            throw new Error('Stable Diffusion is not running. Please install Automatic1111 WebUI and ensure it is running on port 7860.');
-        }
-        
-        // Generate image
-        const result = await window.electronAPI.sdGenerateImage(
-            prompt,
-            '', // negative prompt
-            1024, // width (SDXL default)
-            1024, // height (SDXL default)
-            30, // steps
-            7, // cfg scale
-            -1 // random seed
-        );
-        
-        if (result.success && result.image) {
-            // Create a new HTML file with the image
-            const imageHtml = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Generated Image</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #1a1a1a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            color: white;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-        .prompt {
-            margin-top: 20px;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            max-width: 800px;
-            text-align: center;
-        }
-        .prompt-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 8px;
-        }
-        .prompt-text {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-    </style>
-</head>
-<body>
-    <img src="data:image/png;base64,${result.image}" alt="Generated image">
-    <div class="prompt">
-        <div class="prompt-label">Prompt:</div>
-        <div class="prompt-text">${escapeHtml(prompt)}</div>
-    </div>
-</body>
-</html>`;
-            
-            const codeEditor = document.getElementById('codeEditor');
-            codeEditor.textContent = imageHtml;
-            generatedCode = imageHtml;
-            updateLineCount();
-            
-            if (currentLanguage === 'html') {
-                updatePreview();
-            }
-            
-            const codeActionsCard = document.getElementById('codeActionsCard');
-            if (codeActionsCard) codeActionsCard.style.display = 'block';
-            
-            updateStatusIndicator('ready');
-            alert('Image generated successfully!');
-        } else {
-            throw new Error(result.error || 'Failed to generate image');
-        }
-    } catch (error) {
-        console.error('Image generation error:', error);
-        alert(`Error generating image: ${error.message}`);
-        updateStatusIndicator('error');
-    } finally {
-        const btn = document.getElementById('generateImageBtn');
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
-    }
-}
 
 function escapeHtml(text) {
     const div = document.createElement('div');

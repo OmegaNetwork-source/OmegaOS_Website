@@ -49,18 +49,35 @@
             <!-- App Licensing -->
             <div class="identity-section">
                 <div class="identity-card">
-                    <h3>App Licensing</h3>
-                    <p class="section-description">Manage your app licenses on Omega Network</p>
-                    <div id="licensesList" class="licenses-list">
-                        <div class="license-item">
-                            <div class="license-info">
-                                <span class="license-name">Omega OS Pro</span>
-                                <span class="license-status" id="proLicenseStatus">Checking...</span>
+                    <h3>Omega OS Pro Licensing</h3>
+                    <p class="section-description">Unlock Omega Productivity apps and AI features</p>
+                    <div id="licenseStatus" class="license-status-card">
+                        <p class="loading">Checking license status...</p>
+                    </div>
+                    <div id="licenseActions" class="license-actions" style="display: none;">
+                        <div class="license-option">
+                            <div class="license-option-header">
+                                <h4>Stake for License</h4>
+                                <span class="license-price" id="stakingPrice">1,000 OMEGA</span>
                             </div>
-                            <button id="purchaseProBtn" class="identity-btn secondary" style="display: none;">
+                            <p class="license-description">Stake 1,000 OMEGA tokens for a 30-day license. Tokens are locked during the license period and can be withdrawn after expiry.</p>
+                            <button id="stakeLicenseBtn" class="identity-btn secondary">
+                                Stake for License
+                            </button>
+                        </div>
+                        <div class="license-option">
+                            <div class="license-option-header">
+                                <h4>Purchase Lifetime License</h4>
+                                <span class="license-price" id="purchasePrice">10,000 OMEGA</span>
+                            </div>
+                            <p class="license-description">Purchase a lifetime license for 10,000 OMEGA tokens. No renewal needed - access Omega OS Pro forever.</p>
+                            <button id="purchaseLicenseBtn" class="identity-btn primary">
                                 Purchase License
                             </button>
                         </div>
+                    </div>
+                    <div id="licenseInfo" class="license-info" style="display: none;">
+                        <!-- License details will be shown here -->
                     </div>
                 </div>
             </div>
@@ -84,4 +101,5 @@
     <script src="identity.js"></script>
 </body>
 </html>
+
 

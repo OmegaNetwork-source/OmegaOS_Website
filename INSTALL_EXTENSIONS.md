@@ -64,3 +64,4 @@
 - **Extension not working:** Some extensions may have limited functionality in Electron
 
 
+

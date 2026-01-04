@@ -1,0 +1,284 @@
+/* Light Mode Styles */
+[data-theme="light"] body {
+    background: #f5f5f5;
+    color: #333;
+}
+
+[data-theme="light"] .spreadsheet-container {
+    background: white;
+}
+
+[data-theme="light"] .spreadsheet-header {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+[data-theme="light"] .row-header {
+    background: #f8f9fa;
+    border-right: 2px solid #dee2e6;
+}
+
+[data-theme="light"] .column-header {
+    color: #666;
+    border-right: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+[data-theme="light"] .row-numbers {
+    background: #f8f9fa;
+    border-right: 2px solid #dee2e6;
+}
+
+[data-theme="light"] .row-number {
+    color: #666;
+    border-bottom: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .cell {
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #333;
+}
+
+[data-theme="light"] .cell.selected {
+    background: #e3f2fd;
+}
+
+[data-theme="light"] .cell.total-row {
+    background: #f0f0f0;
+}
+
+[data-theme="light"] .cell.total-row.selected {
+    background: #d0e8f5;
+}
+
+[data-theme="light"] .spreadsheet-section {
+    border-right: 2px solid #dee2e6;
+}
+
+[data-theme="light"] .right-panel {
+    background: #f8f9fa;
+    border-left: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .input-section {
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+}
+
+[data-theme="light"] .input-header h3 {
+    color: #333;
+}
+
+[data-theme="light"] .input-hint {
+    color: #666;
+}
+
+[data-theme="light"] #quickInput {
+    border: 2px solid #000;
+    background: white;
+    color: #333;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] #quickInput:focus {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] #quickInput::placeholder {
+    color: #999;
+}
+
+[data-theme="light"] .add-entries-btn {
+    border: 2px solid #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .add-entries-btn:hover {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .clear-sheet-btn {
+    background: white;
+    color: #333;
+    border: 2px solid #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .clear-sheet-btn:hover {
+    background: #f0f0f0;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .clear-sheet-btn:active {
+    background: #e0e0e0;
+}
+
+[data-theme="light"] .calculator-section {
+    background: white;
+    border-top: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .calculator-header h3 {
+    color: #333;
+}
+
+[data-theme="light"] .toggle-calculator-btn {
+    border: 2px solid #000;
+    background: white;
+    color: #333;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .toggle-calculator-btn:hover {
+    background: #f0f0f0;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .calculator-display {
+    background: white;
+    color: #333;
+    border: 2px solid #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .calculator-display:focus {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .calc-btn {
+    border: 2px solid #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .calc-btn:hover {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .calc-number {
+    background: white;
+    color: #333;
+}
+
+[data-theme="light"] .calc-number:hover {
+    background: #f0f0f0;
+}
+
+[data-theme="light"] .calc-operator {
+    background: #f0f0f0;
+    color: #333;
+}
+
+[data-theme="light"] .calc-operator:hover {
+    background: #e0e0e0;
+}
+
+[data-theme="light"] .calc-function {
+    background: #f8f9fa;
+    color: #333;
+}
+
+[data-theme="light"] .calc-function:hover {
+    background: #e9ecef;
+}
+
+[data-theme="light"] .calc-equals {
+    border: 2px solid #000;
+}
+
+[data-theme="light"] .tax-calculator-section {
+    background: white;
+    border-top: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .tax-calculator-header h3 {
+    color: #333;
+}
+
+[data-theme="light"] .tax-input-group label {
+    color: #666;
+}
+
+[data-theme="light"] .tax-input {
+    border: 2px solid #000;
+    background: white;
+    color: #333;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .tax-input:focus {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .tax-input::placeholder {
+    color: #999;
+}
+
+[data-theme="light"] .tax-calculate-btn {
+    border: 2px solid #000;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .tax-calculate-btn:hover {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .tax-results {
+    border-top: 1px solid #e0e0e0;
+}
+
+[data-theme="light"] .tax-result-label {
+    color: #666;
+}
+
+[data-theme="light"] .tax-result-value {
+    color: #333;
+}
+
+[data-theme="light"] .tax-result-total {
+    border-top: 2px solid #000;
+}
+
+[data-theme="light"] .file-menu-dropdown {
+    background: white;
+    border: 1px solid #d0d0d0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .file-menu-item {
+    color: #333;
+}
+
+[data-theme="light"] .file-menu-item:hover {
+    background: #f0f0f0;
+}
+
+[data-theme="light"] .file-menu-item svg {
+    color: #666;
+}
+
+[data-theme="light"] .file-menu-shortcut {
+    color: #999;
+}
+
+[data-theme="light"] .file-menu-divider {
+    background: #e0e0e0;
+}
+
+[data-theme="light"] .spreadsheet-body::-webkit-scrollbar-track,
+[data-theme="light"] .cells-container::-webkit-scrollbar-track,
+[data-theme="light"] .column-headers::-webkit-scrollbar-track {
+    background: #f5f5f5;
+}
+
+[data-theme="light"] .spreadsheet-body::-webkit-scrollbar-thumb,
+[data-theme="light"] .cells-container::-webkit-scrollbar-thumb,
+[data-theme="light"] .column-headers::-webkit-scrollbar-thumb {
+    background: #ccc;
+}
+
+[data-theme="light"] .spreadsheet-body::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] .cells-container::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] .column-headers::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}

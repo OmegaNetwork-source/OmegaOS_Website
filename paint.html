@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Paint</title>
+    <link rel="stylesheet" href="paint.css">
+</head>
+<body>
+    <!-- Window Title Bar -->
+    <div class="window-titlebar">
+        <div class="window-titlebar-left">
+            <div class="file-menu-container">
+                <button class="file-menu-btn" id="fileMenuBtn">File</button>
+                <div class="file-menu-dropdown" id="fileMenuDropdown">
+                    <div class="file-menu-item" id="fileMenuNew">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        <span>New</span>
+                        <span class="file-menu-shortcut">Ctrl+N</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuOpen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Open</span>
+                        <span class="file-menu-shortcut">Ctrl+O</span>
+                    </div>
+                    <div class="file-menu-divider"></div>
+                    <div class="file-menu-item" id="fileMenuSave">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save</span>
+                        <span class="file-menu-shortcut">Ctrl+S</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuSaveAs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save As...</span>
+                    </div>
+                    <div class="file-menu-divider"></div>
+                    <div class="file-menu-item" id="fileMenuPrint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <polyline points="6 9 6 2 18 2 18 9"/>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                            <rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                        <span>Print</span>
+                        <span class="file-menu-shortcut">Ctrl+P</span>
+                    </div>
+                </div>
+            </div>
+            <div class="window-title">Omega Paint</div>
+        </div>
+        <div class="window-controls">
+            <button class="window-control minimize" id="minimizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="0" y1="6" x2="12" y2="6"/>
+                </svg>
+            </button>
+            <button class="window-control maximize" id="maximizeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="8" height="8"/>
+                </svg>
+            </button>
+            <button class="window-control close" id="closeBtn">
+                <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="2" y1="2" x2="10" y2="10"/>
+                    <line x1="10" y1="2" x2="2" y2="10"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-section">
+            <button class="tool-btn active" id="brushTool" title="Brush (B)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M9.06 2.57c-1.18-1.18-3.07-1.18-4.24 0L4.8 3.63c-1.18 1.18-1.18 3.07 0 4.24l9.19 9.19c.39.39.9.59 1.41.59s1.02-.2 1.41-.59l1.13-1.13c1.18-1.18 1.18-3.07 0-4.24L9.06 2.57z"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="eraserTool" title="Eraser (E)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21.71 2.29a1 1 0 0 0-1.42 0L18 4.58l-1.29-1.29a1 1 0 0 0-1.42 1.42L16.58 6l-8 8-3.29-3.29a1 1 0 0 0-1.42 1.42l4 4a1 1 0 0 0 1.42 0l9-9a1 1 0 0 0 0-1.42z"/>
+                    <path d="M3 21h18"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="lineTool" title="Line (L)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="rectangleTool" title="Rectangle (R)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="circleTool" title="Circle (C)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="fillTool" title="Fill (F)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-section">
+            <label class="tool-label">Size:</label>
+            <input type="range" id="brushSize" min="1" max="50" value="5" class="size-slider">
+            <span id="brushSizeValue">5</span>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-section">
+            <label class="tool-label">Color:</label>
+            <input type="color" id="colorPicker" value="#000000" class="color-picker">
+            <div class="color-presets">
+                <div class="color-preset" data-color="#000000" style="background: #000000;"></div>
+                <div class="color-preset" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #ccc;"></div>
+                <div class="color-preset" data-color="#FF0000" style="background: #FF0000;"></div>
+                <div class="color-preset" data-color="#00FF00" style="background: #00FF00;"></div>
+                <div class="color-preset" data-color="#0000FF" style="background: #0000FF;"></div>
+                <div class="color-preset" data-color="#FFFF00" style="background: #FFFF00;"></div>
+                <div class="color-preset" data-color="#FF00FF" style="background: #FF00FF;"></div>
+                <div class="color-preset" data-color="#00FFFF" style="background: #00FFFF;"></div>
+            </div>
+        </div>
+        <div class="toolbar-divider"></div>
+        <div class="toolbar-section">
+            <button class="tool-btn" id="undoBtn" title="Undo (Ctrl+Z)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M3 7v6h6"/>
+                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="redoBtn" title="Redo (Ctrl+Y)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 7v6h-6"/>
+                    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
+                </svg>
+            </button>
+            <button class="tool-btn" id="clearBtn" title="Clear Canvas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Canvas Container -->
+    <div class="canvas-container">
+        <canvas id="paintCanvas"></canvas>
+    </div>
+
+    <!-- AI Sidebar -->
+    <div class="ai-sidebar" id="aiSidebar">
+        <div class="ai-sidebar-header">
+            <h3>AI Drawing Assistant</h3>
+            <button class="ai-sidebar-close" id="aiSidebarClose">×</button>
+        </div>
+        <div class="ai-chat-messages" id="aiChatMessages">
+            <div class="ai-message ai-message-assistant">
+                <div class="ai-message-content">
+                    Hello! I'm your AI Drawing Assistant. I can help you:
+                    <ul>
+                        <li>Draw shapes, objects, and scenes</li>
+                        <li>Create illustrations based on descriptions</li>
+                        <li>Add elements to your canvas</li>
+                        <li>Suggest drawing techniques</li>
+                    </ul>
+                    <strong>Try saying:</strong> "Draw a red circle", "Create a sunset scene", "Draw a house", etc.
+                    <br><br>
+                    What would you like me to draw?
+                </div>
+            </div>
+        </div>
+        <div class="ai-chat-input-container">
+            <textarea class="ai-chat-input" id="aiChatInput" placeholder="Describe what you want me to draw..." rows="2"></textarea>
+            <button class="ai-chat-send" id="aiChatSend">Draw</button>
+        </div>
+    </div>
+
+    <!-- AI Toggle Button -->
+    <button class="ai-toggle-btn" id="aiToggleBtn" title="AI Drawing Assistant">AI</button>
+
+    <script src="paint.js"></script>
+</body>
+</html>
+

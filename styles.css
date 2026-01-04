@@ -138,12 +138,14 @@ input, textarea {
 
 /* Centered URL Bar */
 .url-bar-center {
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     justify-content: center;
     -webkit-app-region: no-drag;
     max-width: 600px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 .address-bar-wrapper {
@@ -152,18 +154,33 @@ input, textarea {
     gap: 8px;
     width: 100%;
     max-width: 600px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
+    min-width: 300px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
     padding: 4px 4px 4px 12px;
     transition: all 0.2s ease;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+/* Light mode - black glow */
+[data-theme="light"] .address-bar-wrapper {
+    border: 1.5px solid rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3), 0 0 16px rgba(0, 0, 0, 0.2);
 }
 
 .address-bar-wrapper:focus-within {
-    background: var(--bg-primary);
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(255, 255, 255, 0.3), 0 0 24px rgba(255, 255, 255, 0.2);
     max-width: 700px;
+}
+
+/* Light mode focus - black glow */
+[data-theme="light"] .address-bar-wrapper:focus-within {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 0, 0, 0.3), 0 0 24px rgba(0, 0, 0, 0.2);
 }
 
 .camera-btn {
@@ -201,38 +218,57 @@ input, textarea {
 }
 
 .ai-mode-btn {
-    height: 32px;
-    padding: 0 12px;
-    border: 1.5px solid rgba(255, 255, 255, 0.9);
-    border-radius: 16px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
     background: var(--bg-secondary);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     transition: all 0.2s ease;
     flex-shrink: 0;
     white-space: nowrap;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 16px rgba(255, 255, 255, 0.2);
 }
 
 .ai-mode-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
 .ai-mode-btn.active {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 1);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(255, 255, 255, 0.3), 0 0 24px rgba(255, 255, 255, 0.2);
 }
 
 .ai-mode-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
+}
+
+/* Light mode - black text and black glow */
+[data-theme="light"] .ai-mode-btn {
+    border: 1.5px solid rgba(0, 0, 0, 0.9);
+    color: rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3), 0 0 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .ai-mode-btn:hover {
+    border-color: rgba(0, 0, 0, 1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .ai-mode-btn.active {
+    border-color: rgba(0, 0, 0, 1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 0, 0, 0.3), 0 0 24px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="dark"] .ai-mode-btn {
@@ -241,22 +277,22 @@ input, textarea {
 }
 
 .vpn-toggle-btn {
-    height: 32px;
-    padding: 0 12px;
-    border: 1.5px solid rgba(255, 255, 255, 0.5);
-    border-radius: 16px;
+    height: 24px;
+    padding: 0 8px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
     background: transparent;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     transition: all 0.2s ease;
     flex-shrink: 0;
     white-space: nowrap;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .vpn-toggle-btn:hover {
@@ -278,8 +314,8 @@ input, textarea {
 }
 
 .vpn-toggle-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
 }
 
@@ -299,6 +335,15 @@ input, textarea {
 }
 
 .top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.top-bar-left {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -685,14 +730,30 @@ input, textarea {
     position: relative;
 }
 
+/* Light mode - black border and glow for better visibility */
+[data-theme="light"] .tab {
+    border: 1.5px solid rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
 .tab:hover {
     background: var(--tab-active);
+}
+
+[data-theme="light"] .tab:hover {
+    border-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
 .tab.active {
     background: var(--tab-active);
     border-bottom-color: var(--tab-active);
     z-index: 1;
+}
+
+[data-theme="light"] .tab.active {
+    border: 1.5px solid rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3), 0 0 12px rgba(0, 0, 0, 0.2);
 }
 
 .tab-title {
@@ -1020,6 +1081,8 @@ webview {
     overflow-y: auto;
     flex: 1;
     background: transparent;
+    /* Ensure B2H button is visible */
+    scroll-behavior: smooth;
 }
 
 #walletPanel .panel-body {
@@ -1150,6 +1213,23 @@ webview {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.7) !important;
     margin: 0 0 16px 0;
+}
+
+/* Burn to Hell (B2H) Button */
+#burnToHellBtn:hover {
+    background: linear-gradient(135deg, #ff6666 0%, #ff0000 100%) !important;
+    box-shadow: 0 0 25px rgba(255, 68, 68, 0.7), 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+#burnToHellBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+#burnToHellBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6 !important;
 }
 
 .settings-options {

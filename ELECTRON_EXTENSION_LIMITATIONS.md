@@ -57,3 +57,4 @@ The extensions being "detected" but not functional creates a poor user experienc
 - Use alternatives (WalletConnect, native integration)
 
 
+

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Finance</title>
+    <link rel="stylesheet" href="finance.css">
+</head>
+<body>
+    <!-- Window Title Bar -->
+    <div class="window-titlebar">
+        <div class="window-titlebar-left">
+            <div class="file-menu-container">
+                <button class="file-menu-btn" id="fileMenuBtn">File</button>
+                <div class="file-menu-dropdown" id="fileMenuDropdown">
+                    <div class="file-menu-item" id="fileMenuNew">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="8" x2="12" y2="16"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        <span>New</span>
+                        <span class="file-menu-shortcut">Ctrl+N</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuOpen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <span>Open</span>
+                        <span class="file-menu-shortcut">Ctrl+O</span>
+                    </div>
+                    <div class="file-menu-divider"></div>
+                    <div class="file-menu-item" id="fileMenuSave">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save</span>
+                        <span class="file-menu-shortcut">Ctrl+S</span>
+                    </div>
+                    <div class="file-menu-item" id="fileMenuSaveAs">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        <span>Save As...</span>
+                    </div>
+                </div>
+            </div>
+            <button class="file-menu-btn" id="helpBtn" title="Show/Hide Right Panel">Help</button>
+            <button class="file-menu-btn" id="aiBtn" title="AI Assistant">AI</button>
+        </div>
+        <div class="window-title-center">
+            <div class="window-title">Omega Finance</div>
+        </div>
+        <div class="window-titlebar-right">
+            <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Dark/Light Mode">☀️</button>
+            <div class="window-controls">
+                <button class="window-control minimize" id="minimizeBtn">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="0" y1="6" x2="12" y2="6"/>
+                    </svg>
+                </button>
+                <button class="window-control maximize" id="maximizeBtn">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="8" height="8"/>
+                    </svg>
+                </button>
+                <button class="window-control close" id="closeBtn">
+                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="2" y1="2" x2="10" y2="10"/>
+                        <line x1="10" y1="2" x2="2" y2="10"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel-like Ribbon Interface -->
+    <div class="ribbon-container">
+        <div class="ribbon-tabs">
+            <button class="ribbon-tab active" data-tab="home">Home</button>
+            <button class="ribbon-tab" data-tab="insert">Insert</button>
+            <button class="ribbon-tab" data-tab="formulas">Formulas</button>
+            <button class="ribbon-tab" data-tab="data">Data</button>
+            <button class="ribbon-tab" data-tab="review">Review</button>
+            <button class="ribbon-tab" data-tab="view">View</button>
+        </div>
+        
+        <!-- Home Tab Content -->
+        <div class="ribbon-content" id="ribbonHome">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Clipboard</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn" id="ribbonPaste" title="Paste">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        <span>Paste</span>
+                    </button>
+                    <button class="ribbon-btn" id="ribbonCut" title="Cut">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <circle cx="6" cy="6" r="3"/>
+                            <circle cx="6" cy="18" r="3"/>
+                            <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                            <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                            <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                        </svg>
+                        <span>Cut</span>
+                    </button>
+                    <button class="ribbon-btn" id="ribbonCopy" title="Copy">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonUndo" title="Undo (Ctrl+Z)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M3 7v6h6"/>
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.7L3 13"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonRedo" title="Redo (Ctrl+Y)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M21 7v6h-6"/>
+                            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.7L21 13"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Font</div>
+                <div class="ribbon-group-items">
+                    <select class="ribbon-font-select" id="ribbonFontFamily">
+                        <option>Calibri</option>
+                        <option>Arial</option>
+                        <option>Times New Roman</option>
+                        <option>Courier New</option>
+                    </select>
+                    <select class="ribbon-size-select" id="ribbonFontSize">
+                        <option>8</option>
+                        <option>9</option>
+                        <option>10</option>
+                        <option>11</option>
+                        <option selected>12</option>
+                        <option>14</option>
+                        <option>16</option>
+                        <option>18</option>
+                        <option>20</option>
+                        <option>24</option>
+                    </select>
+                    <button class="ribbon-btn-icon" id="ribbonBold" title="Bold">
+                        <strong>B</strong>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonItalic" title="Italic">
+                        <em>I</em>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonUnderline" title="Underline">
+                        <u>U</u>
+                    </button>
+                    <div class="ribbon-color-picker-container">
+                        <button class="ribbon-btn-icon" id="ribbonFontColor" title="Font Color">
+                            <span style="text-decoration: underline;">A</span>
+                        </button>
+                        <input type="color" id="ribbonFontColorPicker" class="ribbon-color-picker" value="#000000">
+                    </div>
+                    <div class="ribbon-color-picker-container">
+                        <button class="ribbon-btn-icon" id="ribbonFillColor" title="Fill Color">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                <path d="M3 3h18v18H3z"/>
+                            </svg>
+                        </button>
+                        <input type="color" id="ribbonFillColorPicker" class="ribbon-color-picker" value="#ffffff">
+                    </div>
+                </div>
+            </div>
+
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Alignment</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn-icon" id="ribbonAlignLeft" title="Align Left">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="15" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonAlignCenter" title="Align Center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="6" y1="12" x2="18" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonAlignRight" title="Align Right">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="9" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonAlignTop" title="Top Align">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                            <line x1="6" y1="4" x2="18" y2="4"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonAlignMiddle" title="Middle Align">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                            <line x1="6" y1="12" x2="18" y2="12"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonAlignBottom" title="Bottom Align">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                            <line x1="6" y1="20" x2="18" y2="20"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonWrapText" title="Wrap Text">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M3 6h18M3 12h12M3 18h6"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonMergeCenter" title="Merge & Center">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Number</div>
+                <div class="ribbon-group-items">
+                    <select class="ribbon-format-select" id="ribbonNumberFormat">
+                        <option value="general">General</option>
+                        <option value="number">Number</option>
+                        <option value="currency">Currency</option>
+                        <option value="percent">Percent</option>
+                        <option value="date">Date</option>
+                        <option value="time">Time</option>
+                    </select>
+                    <button class="ribbon-btn-icon" id="ribbonCurrency" title="Currency Format">
+                        <strong>$</strong>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonPercent" title="Percent Format">
+                        <strong>%</strong>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonComma" title="Comma Style">
+                        <strong>,</strong>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonIncreaseDecimal" title="Increase Decimal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn-icon" id="ribbonDecreaseDecimal" title="Decrease Decimal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Cells</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn" id="ribbonDelete">
+                        <span>Delete</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Editing</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn" id="ribbonAutoSum">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <path d="M18 6H9M6 12h12M9 18H6"/>
+                        </svg>
+                        <span>AutoSum</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn" id="ribbonClear">
+                        <span>Clear</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                    <button class="ribbon-btn" id="ribbonFindSelect">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                        <span>Find & Select</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other tabs (simplified for now) -->
+        <div class="ribbon-content hidden" id="ribbonInsert">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Insert</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ribbon-content hidden" id="ribbonFormulas">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Formulas</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ribbon-content hidden" id="ribbonData">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Data</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ribbon-content hidden" id="ribbonReview">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">Review</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ribbon-content hidden" id="ribbonView">
+            <div class="ribbon-group">
+                <div class="ribbon-group-label">View</div>
+                <div class="ribbon-group-items">
+                    <button class="ribbon-btn">Coming Soon</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-container">
+        <!-- Left Side: Spreadsheet -->
+        <div class="spreadsheet-section">
+            <div class="spreadsheet-container">
+                <div class="spreadsheet-header">
+                    <div class="row-header"></div>
+                    <div class="column-headers" id="columnHeaders"></div>
+                </div>
+                <div class="spreadsheet-body">
+                    <div class="row-numbers" id="rowNumbers"></div>
+                    <div class="cells-container" id="cellsContainer"></div>
+                </div>
+            </div>
+            
+            <!-- Sheet Tabs -->
+            <div class="sheet-tabs-container">
+                <button class="sheet-tab-btn" id="addSheetBtn" title="Add New Sheet">+</button>
+                <div class="sheet-tabs" id="sheetTabs">
+                    <button class="sheet-tab active" data-sheet="Sheet1">Sheet1</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Calculator & Input Panel -->
+        <div class="right-panel" id="rightPanel">
+            <button class="close-right-panel-btn" id="closeRightPanelBtn" title="Close Panel">×</button>
+            
+            <div class="ai-section minimized">
+                <div class="ai-header">
+                    <h3>AI</h3>
+                    <button class="toggle-ai-btn" id="toggleAiBtn">+</button>
+                </div>
+                <div class="ai-content" id="aiContent">
+                    <textarea id="aiInput" placeholder="Ask AI about your finances..." rows="4"></textarea>
+                    <button id="aiSubmitBtn" class="ai-submit-btn">Ask AI</button>
+                    <div id="aiResponse" class="ai-response"></div>
+                </div>
+            </div>
+
+            <div class="input-section minimized">
+                <div class="input-header">
+                    <h3>Quick Entry</h3>
+                    <button class="toggle-quick-entry-btn" id="toggleQuickEntryBtn">+</button>
+                </div>
+                <p class="input-hint">Type entries like: "house cost -100" or "paycheck +500"</p>
+                <div class="input-container" id="quickEntryContent">
+                    <textarea id="quickInput" placeholder="house cost -100&#10;paycheck +500&#10;groceries -75" rows="6"></textarea>
+                    <button id="addEntriesBtn" class="add-entries-btn">Add to Sheet</button>
+                    <button id="clearSheetBtn" class="clear-sheet-btn">Clear</button>
+                </div>
+            </div>
+
+            <div class="calculator-section minimized">
+                <div class="calculator-header">
+                    <h3>Calculator</h3>
+                    <button class="toggle-calculator-btn" id="toggleCalculatorBtn">+</button>
+                </div>
+                <div class="calculator-content" id="calculatorContent">
+                    <div class="calculator-display" id="calcDisplay">0</div>
+                    <div class="calculator-buttons">
+                        <button class="calc-btn calc-function" onclick="calcClearAll()">AC</button>
+                        <button class="calc-btn calc-function" onclick="calcClearEntry()">CE</button>
+                        <button class="calc-btn calc-function" onclick="calcDelete()">⌫</button>
+                        <button class="calc-btn calc-operator" onclick="calcOperator('/')">÷</button>
+                        
+                        <button class="calc-btn calc-number" onclick="calcNumber('7')">7</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('8')">8</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('9')">9</button>
+                        <button class="calc-btn calc-operator" onclick="calcOperator('*')">×</button>
+                        
+                        <button class="calc-btn calc-number" onclick="calcNumber('4')">4</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('5')">5</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('6')">6</button>
+                        <button class="calc-btn calc-operator" onclick="calcOperator('-')">−</button>
+                        
+                        <button class="calc-btn calc-number" onclick="calcNumber('1')">1</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('2')">2</button>
+                        <button class="calc-btn calc-number" onclick="calcNumber('3')">3</button>
+                        <button class="calc-btn calc-operator" onclick="calcOperator('+')">+</button>
+                        
+                        <button class="calc-btn calc-number calc-zero" onclick="calcNumber('0')">0</button>
+                        <button class="calc-btn calc-number" onclick="calcDecimal()">.</button>
+                        <button class="calc-btn calc-equals" onclick="calcCalculate()">=</button>
+                        <button class="calc-btn calc-operator" onclick="calcOperator('%')">%</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tax-calculator-section minimized">
+                <div class="tax-calculator-header">
+                    <h3>Tax Calculator</h3>
+                    <button class="toggle-tax-calculator-btn" id="toggleTaxCalculatorBtn">+</button>
+                </div>
+                <div class="tax-calculator-content" id="taxCalculatorContent">
+                    <div class="tax-type-buttons">
+                        <button class="tax-type-btn" id="incomeTaxBtn">Income Tax</button>
+                        <button class="tax-type-btn" id="cryptoTaxBtn">Crypto Tax</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="formulas-section minimized">
+                <div class="formulas-header">
+                    <h3>Formulas</h3>
+                    <button class="toggle-formulas-btn" id="toggleFormulasBtn">+</button>
+                </div>
+                <div class="formulas-content" id="formulasContent">
+                    <div class="formula-box">
+                        <h4>Budget</h4>
+                        <div class="budget-form">
+                            <div class="budget-section">
+                                <h5>Expenses</h5>
+                                <div id="expensesContainer"></div>
+                                <button type="button" class="add-expense-btn" id="addExpenseBtn">+ Add Expense</button>
+                            </div>
+                            <div class="budget-section">
+                                <h5>Income</h5>
+                                <div id="incomeContainer"></div>
+                                <button type="button" class="add-income-btn" id="addIncomeBtn">+ Add Income</button>
+                            </div>
+                            <div class="budget-section">
+                                <label for="forecastDate">Forecast to:</label>
+                                <input type="date" id="forecastDate" class="budget-input">
+                            </div>
+                            <button type="button" class="budget-submit-btn" id="budgetSubmitBtn">Create Budget</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income Tax Modal -->
+    <div id="incomeTaxModal" class="tax-modal">
+        <div class="tax-modal-content">
+            <div class="tax-modal-header">
+                <h2>Income Tax Calculator</h2>
+                <button class="tax-modal-close" id="closeIncomeTaxModal">×</button>
+            </div>
+            <div class="tax-modal-body" id="incomeTaxForm">
+                <!-- Form will be generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Crypto Tax Modal -->
+    <div id="cryptoTaxModal" class="tax-modal">
+        <div class="tax-modal-content">
+            <div class="tax-modal-header">
+                <h2>Crypto Tax Calculator</h2>
+                <button class="tax-modal-close" id="closeCryptoTaxModal">×</button>
+            </div>
+            <div class="tax-modal-body" id="cryptoTaxForm">
+                <!-- Form will be generated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="finance.js"></script>
+    <script src="finance-tax.js"></script>
+    <script src="finance-budget.js"></script>
+</body>
+</html>

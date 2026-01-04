@@ -24,9 +24,10 @@ class TorManager {
   getTorPath() {
     // First, try bundled Tor (from build/tor directory)
     // In development: app.getAppPath() returns project root
-    // In production: process.resourcesPath points to app.asar or resources folder
-    const appPath = process.resourcesPath || app.getAppPath();
-    const bundledTorPath = path.join(appPath, 'build', 'tor', 'tor.exe');
+    // In production: process.resourcesPath points to resources folder (outside app.asar)
+    // electron-builder puts build/ folder in resources/ directory
+    const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
+    const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
     
     if (fs.existsSync(bundledTorPath)) {
       console.log('[Tor] Using bundled Tor from:', bundledTorPath);
@@ -56,8 +57,8 @@ class TorManager {
   // Check if Tor is already installed
   async isTorInstalled() {
     // Check bundled Tor first (both dev and production paths)
-    const appPath = process.resourcesPath || app.getAppPath();
-    const bundledTorPath = path.join(appPath, 'build', 'tor', 'tor.exe');
+    const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
+    const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
     if (fs.existsSync(bundledTorPath)) {
       console.log('[Tor] Found bundled Tor at:', bundledTorPath);
       return true;
@@ -81,8 +82,8 @@ class TorManager {
     }
 
     // Check if bundled Tor exists (should be in build/tor/tor.exe)
-    const appPath = process.resourcesPath || app.getAppPath();
-    const bundledTorPath = path.join(appPath, 'build', 'tor', 'tor.exe');
+    const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
+    const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
     
     if (fs.existsSync(bundledTorPath)) {
       console.log('[Tor] Using bundled Tor');

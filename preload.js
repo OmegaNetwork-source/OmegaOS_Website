@@ -26,10 +26,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('open-file', (event, filePath) => callback(filePath));
   },
   
+  // Listen for wallet configuration for identity registration
+  onWalletConfigureForIdentity: (callback) => {
+    ipcRenderer.on('wallet-configure-for-identity', () => callback());
+  },
+  
+  // Listen for app interaction notifications
+  onWalletAppInteraction: (callback) => {
+    ipcRenderer.on('wallet-app-interaction', (event, data) => callback(data));
+  },
+  
+  // Open external URL
+  openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
+  
+  // Clipboard operations
+  clipboardWriteText: (text) => ipcRenderer.invoke('clipboard-write-text', text),
+  
   // App Management
   launchApp: (appType, options) => ipcRenderer.invoke('launch-app', appType, options),
   getOpenWindows: () => ipcRenderer.invoke('get-open-windows'),
   focusWindow: (windowId) => ipcRenderer.invoke('focus-window', windowId),
+  minimizeWindow: (windowId) => ipcRenderer.invoke('minimize-window', windowId),
   
   // Wallet (still available)
   walletCreate: (password, secretKeyBase64 = null) => ipcRenderer.invoke('wallet-create', password, secretKeyBase64),
@@ -52,14 +69,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
   walletExportPrivateKey: (password) => ipcRenderer.invoke('wallet-export-private-key', password),
   walletToggleNetwork: (enable) => ipcRenderer.invoke('wallet-toggle-network', enable),
   
+  // Multi-wallet methods
+  walletCreateForNetwork: (password, network, name) => ipcRenderer.invoke('wallet-create-for-network', password, network, name),
+  walletGetWalletsForNetwork: (network) => ipcRenderer.invoke('wallet-get-wallets-for-network', network),
+  walletSetCurrentWallet: (network, walletId, password) => ipcRenderer.invoke('wallet-set-current-wallet', network, walletId, password),
+  walletGetCurrentWalletId: (network) => ipcRenderer.invoke('wallet-get-current-wallet-id', network),
+  walletLoadByNetwork: (password, network) => ipcRenderer.invoke('wallet-load-by-network', password, network),
+  walletUpdateName: (walletId, name) => ipcRenderer.invoke('wallet-update-name', walletId, name),
+  walletDelete: (walletId) => ipcRenderer.invoke('wallet-delete', walletId),
+  walletCleanupDuplicates: () => ipcRenderer.invoke('wallet-cleanup-duplicates'),
+  
   // Omega Identity APIs
   identityInitialize: () => ipcRenderer.invoke('identity-initialize'),
   identityGet: () => ipcRenderer.invoke('identity-get'),
   identityHasIdentity: () => ipcRenderer.invoke('identity-has-identity'),
   identitySyncDocument: (documentId, documentHash, metadata) => ipcRenderer.invoke('identity-sync-document', documentId, documentHash, metadata),
   identityGetSyncedDocuments: () => ipcRenderer.invoke('identity-get-synced-documents'),
-  identityCheckLicense: (appName) => ipcRenderer.invoke('identity-check-license', appName),
-  identityPurchaseLicense: (appName, price) => ipcRenderer.invoke('identity-purchase-license', appName, price),
+  identityCheckLicense: () => ipcRenderer.invoke('identity-check-license'),
+  identityGetLicenseDetails: () => ipcRenderer.invoke('identity-get-license-details'),
+  identityGetLicensePricing: () => ipcRenderer.invoke('identity-get-license-pricing'),
+  identityStakeForLicense: () => ipcRenderer.invoke('identity-stake-for-license'),
+  identityPurchaseLicense: () => ipcRenderer.invoke('identity-purchase-license'),
+  identityWithdrawStake: () => ipcRenderer.invoke('identity-withdraw-stake'),
   identityAuthenticate: (message) => ipcRenderer.invoke('identity-authenticate', message),
   identityVerifySignature: (message, signature, address) => ipcRenderer.invoke('identity-verify-signature', message, signature, address),
   
@@ -67,6 +98,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileDialog: (options) => ipcRenderer.invoke('save-file-dialog', options),
   openFileDialog: (options) => ipcRenderer.invoke('open-file-dialog', options),
   readFile: (filePath, encoding) => ipcRenderer.invoke('read-file', filePath, encoding),
+  readFileFromPath: (filePath, encoding) => ipcRenderer.invoke('read-file-from-path', filePath, encoding),
   writeFile: (filePath, content, encoding) => ipcRenderer.invoke('write-file', filePath, content, encoding),
   // File conversion operations
   convertToDocx: (htmlContent, filePath) => ipcRenderer.invoke('convert-to-docx', htmlContent, filePath),
@@ -79,6 +111,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteFile: (filePath) => ipcRenderer.invoke('delete-file', filePath),
   renameFile: (filePath, newName) => ipcRenderer.invoke('rename-file', filePath, newName),
   copyFile: (sourcePath, destPath) => ipcRenderer.invoke('copy-file', sourcePath, destPath),
+  getFileStats: (filePath) => ipcRenderer.invoke('get-file-stats', filePath),
   
   // Encryption operations (for password manager and secure apps)
   encryptData: (data, key) => ipcRenderer.invoke('encrypt-data', data, key),
@@ -106,6 +139,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('firewall-sync-enabled', (event, enabled) => callback(enabled));
   },
   
+  // Privacy Monitor APIs
+  privacyMonitorRegister: () => ipcRenderer.send('privacy-monitor-register'),
+  privacyMonitorUnregister: () => ipcRenderer.send('privacy-monitor-unregister'),
+  onPrivacyFileAccess: (callback) => {
+    ipcRenderer.on('privacy-file-access', (event, data) => callback(data));
+  },
+  
+  // Burn to Hell (B2H) - Wipe all data
+  burnToHell: () => ipcRenderer.invoke('burn-to-hell'),
+  
   // Extension Management - Removed (extensions not supported, using WalletConnect instead)
   getLoadedExtensions: () => Promise.resolve([]), // Always return empty
   openExtensionPopup: () => Promise.resolve({ success: false }), // No-op
@@ -131,11 +174,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiGetCodeModels: () => ipcRenderer.invoke('ai-get-code-models'),
   aiSelectBestModel: (preferenceList = null) => ipcRenderer.invoke('ai-select-best-model', preferenceList),
   
-  // Stable Diffusion APIs
-  sdGenerateImage: (prompt, negativePrompt = '', width = 512, height = 512, steps = 20, cfgScale = 7, seed = -1) => ipcRenderer.invoke('sd-generate-image', prompt, negativePrompt, width, height, steps, cfgScale, seed),
-  sdCheckReady: () => ipcRenderer.invoke('sd-check-ready'),
-  sdGetModels: () => ipcRenderer.invoke('sd-get-models'),
-  sdSetModel: (modelName) => ipcRenderer.invoke('sd-set-model', modelName),
   
   // Ad Blocker
   adBlockerGetStatus: () => ipcRenderer.invoke('adblocker-get-status'),
@@ -209,3 +247,148 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateAIConfig: (appName, config) => ipcRenderer.invoke('update-ai-config', appName, config),
   getAIConfig: (appName) => ipcRenderer.invoke('get-ai-config', appName),
 });
+
+// TOR HARDENING: Fingerprinting Protection
+// Override navigator APIs to prevent fingerprinting when Tor is enabled
+// These values are normalized to common values to reduce uniqueness
+(function() {
+  'use strict';
+  
+  // Store original values
+  const originalNavigator = window.navigator;
+  
+  // Normalized fingerprint values (common/default values)
+  const FINGERPRINT_VALUES = {
+    hardwareConcurrency: 4, // Common CPU core count
+    deviceMemory: 8, // Common RAM in GB (or undefined if not supported)
+    platform: 'Win32', // Standard platform string
+    maxTouchPoints: 0, // Standard for desktop
+    vendor: 'Google Inc.',
+    vendorSub: '',
+    productSub: '20030107'
+  };
+  
+  // Override hardwareConcurrency
+  try {
+    Object.defineProperty(navigator, 'hardwareConcurrency', {
+      get: () => FINGERPRINT_VALUES.hardwareConcurrency,
+      configurable: true
+    });
+  } catch (e) {}
+  
+  // Override deviceMemory (if supported)
+  try {
+    if ('deviceMemory' in navigator) {
+      Object.defineProperty(navigator, 'deviceMemory', {
+        get: () => FINGERPRINT_VALUES.deviceMemory,
+        configurable: true
+      });
+    }
+  } catch (e) {}
+  
+  // Override platform (keep consistent)
+  try {
+    Object.defineProperty(navigator, 'platform', {
+      get: () => FINGERPRINT_VALUES.platform,
+      configurable: true
+    });
+  } catch (e) {}
+  
+  // Override maxTouchPoints
+  try {
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      get: () => FINGERPRINT_VALUES.maxTouchPoints,
+      configurable: true
+    });
+  } catch (e) {}
+  
+  // Override vendor/vendorSub/productSub for consistency
+  try {
+    Object.defineProperty(navigator, 'vendor', {
+      get: () => FINGERPRINT_VALUES.vendor,
+      configurable: true
+    });
+    Object.defineProperty(navigator, 'vendorSub', {
+      get: () => FINGERPRINT_VALUES.vendorSub,
+      configurable: true
+    });
+    Object.defineProperty(navigator, 'productSub', {
+      get: () => FINGERPRINT_VALUES.productSub,
+      configurable: true
+    });
+  } catch (e) {}
+  
+  // Canvas fingerprinting protection - add noise to canvas operations
+  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+  
+  HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
+    const imageData = this.getContext('2d')?.getImageData(0, 0, this.width, this.height);
+    if (imageData) {
+      // Add minimal noise (1 bit per 1000 pixels) to prevent fingerprinting
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4000) {
+        if (Math.random() < 0.001) {
+          data[i] = Math.min(255, Math.max(0, data[i] + (Math.random() < 0.5 ? 1 : -1)));
+        }
+      }
+    }
+    return originalToDataURL.apply(this, arguments);
+  };
+  
+  CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {
+    const imageData = originalGetImageData.apply(this, arguments);
+    // Add minimal noise to prevent fingerprinting
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4000) {
+      if (Math.random() < 0.001) {
+        data[i] = Math.min(255, Math.max(0, data[i] + (Math.random() < 0.5 ? 1 : -1)));
+      }
+    }
+    return imageData;
+  };
+  
+  // AudioContext fingerprinting protection
+  const originalAudioContext = window.AudioContext || window.webkitAudioContext;
+  if (originalAudioContext) {
+    const OriginalAudioContext = originalAudioContext;
+    window.AudioContext = function() {
+      const ctx = new OriginalAudioContext();
+      // Override createAnalyser to add noise
+      const originalCreateAnalyser = ctx.createAnalyser.bind(ctx);
+      ctx.createAnalyser = function() {
+        const analyser = originalCreateAnalyser();
+        const originalGetFloatFrequencyData = analyser.getFloatFrequencyData.bind(analyser);
+        analyser.getFloatFrequencyData = function(array) {
+          originalGetFloatFrequencyData(array);
+          // Add minimal noise
+          for (let i = 0; i < array.length; i += 100) {
+            if (Math.random() < 0.01) {
+              array[i] += (Math.random() - 0.5) * 0.0001;
+            }
+          }
+        };
+        return analyser;
+      };
+      return ctx;
+    };
+    window.AudioContext.prototype = OriginalAudioContext.prototype;
+    if (window.webkitAudioContext) {
+      window.webkitAudioContext = window.AudioContext;
+    }
+  }
+  
+  // Font enumeration protection - limit font access
+  const originalFontFaceSet = document.fonts;
+  if (originalFontFaceSet && originalFontFaceSet.check) {
+    const originalCheck = originalFontFaceSet.check.bind(originalFontFaceSet);
+    document.fonts.check = function(font, text) {
+      // Return true for common fonts to prevent enumeration
+      const commonFonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia'];
+      if (commonFonts.some(f => font.includes(f))) {
+        return true;
+      }
+      return originalCheck(font, text);
+    };
+  }
+})();

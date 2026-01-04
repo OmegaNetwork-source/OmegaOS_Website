@@ -61,3 +61,4 @@ Or open console on any page and type:
 **You don't need popups!** Extensions work perfectly on web pages. When you visit a dApp, MetaMask/Phantom will automatically connect. That's what matters.
 
 
+

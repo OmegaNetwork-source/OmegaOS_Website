@@ -40,6 +40,147 @@ body {
     background: transparent;
     background-size: cover;
     background-position: center;
+    position: relative;
+}
+
+/* Omega Trace Wallpaper */
+.omega-trace-wallpaper,
+.omega-symbol-wallpaper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.omega-trace-symbol,
+.omega-symbol-only {
+    font-size: 700px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.08);
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+    position: relative;
+    user-select: none;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1;
+}
+
+.omega-trace-circle {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 1), 
+                0 0 40px rgba(255, 255, 255, 0.8), 
+                0 0 60px rgba(255, 255, 255, 0.6),
+                0 0 80px rgba(255, 255, 255, 0.4);
+    animation: traceOmegaSymbol 15s linear infinite;
+    z-index: 2;
+}
+
+@keyframes traceOmegaSymbol {
+    /* Start at top-left curve of Omega */
+    0% {
+        top: calc(50% - 280px);
+        left: calc(50% - 180px);
+        transform: translate(-50%, -50%);
+    }
+    /* Top-left curve to top-center */
+    5% {
+        top: calc(50% - 310px);
+        left: calc(50% - 90px);
+        transform: translate(-50%, -50%);
+    }
+    /* Top-center to top-right curve */
+    10% {
+        top: calc(50% - 280px);
+        left: calc(50% + 10px);
+        transform: translate(-50%, -50%);
+    }
+    /* Top-right curve to right side */
+    15% {
+        top: calc(50% - 250px);
+        left: calc(50% + 110px);
+        transform: translate(-50%, -50%);
+    }
+    /* Right side going down */
+    20% {
+        top: calc(50% - 150px);
+        left: calc(50% + 140px);
+        transform: translate(-50%, -50%);
+    }
+    /* Right side continuing down */
+    30% {
+        top: calc(50% - 50px);
+        left: calc(50% + 130px);
+        transform: translate(-50%, -50%);
+    }
+    /* Bottom-right curve start */
+    38% {
+        top: calc(50% + 30px);
+        left: calc(50% + 110px);
+        transform: translate(-50%, -50%);
+    }
+    /* Bottom-right curve to bottom */
+    45% {
+        top: calc(50% + 80px);
+        left: calc(50% + 70px);
+        transform: translate(-50%, -50%);
+    }
+    /* Bottom center (lowest point) */
+    50% {
+        top: calc(50% + 110px);
+        left: calc(50%);
+        transform: translate(-50%, -50%);
+    }
+    /* Bottom-left curve from bottom */
+    55% {
+        top: calc(50% + 80px);
+        left: calc(50% - 70px);
+        transform: translate(-50%, -50%);
+    }
+    /* Bottom-left curve start */
+    62% {
+        top: calc(50% + 30px);
+        left: calc(50% - 110px);
+        transform: translate(-50%, -50%);
+    }
+    /* Left side going up */
+    70% {
+        top: calc(50% - 50px);
+        left: calc(50% - 130px);
+        transform: translate(-50%, -50%);
+    }
+    /* Left side continuing up */
+    80% {
+        top: calc(50% - 150px);
+        left: calc(50% - 140px);
+        transform: translate(-50%, -50%);
+    }
+    /* Left side to top-left curve */
+    90% {
+        top: calc(50% - 250px);
+        left: calc(50% - 110px);
+        transform: translate(-50%, -50%);
+    }
+    /* Top-left curve */
+    95% {
+        top: calc(50% - 280px);
+        left: calc(50% - 180px);
+        transform: translate(-50%, -50%);
+    }
+    /* Complete the loop */
+    100% {
+        top: calc(50% - 280px);
+        left: calc(50% - 180px);
+        transform: translate(-50%, -50%);
+    }
 }
 
 /* VPN Status Badge */
@@ -681,6 +822,44 @@ body {
 
 .taskbar-app.active::before {
     width: calc(100% - 16px);
+}
+
+/* Minimized apps - styled border to match Windows thumbnails */
+.taskbar-app.minimized {
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+        0 0 12px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: visible;
+}
+
+/* Add a subtle glow effect to make it look like a thumbnail border */
+.taskbar-app.minimized::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    pointer-events: none;
+    box-shadow: 
+        inset 0 0 20px rgba(255, 255, 255, 0.05),
+        0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.taskbar-app.minimized:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+}
+
+.taskbar-app.minimized::before {
+    display: none; /* Hide the active indicator for minimized apps */
 }
 
 .taskbar-app-icon {
@@ -1351,10 +1530,41 @@ body {
     font-size: 16px;
 }
 
+.user-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.user-separator {
+    color: rgba(0, 0, 0, 0.3);
+    font-size: 12px;
+}
+
 .user-name {
     font-size: 13px;
     font-weight: 500;
     color: #333;
+}
+
+.user-register-link {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    pointer-events: auto;
+    z-index: 10;
+    position: relative;
+}
+
+.user-register-link:hover {
+    color: #667eea;
+    text-decoration: underline;
+}
 }
 
 .start-menu-power {
@@ -1509,6 +1719,39 @@ body {
 
 .color-picker-body {
     padding: 20px;
+}
+
+.theme-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.theme-preset {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    padding: 4px;
+    border: 2px solid transparent;
+}
+
+.theme-preset:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.theme-preset.active {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes previewTrace {
+    0% { top: 15px; left: 15px; }
+    25% { top: 15px; left: calc(100% - 25px); }
+    50% { top: calc(100% - 25px); left: calc(100% - 25px); }
+    75% { top: calc(100% - 25px); left: 15px; }
+    100% { top: 15px; left: 15px; }
 }
 
 .color-presets {
@@ -2109,6 +2352,180 @@ body {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+}
+
+/* Identity Registration Modal */
+.identity-registration-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 20000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.identity-registration-modal[style*="flex"],
+.identity-registration-modal[style*="block"] {
+    display: flex !important;
+}
+
+.identity-registration-content {
+    background: var(--start-menu-bg);
+    border-radius: 12px;
+    width: 500px;
+    max-width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.identity-registration-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.identity-registration-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.identity-registration-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.identity-registration-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.identity-registration-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    color: #333;
+}
+
+.identity-registration-body p {
+    color: #333 !important;
+}
+
+.identity-registration-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #333;
+}
+
+.identity-registration-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 13px;
+}
+
+.info-value {
+    color: #333;
+    font-size: 13px;
+}
+
+.identity-register-btn {
+    padding: 12px 24px;
+    background: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.identity-register-btn:hover {
+    background: #0063b1;
+}
+
+.identity-register-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.identity-registration-status {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.identity-registration-status.success {
+    background: rgba(0, 200, 0, 0.1);
+    color: rgba(0, 150, 0, 1);
+}
+
+.identity-registration-status.error {
+    background: rgba(255, 0, 0, 0.1);
+    color: rgba(200, 0, 0, 1);
+}
+
+.identity-registered-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(0, 200, 0, 0.05);
+    border-radius: 8px;
+}
+
+.registered-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.registered-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 13px;
+}
+
+.registered-value {
+    color: #333;
+    font-size: 13px;
+    font-family: monospace;
+    word-break: break-all;
+    text-align: right;
+    max-width: 60%;
 }
 
 /* Window Snapping */

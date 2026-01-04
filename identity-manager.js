@@ -11,16 +11,37 @@ const crypto = require('crypto');
  */
 class OmegaIdentityManager {
     constructor() {
-        // Omega Network RPC - Update with your actual RPC endpoint
-        // For now, using a placeholder - you'll need to provide the actual Omega Network RPC URL
-        this.omegaNetworkRpc = process.env.OMEGA_NETWORK_RPC || 'https://rpc.omeganetwork.io';
-        this.omegaNetworkChainId = parseInt(process.env.OMEGA_NETWORK_CHAIN_ID || '8888'); // Default chain ID
+        // Omega Network RPC - Aurora-based network
+        // RPC URL: https://0x4e454228.rpc.aurora-cloud.dev/
+        this.omegaNetworkRpc = process.env.OMEGA_NETWORK_RPC || 'https://0x4e454228.rpc.aurora-cloud.dev/';
+        this.omegaNetworkChainId = parseInt(process.env.OMEGA_NETWORK_CHAIN_ID || '1313161768'); // Omega Network Chain ID
         
-        // Smart contract addresses (these would be deployed contracts on Omega Network)
-        // You'll need to deploy these contracts or provide existing addresses
-        this.identityContractAddress = process.env.OMEGA_IDENTITY_CONTRACT || '0x0000000000000000000000000000000000000000';
-        this.licensingContractAddress = process.env.OMEGA_LICENSING_CONTRACT || '0x0000000000000000000000000000000000000000';
-        this.syncContractAddress = process.env.OMEGA_SYNC_CONTRACT || '0x0000000000000000000000000000000000000000';
+        // Smart contract addresses (deployed on Omega Network)
+        this.identityContractAddress = process.env.OMEGA_IDENTITY_CONTRACT || '0xe8d01934A917bA9565c0bA8286995D15F7B19F0C';
+        this.licensingContractAddress = process.env.OMEGA_LICENSING_CONTRACT || '0x7DfD4E9A0a433e60D7B60AfdDd5cFCCAE7898108';
+        this.syncContractAddress = process.env.OMEGA_SYNC_CONTRACT || '0x4d4c6D91971ac65a161A0B8d9aC8A49091037aD7';
+        
+        // Load ABIs
+        try {
+            this.identityABI = require('./contracts/IdentityRegistry.abi.json');
+        } catch (error) {
+            console.warn('Failed to load Identity Registry ABI:', error);
+            this.identityABI = null;
+        }
+        
+        try {
+            this.licensingABI = require('./contracts/Licensing.abi.json');
+        } catch (error) {
+            console.warn('Licensing ABI not available yet:', error);
+            this.licensingABI = null;
+        }
+        
+        try {
+            this.syncABI = require('./contracts/DocumentSync.abi.json');
+        } catch (error) {
+            console.warn('Failed to load Document Sync ABI:', error);
+            this.syncABI = null;
+        }
         
         // Initialize provider
         this.provider = null;
@@ -145,26 +166,42 @@ class OmegaIdentityManager {
                 throw new Error('Provider not initialized');
             }
             
-            // For now, we'll use a simple transaction
-            // In production, you'd call a smart contract method
-            // Example: await identityContract.registerIdentity(omegaId, deviceFingerprint);
+            if (!this.identityABI) {
+                throw new Error('Identity Registry ABI not loaded');
+            }
             
-            // Placeholder: In real implementation, you'd have:
-            // const identityContract = new ethers.Contract(
-            //     this.identityContractAddress,
-            //     IDENTITY_ABI,
-            //     this.wallet
-            // );
-            // const tx = await identityContract.registerIdentity(omegaId, deviceFingerprint);
-            // await tx.wait();
+            // Create contract instance
+            const identityContract = new ethers.Contract(
+                this.identityContractAddress,
+                this.identityABI,
+                this.wallet
+            );
             
-            // For now, just return true (mock implementation)
-            // You'll need to deploy the actual smart contract
-            console.log('Identity registration (mock):', { omegaId, address, deviceFingerprint });
+            // Check if identity already exists
+            const hasIdentity = await identityContract.hasIdentity(address);
+            if (hasIdentity) {
+                console.log('Identity already exists for this address');
+                return true;
+            }
+            
+            // Check if Omega ID is available
+            const isAvailable = await identityContract.isOmegaIdAvailable(omegaId);
+            if (!isAvailable) {
+                throw new Error('Omega ID already taken');
+            }
+            
+            // Register identity
+            console.log('Registering identity on Omega Network...', { omegaId, address, deviceFingerprint });
+            const tx = await identityContract.registerIdentity(omegaId, deviceFingerprint);
+            
+            console.log('Transaction sent, waiting for confirmation...', tx.hash);
+            await tx.wait();
+            
+            console.log('Identity registered successfully!', tx.hash);
             return true;
         } catch (error) {
             console.error('Failed to register identity on chain:', error);
-            return false;
+            throw error;
         }
     }
     
@@ -202,34 +239,58 @@ class OmegaIdentityManager {
     async syncDocumentHash(documentId, documentHash, metadata = {}) {
         try {
             if (!this.wallet || !this.provider) {
-                throw new Error('Provider not initialized');
+                throw new Error('Provider not initialized. Please unlock your wallet.');
             }
             
             if (!this.identity) {
-                throw new Error('Identity not initialized');
+                throw new Error('Identity not initialized. Please register your Omega OS identity first.');
             }
             
-            // Store document hash on-chain
-            // In production, you'd call a smart contract:
-            // const syncContract = new ethers.Contract(
-            //     this.syncContractAddress,
-            //     SYNC_ABI,
-            //     this.wallet
-            // );
-            // const tx = await syncContract.storeDocumentHash(
-            //     this.identity.omegaId,
-            //     documentId,
-            //     documentHash,
-            //     JSON.stringify(metadata)
-            // );
-            // await tx.wait();
+            if (!this.syncContractAddress || this.syncContractAddress === '0x0000000000000000000000000000000000000000') {
+                throw new Error('Document Sync contract not deployed. Please deploy the contract first.');
+            }
             
-            // For now, return mock success
-            console.log('Document sync (mock):', { omegaId: this.identity.omegaId, documentId, documentHash });
+            if (!this.syncABI) {
+                throw new Error('Document Sync ABI not loaded');
+            }
+            
+            // Create contract instance
+            const syncContract = new ethers.Contract(
+                this.syncContractAddress,
+                this.syncABI,
+                this.wallet
+            );
+            
+            // Extract metadata
+            const fileName = metadata.name || documentId;
+            const documentType = metadata.type || 'file';
+            
+            // Call syncDocument function
+            console.log('Syncing document to Omega Network...', { 
+                omegaId: this.identity.omegaId, 
+                documentId, 
+                documentHash,
+                fileName,
+                documentType
+            });
+            
+            const tx = await syncContract.syncDocument(
+                documentId,
+                documentHash,
+                this.identity.omegaId,
+                fileName,
+                documentType
+            );
+            
+            console.log('Document sync transaction sent, waiting for confirmation...', tx.hash);
+            const receipt = await tx.wait();
+            
+            console.log('Document synced successfully!', tx.hash);
             return {
                 success: true,
-                txHash: '0x' + crypto.randomBytes(32).toString('hex'),
-                timestamp: Date.now()
+                txHash: tx.hash,
+                timestamp: Date.now(),
+                blockNumber: receipt.blockNumber
             };
         } catch (error) {
             console.error('Failed to sync document:', error);
@@ -246,16 +307,53 @@ class OmegaIdentityManager {
                 return [];
             }
             
-            // In production, query smart contract:
-            // const syncContract = new ethers.Contract(
-            //     this.syncContractAddress,
-            //     SYNC_ABI,
-            //     this.provider
-            // );
-            // const documents = await syncContract.getDocuments(this.identity.omegaId);
+            if (!this.provider) {
+                console.warn('Provider not initialized, cannot fetch synced documents');
+                return [];
+            }
             
-            // For now, return empty array
-            return [];
+            if (!this.syncContractAddress || this.syncContractAddress === '0x0000000000000000000000000000000000000000') {
+                console.warn('Document Sync contract not deployed');
+                return [];
+            }
+            
+            if (!this.syncABI) {
+                console.warn('Document Sync ABI not loaded');
+                return [];
+            }
+            
+            // Create read-only contract instance
+            const syncContract = new ethers.Contract(
+                this.syncContractAddress,
+                this.syncABI,
+                this.provider
+            );
+            
+            // Get all document IDs for this Omega ID
+            const documentIds = await syncContract.getDocuments(this.identity.omegaId);
+            
+            // Fetch details for each document
+            const documents = [];
+            for (const docId of documentIds) {
+                try {
+                    const doc = await syncContract.getDocument(docId);
+                    documents.push({
+                        documentId: docId,
+                        documentHash: doc.documentHash,
+                        fileName: doc.fileName,
+                        documentType: doc.documentType,
+                        timestamp: Number(doc.timestamp) * 1000, // Convert to milliseconds
+                        exists: doc.exists
+                    });
+                } catch (err) {
+                    console.warn(`Failed to fetch document ${docId}:`, err);
+                }
+            }
+            
+            // Sort by timestamp (newest first)
+            documents.sort((a, b) => b.timestamp - a.timestamp);
+            
+            return documents;
         } catch (error) {
             console.error('Failed to get synced documents:', error);
             return [];
@@ -263,76 +361,319 @@ class OmegaIdentityManager {
     }
     
     /**
-     * Check license for app
+     * Check if user has active license (Omega OS Pro)
      */
-    async checkLicense(appName) {
+    async checkLicense() {
         try {
-            if (!this.wallet || !this.provider) {
-                return { hasLicense: false, reason: 'Provider not initialized' };
-            }
-            
             if (!this.identity) {
-                return { hasLicense: false, reason: 'Identity not initialized' };
+                return { 
+                    hasLicense: false, 
+                    licenseType: 'None',
+                    reason: 'Identity not initialized' 
+                };
             }
             
-            // In production, query smart contract:
-            // const licensingContract = new ethers.Contract(
-            //     this.licensingContractAddress,
-            //     LICENSING_ABI,
-            //     this.provider
-            // );
-            // const hasLicense = await licensingContract.hasLicense(
-            //     this.identity.omegaId,
-            //     appName
-            // );
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                return { 
+                    hasLicense: false, 
+                    licenseType: 'None',
+                    reason: 'Licensing contract not deployed' 
+                };
+            }
             
-            // For now, return mock (no license)
+            if (!this.provider) {
+                return { 
+                    hasLicense: false, 
+                    licenseType: 'None',
+                    reason: 'Provider not initialized' 
+                };
+            }
+            
+            if (!this.licensingABI) {
+                return { 
+                    hasLicense: false, 
+                    licenseType: 'None',
+                    reason: 'Licensing ABI not loaded' 
+                };
+            }
+            
+            // Create read-only contract instance
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.provider
+            );
+            
+            // Check for active license
+            const [hasLicense, licenseType, expiryTime] = await licensingContract.hasActiveLicense(
+                this.identity.omegaId
+            );
+            
             return {
-                hasLicense: false,
-                appName: appName,
+                hasLicense,
+                licenseType: licenseType === 1 ? 'Staked' : licenseType === 2 ? 'Purchased' : 'None',
+                expiryTime: expiryTime > 0 ? Number(expiryTime) * 1000 : null, // Convert to milliseconds
                 omegaId: this.identity.omegaId
             };
         } catch (error) {
             console.error('Failed to check license:', error);
-            return { hasLicense: false, reason: error.message };
+            return { 
+                hasLicense: false, 
+                licenseType: 'None',
+                reason: error.message 
+            };
         }
     }
     
     /**
-     * Purchase license for app
+     * Get license details
      */
-    async purchaseLicense(appName, price) {
+    async getLicenseDetails() {
+        try {
+            if (!this.identity) {
+                return null;
+            }
+            
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                return null;
+            }
+            
+            if (!this.provider || !this.licensingABI) {
+                return null;
+            }
+            
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.provider
+            );
+            
+            const [licenseType, stakedAmount, purchaseAmount, startTime, expiryTime, isActive] = 
+                await licensingContract.getLicense(this.identity.omegaId);
+            
+            return {
+                licenseType: licenseType === 1 ? 'Staked' : licenseType === 2 ? 'Purchased' : 'None',
+                stakedAmount: stakedAmount.toString(),
+                purchaseAmount: purchaseAmount.toString(),
+                startTime: Number(startTime) * 1000,
+                expiryTime: expiryTime > 0 ? Number(expiryTime) * 1000 : null,
+                isActive
+            };
+        } catch (error) {
+            console.error('Failed to get license details:', error);
+            return null;
+        }
+    }
+    
+    /**
+     * Get pricing information
+     */
+    async getLicensePricing() {
+        try {
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                return {
+                    stakingAmount: ethers.parseEther('1000').toString(), // Default: 1000 OMEGA
+                    purchaseAmount: ethers.parseEther('10000').toString(), // Default: 10000 OMEGA
+                    stakingPeriod: 30 * 24 * 60 * 60 // 30 days in seconds
+                };
+            }
+            
+            if (!this.provider || !this.licensingABI) {
+                return {
+                    stakingAmount: ethers.parseEther('1000').toString(),
+                    purchaseAmount: ethers.parseEther('10000').toString(),
+                    stakingPeriod: 30 * 24 * 60 * 60
+                };
+            }
+            
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.provider
+            );
+            
+            const [stakingAmount, purchaseAmount, stakingPeriod] = await Promise.all([
+                licensingContract.stakingAmount(),
+                licensingContract.purchaseAmount(),
+                licensingContract.stakingPeriod()
+            ]);
+            
+            return {
+                stakingAmount: stakingAmount.toString(),
+                purchaseAmount: purchaseAmount.toString(),
+                stakingPeriod: Number(stakingPeriod)
+            };
+        } catch (error) {
+            console.error('Failed to get license pricing:', error);
+            return {
+                stakingAmount: ethers.parseEther('1000').toString(),
+                purchaseAmount: ethers.parseEther('10000').toString(),
+                stakingPeriod: 30 * 24 * 60 * 60
+            };
+        }
+    }
+    
+    /**
+     * Stake tokens for 30-day license
+     */
+    async stakeForLicense() {
         try {
             if (!this.wallet || !this.provider) {
-                throw new Error('Provider not initialized');
+                throw new Error('Provider not initialized. Please unlock your wallet.');
             }
             
             if (!this.identity) {
-                throw new Error('Identity not initialized');
+                throw new Error('Identity not initialized. Please register your Omega OS identity first.');
             }
             
-            // In production, call smart contract:
-            // const licensingContract = new ethers.Contract(
-            //     this.licensingContractAddress,
-            //     LICENSING_ABI,
-            //     this.wallet
-            // );
-            // const tx = await licensingContract.purchaseLicense(
-            //     appName,
-            //     { value: ethers.parseEther(price.toString()) }
-            // );
-            // await tx.wait();
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                throw new Error('Licensing contract not deployed.');
+            }
             
-            // For now, return mock
-            console.log('License purchase (mock):', { appName, price, omegaId: this.identity.omegaId });
+            if (!this.licensingABI) {
+                throw new Error('Licensing ABI not loaded');
+            }
+            
+            // Get staking amount
+            const pricing = await this.getLicensePricing();
+            const stakingAmount = BigInt(pricing.stakingAmount);
+            
+            // Create contract instance
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.wallet
+            );
+            
+            console.log('Staking for license...', { 
+                omegaId: this.identity.omegaId, 
+                stakingAmount: ethers.formatEther(stakingAmount) + ' OMEGA'
+            });
+            
+            // Call stakeForLicense function
+            const tx = await licensingContract.stakeForLicense(
+                this.identity.omegaId,
+                { value: stakingAmount }
+            );
+            
+            console.log('Staking transaction sent, waiting for confirmation...', tx.hash);
+            const receipt = await tx.wait();
+            
+            console.log('License staked successfully!', tx.hash);
             return {
                 success: true,
-                txHash: '0x' + crypto.randomBytes(32).toString('hex'),
-                appName: appName
+                txHash: tx.hash,
+                timestamp: Date.now(),
+                blockNumber: receipt.blockNumber
+            };
+        } catch (error) {
+            console.error('Failed to stake for license:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    /**
+     * Purchase lifetime license
+     */
+    async purchaseLicense() {
+        try {
+            if (!this.wallet || !this.provider) {
+                throw new Error('Provider not initialized. Please unlock your wallet.');
+            }
+            
+            if (!this.identity) {
+                throw new Error('Identity not initialized. Please register your Omega OS identity first.');
+            }
+            
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                throw new Error('Licensing contract not deployed.');
+            }
+            
+            if (!this.licensingABI) {
+                throw new Error('Licensing ABI not loaded');
+            }
+            
+            // Get purchase amount
+            const pricing = await this.getLicensePricing();
+            const purchaseAmount = BigInt(pricing.purchaseAmount);
+            
+            // Create contract instance
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.wallet
+            );
+            
+            console.log('Purchasing lifetime license...', { 
+                omegaId: this.identity.omegaId, 
+                purchaseAmount: ethers.formatEther(purchaseAmount) + ' OMEGA'
+            });
+            
+            // Call purchaseLicense function
+            const tx = await licensingContract.purchaseLicense(
+                this.identity.omegaId,
+                { value: purchaseAmount }
+            );
+            
+            console.log('Purchase transaction sent, waiting for confirmation...', tx.hash);
+            const receipt = await tx.wait();
+            
+            console.log('License purchased successfully!', tx.hash);
+            return {
+                success: true,
+                txHash: tx.hash,
+                timestamp: Date.now(),
+                blockNumber: receipt.blockNumber
             };
         } catch (error) {
             console.error('Failed to purchase license:', error);
-            throw error;
+            return { success: false, error: error.message };
+        }
+    }
+    
+    /**
+     * Withdraw staked tokens (after license expires)
+     */
+    async withdrawStake() {
+        try {
+            if (!this.wallet || !this.provider) {
+                throw new Error('Provider not initialized. Please unlock your wallet.');
+            }
+            
+            if (!this.identity) {
+                throw new Error('Identity not initialized.');
+            }
+            
+            if (!this.licensingContractAddress || this.licensingContractAddress === '0x0000000000000000000000000000000000000000') {
+                throw new Error('Licensing contract not deployed.');
+            }
+            
+            if (!this.licensingABI) {
+                throw new Error('Licensing ABI not loaded');
+            }
+            
+            const licensingContract = new ethers.Contract(
+                this.licensingContractAddress,
+                this.licensingABI,
+                this.wallet
+            );
+            
+            console.log('Withdrawing staked tokens...', { omegaId: this.identity.omegaId });
+            
+            const tx = await licensingContract.withdrawStake(this.identity.omegaId);
+            console.log('Withdrawal transaction sent, waiting for confirmation...', tx.hash);
+            const receipt = await tx.wait();
+            
+            console.log('Stake withdrawn successfully!', tx.hash);
+            return {
+                success: true,
+                txHash: tx.hash,
+                timestamp: Date.now(),
+                blockNumber: receipt.blockNumber
+            };
+        } catch (error) {
+            console.error('Failed to withdraw stake:', error);
+            return { success: false, error: error.message };
         }
     }
     
@@ -380,4 +721,5 @@ class OmegaIdentityManager {
 }
 
 module.exports = OmegaIdentityManager;
+
 

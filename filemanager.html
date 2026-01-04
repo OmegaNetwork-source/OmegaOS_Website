@@ -303,6 +303,95 @@
         .file-list.grid-view .file-size {
             display: none;
         }
+
+        /* Properties Modal */
+        .properties-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .properties-modal.show {
+            display: flex;
+        }
+
+        .properties-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .properties-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .properties-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .properties-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .properties-close:hover {
+            background: #f0f0f0;
+        }
+
+        .properties-body {
+            padding: 20px;
+        }
+
+        .properties-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .properties-row:last-child {
+            border-bottom: none;
+        }
+
+        .properties-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 120px;
+            font-size: 13px;
+        }
+
+        .properties-value {
+            color: #333;
+            flex: 1;
+            font-size: 13px;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -365,9 +454,23 @@
             <span>✏️</span>
             <span>Rename</span>
         </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="contextCut">
+            <span>✂️</span>
+            <span>Cut</span>
+        </div>
         <div class="context-menu-item" id="contextCopy">
             <span>📋</span>
             <span>Copy</span>
+        </div>
+        <div class="context-menu-item" id="contextPaste">
+            <span>📄</span>
+            <span>Paste</span>
+        </div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" id="contextProperties">
+            <span>ℹ️</span>
+            <span>Properties</span>
         </div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" id="contextDelete">
@@ -376,10 +479,24 @@
         </div>
     </div>
 
+    <!-- Properties Modal -->
+    <div class="properties-modal" id="propertiesModal">
+        <div class="properties-content">
+            <div class="properties-header">
+                <div class="properties-title">Properties</div>
+                <button class="properties-close" id="propertiesClose">×</button>
+            </div>
+            <div class="properties-body" id="propertiesBody">
+                <!-- Properties content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         let windowId = null;
         let selectedFile = null;
         let clipboardFile = null;
+        let clipboardOperation = null; // 'copy' or 'cut'
         let currentSort = 'name';
         let sortOrder = 'asc';
         let currentView = 'list';
@@ -444,42 +561,75 @@
             contextMenu.style.display = 'none';
         });
 
-        document.getElementById('contextCopy').addEventListener('click', async () => {
-            if (contextMenuFile && window.electronAPI && window.electronAPI.copyFile) {
-                try {
-                    // Create copy with "Copy of" prefix
-                    const fileName = contextMenuFile.name;
-                    const fileDir = contextMenuFile.path.substring(0, Math.max(
-                        contextMenuFile.path.lastIndexOf('\\'),
-                        contextMenuFile.path.lastIndexOf('/')
-                    ));
+        document.getElementById('contextCut').addEventListener('click', () => {
+            if (contextMenuFile) {
+                clipboardFile = contextMenuFile;
+                clipboardOperation = 'cut';
+            }
+            contextMenu.style.display = 'none';
+        });
+
+        document.getElementById('contextCopy').addEventListener('click', () => {
+            if (contextMenuFile) {
+                clipboardFile = contextMenuFile;
+                clipboardOperation = 'copy';
+            }
+            contextMenu.style.display = 'none';
+        });
+
+        document.getElementById('contextPaste').addEventListener('click', async () => {
+            if (!clipboardFile || !window.electronAPI) {
+                contextMenu.style.display = 'none';
+                return;
+            }
+
+            try {
+                // Get documents directory path from clipboard file's directory
+                const separator = clipboardFile.path.includes('\\') ? '\\' : '/';
+                const documentsPath = clipboardFile.path.substring(0, Math.max(
+                    clipboardFile.path.lastIndexOf('\\'),
+                    clipboardFile.path.lastIndexOf('/')
+                ));
+
+                const fileName = clipboardFile.name;
+                let destPath = documentsPath + separator + fileName;
+
+                // Handle duplicate names
+                let counter = 1;
+                while (await checkFileExists(destPath)) {
                     const lastDot = fileName.lastIndexOf('.');
                     const ext = lastDot >= 0 ? fileName.substring(lastDot) : '';
                     const baseName = lastDot >= 0 ? fileName.substring(0, lastDot) : fileName;
-                    
-                    // Get directory separator
-                    const separator = contextMenuFile.path.includes('\\') ? '\\' : '/';
-                    
-                    let copyName = `Copy of ${baseName}${ext}`;
-                    let copyPath = fileDir + separator + copyName;
-                    
-                    // Handle duplicate copies
-                    let counter = 1;
-                    while (await checkFileExists(copyPath)) {
-                        copyName = `Copy (${counter}) of ${baseName}${ext}`;
-                        copyPath = fileDir + separator + copyName;
-                        counter++;
+                    const newName = `${baseName} (${counter})${ext}`;
+                    destPath = documentsPath + separator + newName;
+                    counter++;
+                }
+
+                if (clipboardOperation === 'cut') {
+                    // Move file (rename) - need to get just the filename from destPath
+                    const newFileName = destPath.substring(Math.max(
+                        destPath.lastIndexOf('\\'),
+                        destPath.lastIndexOf('/')
+                    ) + 1);
+                    const success = await window.electronAPI.renameFile(clipboardFile.path, newFileName);
+                    if (success) {
+                        clipboardFile = null;
+                        clipboardOperation = null;
+                        loadFiles();
+                    } else {
+                        alert('Failed to move file');
                     }
-                    
-                    const success = await window.electronAPI.copyFile(contextMenuFile.path, copyPath);
+                } else {
+                    // Copy file
+                    const success = await window.electronAPI.copyFile(clipboardFile.path, destPath);
                     if (success) {
                         loadFiles();
                     } else {
                         alert('Failed to copy file');
                     }
-                } catch (error) {
-                    alert('Failed to copy file: ' + error.message);
                 }
+            } catch (error) {
+                alert('Failed to paste file: ' + error.message);
             }
             contextMenu.style.display = 'none';
         });
@@ -493,6 +643,21 @@
                 return false;
             }
         }
+
+        document.getElementById('contextProperties').addEventListener('click', async () => {
+            if (!contextMenuFile || !window.electronAPI || !window.electronAPI.getFileStats) {
+                contextMenu.style.display = 'none';
+                return;
+            }
+
+            try {
+                const stats = await window.electronAPI.getFileStats(contextMenuFile.path);
+                showPropertiesDialog(stats);
+            } catch (error) {
+                alert('Failed to get file properties: ' + error.message);
+            }
+            contextMenu.style.display = 'none';
+        });
 
         document.getElementById('contextDelete').addEventListener('click', async () => {
             if (!contextMenuFile || !window.electronAPI || !window.electronAPI.deleteFile) {
@@ -517,6 +682,71 @@
                 }
             }
             contextMenu.style.display = 'none';
+        });
+
+        // Properties dialog
+        function showPropertiesDialog(stats) {
+            const modal = document.getElementById('propertiesModal');
+            const body = document.getElementById('propertiesBody');
+            
+            const formatDate = (timestamp) => {
+                const date = new Date(timestamp);
+                return date.toLocaleString();
+            };
+
+            const formatFileSize = (bytes) => {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            };
+
+            body.innerHTML = `
+                <div class="properties-row">
+                    <div class="properties-label">Name:</div>
+                    <div class="properties-value">${stats.name}</div>
+                </div>
+                <div class="properties-row">
+                    <div class="properties-label">Type:</div>
+                    <div class="properties-value">${stats.isDirectory ? 'Folder' : (stats.extension || 'File')}</div>
+                </div>
+                ${!stats.isDirectory ? `
+                <div class="properties-row">
+                    <div class="properties-label">Size:</div>
+                    <div class="properties-value">${formatFileSize(stats.size)}</div>
+                </div>
+                ` : ''}
+                <div class="properties-row">
+                    <div class="properties-label">Location:</div>
+                    <div class="properties-value">${stats.path}</div>
+                </div>
+                <div class="properties-row">
+                    <div class="properties-label">Created:</div>
+                    <div class="properties-value">${formatDate(stats.created)}</div>
+                </div>
+                <div class="properties-row">
+                    <div class="properties-label">Modified:</div>
+                    <div class="properties-value">${formatDate(stats.modified)}</div>
+                </div>
+                <div class="properties-row">
+                    <div class="properties-label">Accessed:</div>
+                    <div class="properties-value">${formatDate(stats.accessed)}</div>
+                </div>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        // Close properties modal
+        document.getElementById('propertiesClose').addEventListener('click', () => {
+            document.getElementById('propertiesModal').classList.remove('show');
+        });
+
+        document.getElementById('propertiesModal').addEventListener('click', (e) => {
+            if (e.target.id === 'propertiesModal') {
+                document.getElementById('propertiesModal').classList.remove('show');
+            }
         });
 
         // Title bar controls
@@ -641,6 +871,7 @@
                         // Right-click for context menu
                         item.addEventListener('contextmenu', (e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             contextMenuFile = file;
                             
                             // Position context menu
@@ -662,8 +893,14 @@
                             contextMenu.style.top = top + 'px';
                             contextMenu.style.display = 'block';
                             
-                            // Update menu item states
+                            // Update menu item states for file context
                             document.getElementById('contextOpen').classList.toggle('disabled', file.isDirectory);
+                            document.getElementById('contextRename').classList.remove('disabled');
+                            document.getElementById('contextCut').classList.remove('disabled');
+                            document.getElementById('contextCopy').classList.remove('disabled');
+                            document.getElementById('contextProperties').classList.remove('disabled');
+                            document.getElementById('contextDelete').classList.remove('disabled');
+                            document.getElementById('contextPaste').classList.toggle('disabled', !clipboardFile);
                         });
 
                         // Double-click to open
@@ -759,6 +996,45 @@
 
         // Refresh button
         document.getElementById('refreshBtn').addEventListener('click', loadFiles);
+
+        // Right-click on empty area (folder context menu)
+        const fileListEl = document.getElementById('fileList');
+        fileListEl.addEventListener('contextmenu', (e) => {
+            // Only show context menu if clicking on empty area (not on a file item)
+            const fileItem = e.target.closest('.file-item');
+            if (!fileItem && (e.target === fileListEl || e.target.classList.contains('empty-state') || e.target.closest('.empty-state'))) {
+                e.preventDefault();
+                e.stopPropagation();
+                contextMenuFile = null; // No file selected
+                
+                // Position context menu
+                const menuWidth = 180;
+                const menuHeight = 150;
+                let left = e.clientX;
+                let top = e.clientY;
+                
+                // Adjust if menu would go off screen
+                if (left + menuWidth > window.innerWidth) {
+                    left = window.innerWidth - menuWidth - 10;
+                }
+                if (top + menuHeight > window.innerHeight) {
+                    top = window.innerHeight - menuHeight - 10;
+                }
+                
+                contextMenu.style.left = left + 'px';
+                contextMenu.style.top = top + 'px';
+                contextMenu.style.display = 'block';
+                
+                // Update menu item states for empty area context
+                document.getElementById('contextOpen').classList.add('disabled');
+                document.getElementById('contextRename').classList.add('disabled');
+                document.getElementById('contextCut').classList.add('disabled');
+                document.getElementById('contextCopy').classList.add('disabled');
+                document.getElementById('contextProperties').classList.add('disabled');
+                document.getElementById('contextDelete').classList.add('disabled');
+                document.getElementById('contextPaste').classList.toggle('disabled', !clipboardFile);
+            }
+        });
 
         // Load files on startup
         loadFiles();

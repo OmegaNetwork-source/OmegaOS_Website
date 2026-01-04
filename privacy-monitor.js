@@ -89,19 +89,37 @@ function saveLogs() {
 }
 
 function startMonitoring() {
-    // Monitor file operations via IPC (would need main process hooks)
-    // For now, simulate monitoring
+    // Register with main process to receive file access events
+    if (window.electronAPI && window.electronAPI.privacyMonitorRegister) {
+        try {
+            window.electronAPI.privacyMonitorRegister();
+            console.log('[Privacy Monitor] Registered with main process');
+        } catch (e) {
+            console.error('[Privacy Monitor] Failed to register:', e);
+        }
+    }
+    
+    // Listen for file access events from main process
+    if (window.electronAPI && window.electronAPI.onPrivacyFileAccess) {
+        window.electronAPI.onPrivacyFileAccess((event) => {
+            if (event && event.type && event.file && event.app) {
+                logAccess(event.type, event.file, event.app);
+            }
+        });
+        console.log('[Privacy Monitor] File access listener registered');
+    }
+    
+    // Update stats periodically
     setInterval(() => {
-        // This would be replaced with actual IPC listeners
         updateStats();
     }, 1000);
     
-    // Add sample entries for demo
-    setTimeout(() => {
-        logAccess('read', 'document.txt', 'Omega Word');
-        logAccess('write', 'spreadsheet.xlsx', 'Omega Sheets');
-        logNetwork('https://api.example.com', 'GET', 200);
-    }, 2000);
+    // Clean up on window close
+    window.addEventListener('beforeunload', () => {
+        if (window.electronAPI && window.electronAPI.privacyMonitorUnregister) {
+            window.electronAPI.privacyMonitorUnregister();
+        }
+    });
 }
 
 function logAccess(type, file, app) {
@@ -293,4 +311,5 @@ async function exportLogs() {
         alert('Failed to export logs: ' + error.message);
     }
 }
+
 

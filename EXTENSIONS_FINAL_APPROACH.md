@@ -38,3 +38,4 @@ If you prefer a cleaner approach, we can:
 This would simplify the UI while still providing extension functionality on web pages.
 
 
+

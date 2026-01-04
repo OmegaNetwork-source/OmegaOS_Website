@@ -251,8 +251,25 @@ Formatting instructions in the user's message will be automatically applied.`;
                          this.modelName.includes('codellama') || 
                          this.modelName.includes('coder');
       
+      // Check if this is a drawing/paint request (contains JSON array instructions for drawing commands)
+      // Look for multiple indicators to reliably detect drawing prompts - check BEFORE setting temperature
+      const lowerPrompt = message.toLowerCase();
+      const isDrawingRequest = (
+        (lowerPrompt.includes('json array') || 
+         lowerPrompt.includes('respond with only the json') ||
+         lowerPrompt.includes('respond with only') && lowerPrompt.includes('json')) &&
+        (lowerPrompt.includes('drawing commands') || 
+         lowerPrompt.includes('canvas size') ||
+         lowerPrompt.includes('digital artist') ||
+         lowerPrompt.includes('drawing assistant') ||
+         lowerPrompt.includes('type": "circle') ||
+         lowerPrompt.includes('type":"circle') ||
+         lowerPrompt.includes('artistic guidelines'))
+      );
+      
       // Code models work better with lower temperature (more deterministic) and higher token limits
-      const temperature = isCodeModel ? 0.2 : 0.7; // Even lower for more deterministic code
+      // Also use lower temperature for drawing requests to ensure consistent JSON output
+      const temperature = isCodeModel ? 0.2 : (isDrawingRequest ? 0.3 : 0.7); // Lower temp for drawing = more deterministic JSON
       const top_p = isCodeModel ? 0.95 : 0.9;
       
       // Check if this is a game generation request (usually in the prompt)
@@ -271,6 +288,12 @@ Formatting instructions in the user's message will be automatically applied.`;
       let num_predict = -1; // Default: no limit
       if (isLongRequest) {
         num_predict = paragraphCount > 0 ? paragraphCount * 300 : (pageCount > 0 ? pageCount * 1500 : 4000); // Increased for longer content
+      } else if (isDrawingRequest) {
+        // Drawing requests need enough tokens for JSON arrays with multiple drawing commands
+        // A complex drawing can have 15-20 objects, each ~100-200 tokens = 2000-4000 tokens
+        // Use a generous limit to ensure JSON completes
+        num_predict = 8000; // 8k tokens for complex drawings to ensure completion
+        console.log('[AI Service] ✓ Detected drawing request, setting num_predict to 8000 tokens');
       } else if (isCodeModel) {
         if (isCodeModification) {
           // Code modifications need even more tokens - we're sending existing code + generating modified version

@@ -9,14 +9,190 @@ function loadBackground() {
     const bgValue = localStorage.getItem('desktopBgValue') || '#1a1a1a';
     
     const wallpaper = document.querySelector('.desktop-wallpaper');
+    const omegaTrace = document.querySelector('.omega-trace-wallpaper');
+    const omegaSymbol = document.querySelector('.omega-symbol-wallpaper');
+    
+    // Remove any existing omega overlays
+    if (omegaTrace) {
+        omegaTrace.remove();
+    }
+    if (omegaSymbol) {
+        omegaSymbol.remove();
+    }
+    
     if (bgType === 'image' && bgValue) {
         wallpaper.style.backgroundImage = `url(${bgValue})`;
         wallpaper.style.backgroundSize = 'cover';
         wallpaper.style.backgroundPosition = 'center';
         wallpaper.style.backgroundColor = 'transparent';
+    } else if (bgType === 'omega-trace') {
+        wallpaper.style.backgroundImage = 'none';
+        wallpaper.style.backgroundColor = bgValue || '#0a0a0a';
+        // Create omega trace overlay
+        createOmegaTraceWallpaper(bgValue || '#0a0a0a');
+    } else if (bgType === 'omega-symbol') {
+        wallpaper.style.backgroundImage = 'none';
+        wallpaper.style.backgroundColor = bgValue || '#0a0a0a';
+        // Create omega symbol only overlay
+        createOmegaSymbolWallpaper(bgValue || '#0a0a0a');
+    } else if (bgType === 'squidward') {
+        // Load Squidward image
+        loadSquidwardWallpaper().then(() => {
+            wallpaper.style.backgroundImage = 'none';
+            wallpaper.style.backgroundColor = '#0a0a0a';
+        }).catch(() => {
+            // Fallback if image can't load
+            wallpaper.style.backgroundImage = 'none';
+            wallpaper.style.backgroundColor = '#0a0a0a';
+        });
     } else {
         wallpaper.style.backgroundImage = 'none';
         wallpaper.style.backgroundColor = bgValue;
+    }
+}
+
+// Load image from absolute file path (for preset images)
+async function loadImageFromPath(filePath) {
+    if (!window.electronAPI || !window.electronAPI.readFileFromPath) {
+        // Fallback: try using fetch with file:// protocol
+        try {
+            const response = await fetch(`file://${filePath}`);
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.error('Failed to load image:', error);
+            throw error;
+        }
+    }
+    
+    try {
+        // Read as base64
+        const base64Data = await window.electronAPI.readFileFromPath(filePath, 'base64');
+        return `data:image/webp;base64,${base64Data}`;
+    } catch (error) {
+        console.error('Failed to load image from path:', error);
+        throw error;
+    }
+}
+
+// Save preset images
+function savePresetImages(presets) {
+    localStorage.setItem('presetImages', JSON.stringify(presets));
+}
+
+// Load preset images
+function loadPresetImages() {
+    try {
+        return JSON.parse(localStorage.getItem('presetImages') || '[]');
+    } catch {
+        return [];
+    }
+}
+
+// Initialize default preset if squidward.webp exists
+async function initializePresetImages() {
+    const presets = loadPresetImages();
+    
+    // Add squidward.webp as default if not already added
+    const hasSquidward = presets.some(p => p.name === 'Squidward' || p.path?.includes('squidward.webp'));
+    
+    if (!hasSquidward) {
+        const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
+        // Try to load and convert to base64
+        try {
+            const imageData = await loadImageFromPath(squidwardPath);
+            presets.push({
+                name: 'Squidward',
+                data: imageData,
+                path: squidwardPath
+            });
+            savePresetImages(presets);
+        } catch (error) {
+            console.log('Could not load squidward.webp, will be available after first manual selection');
+            // Add placeholder - will load on first use
+            presets.push({
+                name: 'Squidward',
+                path: squidwardPath,
+                data: null // Will be loaded on demand
+            });
+            savePresetImages(presets);
+        }
+    }
+}
+
+function createOmegaTraceWallpaper(bgColor) {
+    const wallpaper = document.querySelector('.desktop-wallpaper');
+    const omegaTrace = document.createElement('div');
+    omegaTrace.className = 'omega-trace-wallpaper';
+    omegaTrace.innerHTML = `
+        <div class="omega-trace-symbol">Ω</div>
+        <div class="omega-trace-circle"></div>
+    `;
+    wallpaper.appendChild(omegaTrace);
+}
+
+function createOmegaSymbolWallpaper(bgColor) {
+    const wallpaper = document.querySelector('.desktop-wallpaper');
+    const omegaSymbol = document.createElement('div');
+    omegaSymbol.className = 'omega-symbol-wallpaper';
+    omegaSymbol.innerHTML = `
+        <div class="omega-symbol-only">Ω</div>
+    `;
+    wallpaper.appendChild(omegaSymbol);
+}
+
+async function loadSquidwardWallpaper() {
+    const wallpaper = document.querySelector('.desktop-wallpaper');
+    const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
+    
+    try {
+        const imageData = await loadImageFromPath(squidwardPath);
+        wallpaper.style.backgroundImage = `url(${imageData})`;
+        wallpaper.style.backgroundSize = 'cover';
+        wallpaper.style.backgroundPosition = 'center';
+        wallpaper.style.backgroundColor = 'transparent';
+        
+        // Save to localStorage for quick access
+        localStorage.setItem('squidwardImageData', imageData);
+    } catch (error) {
+        console.error('Failed to load Squidward image:', error);
+        // Try to use cached version
+        const cached = localStorage.getItem('squidwardImageData');
+        if (cached) {
+            wallpaper.style.backgroundImage = `url(${cached})`;
+            wallpaper.style.backgroundSize = 'cover';
+            wallpaper.style.backgroundPosition = 'center';
+            wallpaper.style.backgroundColor = 'transparent';
+        } else {
+            throw error;
+        }
+    }
+}
+
+async function loadSquidwardPreview() {
+    const preview = document.getElementById('squidwardPreview');
+    if (!preview) return;
+    
+    const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
+    
+    try {
+        const imageData = await loadImageFromPath(squidwardPath);
+        preview.style.backgroundImage = `url(${imageData})`;
+        preview.style.background = '#0a0a0a'; // Keep background color for loading
+        // Hide emoji when image loads
+        if (preview.firstChild) {
+            preview.firstChild.style.display = 'none';
+        }
+        // Save to localStorage for quick access
+        localStorage.setItem('squidwardImageData', imageData);
+    } catch (error) {
+        console.log('Could not load Squidward preview, will use emoji');
+        // Keep emoji visible if image can't load
     }
 }
 
@@ -42,6 +218,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCryptoSettings();
     updateCryptoPrices();
     setInterval(updateCryptoPrices, 60000); // Update every minute
+    
+    // Initialize preset images
+    initializePresetImages().then(() => {
+        renderPresetImages();
+    });
+    
+    // Load Squidward preview thumbnail
+    loadSquidwardPreview();
     
     // Listen for window state updates from main process
     if (window.electronAPI) {
@@ -275,6 +459,35 @@ function initializeDesktop() {
         });
     });
     
+    // Burn to Hell (B2H) Button Handler
+    const burnToHellMenuItem = document.getElementById('burnToHellStartMenuItem');
+    if (burnToHellMenuItem) {
+        burnToHellMenuItem.addEventListener('click', async () => {
+            closeStartMenu();
+            
+            // Double confirmation for safety
+            const firstConfirm = confirm('⚠️ BURN TO HELL (B2H) ⚠️\n\nThis will PERMANENTLY DELETE:\n• All browser history\n• All bookmarks\n• All downloads\n• All files in Documents/Desktop/Trash\n• All cookies and cache\n• All wallet data\n• All identity data\n• ALL DATA\n\nThis CANNOT be undone!\n\nAre you absolutely sure?');
+            if (!firstConfirm) return;
+            
+            const secondConfirm = confirm('🔥 FINAL WARNING 🔥\n\nYou are about to DELETE EVERYTHING.\n\nThe application will restart after wiping all data.\n\nClick OK to proceed with BURN TO HELL.');
+            if (!secondConfirm) return;
+            
+            try {
+                if (window.electronAPI && window.electronAPI.burnToHell) {
+                    const result = await window.electronAPI.burnToHell();
+                    if (result.success) {
+                        alert('✅ All data wiped successfully!\n\nThe application will restart in a moment...');
+                    }
+                } else {
+                    alert('❌ Error: Electron API not available');
+                }
+            } catch (error) {
+                console.error('B2H Error:', error);
+                alert('❌ Error during data wipe: ' + error.message);
+            }
+        });
+    }
+    
     // Start Menu Search
     setupStartMenuSearch();
     
@@ -327,6 +540,12 @@ function initializeDesktop() {
     
     // AI Assistant
     setupAIAssistant();
+    
+    // Identity Registration
+    setupIdentityRegistration();
+    
+    // Load identity status on startup
+    loadIdentityStatus();
 }
 
 // App Folder System
@@ -335,8 +554,10 @@ const appFolders = {
         name: 'Omega Productivity',
         apps: [
             { id: 'word', name: 'Omega Word', icon: '📄', app: 'word' },
-            { id: 'sheets', name: 'Omega Sheets', icon: '📊', app: 'sheets' },
+            { id: 'notes', name: 'Omega Notes', icon: '📝', app: 'notes' },
+            { id: 'finance', name: 'Omega Finance', icon: '📊', app: 'finance' },
             { id: 'slides', name: 'Omega Slides', icon: '📽️', app: 'slides' },
+            { id: 'paint', name: 'Omega Paint', icon: '🎨', app: 'paint' },
             { id: 'calculator', name: 'Calculator', icon: '🔢', app: 'calculator' }
         ]
     },
@@ -344,6 +565,7 @@ const appFolders = {
         name: 'Omega Security',
         apps: [
             { id: 'encrypt', name: 'Omega Encrypt', icon: '💎', app: 'encrypt' },
+            { id: 'hash-verifier', name: 'Hash Verifier', icon: '#', app: 'hash-verifier' },
             { id: 'privacy-monitor', name: 'Privacy Monitor', icon: '🛡️', app: 'privacy-monitor' },
             { id: 'firewall', name: 'Omega Firewall', icon: '🔥', app: 'firewall' }
         ]
@@ -460,12 +682,91 @@ function setupColorPicker() {
     const cancelBtn = document.getElementById('cancelColorPicker');
     const applyBtn = document.getElementById('applyColorPicker');
     const customPicker = document.getElementById('customColorPicker');
+    const colorPresetsSection = document.getElementById('colorPresetsSection');
+    const colorCustomSection = document.getElementById('colorCustomSection');
     
+    let selectedTheme = 'color';
     let selectedColor = '#1a1a1a';
+    
+    // Load current settings
+    const currentBgType = localStorage.getItem('desktopBgType') || 'color';
+    const currentBgValue = localStorage.getItem('desktopBgValue') || '#1a1a1a';
+    selectedTheme = currentBgType;
+    selectedColor = currentBgValue;
+    
+    // Update UI to reflect current selection
+    document.querySelectorAll('.theme-preset').forEach(p => {
+        if (p.dataset.theme === currentBgType) {
+            p.classList.add('active');
+        } else {
+            p.classList.remove('active');
+        }
+    });
+    
+    // Show/hide color options based on theme
+    function updateThemeUI(theme) {
+        const imageUploadSection = document.getElementById('imageUploadSection');
+        const selectImageBtn = document.getElementById('selectImageBtn');
+        
+        if (theme === 'omega-trace' || theme === 'omega-symbol' || theme === 'squidward') {
+            colorPresetsSection.style.display = 'none';
+            colorCustomSection.style.display = 'block';
+            if (imageUploadSection) imageUploadSection.style.display = 'none';
+            if (colorCustomSection.querySelector('label')) {
+                colorCustomSection.querySelector('label').textContent = 'Background Color:';
+            }
+        } else if (theme === 'image') {
+            colorPresetsSection.style.display = 'none';
+            colorCustomSection.style.display = 'none';
+            if (imageUploadSection) imageUploadSection.style.display = 'block';
+        } else {
+            colorPresetsSection.style.display = 'grid';
+            colorCustomSection.style.display = 'block';
+            if (imageUploadSection) imageUploadSection.style.display = 'none';
+            if (colorCustomSection.querySelector('label')) {
+                colorCustomSection.querySelector('label').textContent = 'Custom Color:';
+            }
+        }
+    }
+    
+    // Image upload button handler
+    const selectImageBtn = document.getElementById('selectImageBtn');
+    if (selectImageBtn) {
+        selectImageBtn.addEventListener('click', () => {
+            document.getElementById('imageUploadInput').click();
+        });
+    }
+    
+    // Re-render preset images when image section is shown
+    const imageUploadSection = document.getElementById('imageUploadSection');
+    if (imageUploadSection) {
+        const observer = new MutationObserver(() => {
+            if (imageUploadSection.style.display !== 'none') {
+                renderPresetImages();
+            }
+        });
+        observer.observe(imageUploadSection, { attributes: true, attributeFilter: ['style'] });
+    }
+    updateThemeUI(currentBgType);
+    customPicker.value = currentBgValue;
     
     // Close modal
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-    cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+    cancelBtn.addEventListener('click', () => {
+        // Reset to saved values
+        selectedTheme = currentBgType;
+        selectedColor = currentBgValue;
+        document.querySelectorAll('.theme-preset').forEach(p => {
+            if (p.dataset.theme === currentBgType) {
+                p.classList.add('active');
+            } else {
+                p.classList.remove('active');
+            }
+        });
+        updateThemeUI(selectedTheme);
+        customPicker.value = currentBgValue;
+        modal.classList.remove('active');
+    });
     
     // Close on backdrop click
     modal.addEventListener('click', (e) => {
@@ -474,16 +775,38 @@ function setupColorPicker() {
         }
     });
     
-    // Color presets
+    // Theme presets - handle clicks on the theme preset divs
+    document.querySelectorAll('.theme-preset').forEach(preset => {
+        preset.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedTheme = preset.dataset.theme;
+            if (preset.dataset.value) {
+                selectedColor = preset.dataset.value;
+                customPicker.value = selectedColor;
+            }
+            
+            // Visual feedback
+            document.querySelectorAll('.theme-preset').forEach(p => {
+                p.classList.remove('active');
+            });
+            preset.classList.add('active');
+            
+            updateThemeUI(selectedTheme);
+        });
+    });
+    
+    // Color presets (for solid color theme)
     document.querySelectorAll('.color-preset').forEach(preset => {
         preset.addEventListener('click', () => {
-            selectedColor = preset.dataset.color;
-            customPicker.value = selectedColor;
-            // Visual feedback
-            document.querySelectorAll('.color-preset').forEach(p => {
-                p.style.borderColor = 'transparent';
-            });
-            preset.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            if (selectedTheme === 'color') {
+                selectedColor = preset.dataset.color;
+                customPicker.value = selectedColor;
+                // Visual feedback
+                document.querySelectorAll('.color-preset').forEach(p => {
+                    p.style.borderColor = 'transparent';
+                });
+                preset.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            }
         });
     });
     
@@ -495,28 +818,160 @@ function setupColorPicker() {
         });
     });
     
-    // Apply color
+    // Apply
     applyBtn.addEventListener('click', () => {
-        saveBackground('color', selectedColor);
+        saveBackground(selectedTheme, selectedColor);
         modal.classList.remove('active');
     });
+}
+
+// Render preset images
+function renderPresetImages() {
+    const container = document.getElementById('presetImagesList');
+    if (!container) return;
+    
+    const presets = loadPresetImages();
+    if (presets.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-bottom: 12px;">Preset Images:</p><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; margin-bottom: 16px;">';
+    
+    presets.forEach((preset, index) => {
+        const presetDiv = document.createElement('div');
+        presetDiv.style.cssText = 'position: relative; cursor: pointer; border-radius: 6px; overflow: hidden; border: 2px solid transparent; transition: all 0.2s; aspect-ratio: 1;';
+        presetDiv.title = preset.name;
+        
+        if (preset.data) {
+            presetDiv.style.backgroundImage = `url(${preset.data})`;
+            presetDiv.style.backgroundSize = 'cover';
+            presetDiv.style.backgroundPosition = 'center';
+        } else {
+            presetDiv.style.background = 'rgba(255, 255, 255, 0.1)';
+            presetDiv.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 24px;">📷</div>';
+        }
+        
+        presetDiv.addEventListener('click', async () => {
+            let imageData = preset.data;
+            
+            // Load from path if data not available
+            if (!imageData && preset.path) {
+                try {
+                    imageData = await loadImageFromPath(preset.path);
+                    // Update preset with loaded data
+                    preset.data = imageData;
+                    const presets = loadPresetImages();
+                    presets[index] = preset;
+                    savePresetImages(presets);
+                } catch (error) {
+                    alert('Failed to load image: ' + error.message);
+                    return;
+                }
+            }
+            
+            if (imageData) {
+                saveBackground('image', imageData);
+                document.getElementById('colorPickerModal').classList.remove('active');
+            }
+        });
+        
+        presetDiv.addEventListener('mouseenter', () => {
+            presetDiv.style.transform = 'scale(1.05)';
+            presetDiv.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+        });
+        
+        presetDiv.addEventListener('mouseleave', () => {
+            presetDiv.style.transform = 'scale(1)';
+            presetDiv.style.borderColor = 'transparent';
+        });
+        
+        container.querySelector('div').appendChild(presetDiv);
+    });
+    
+    container.innerHTML += '</div>';
 }
 
 function setupImageUpload() {
     const input = document.getElementById('imageUploadInput');
     
+    // File input handler
     input.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
+            // Check file size (limit to 10MB to avoid localStorage issues)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image is too large. Please use an image smaller than 10MB.');
+                input.value = '';
+                return;
+            }
+            
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const imageData = event.target.result;
                 saveBackground('image', imageData);
+                
+                // Ask if user wants to save as preset
+                if (confirm('Would you like to save this image as a preset for quick access?')) {
+                    const name = prompt('Enter a name for this preset:', file.name.split('.')[0] || 'My Image');
+                    if (name) {
+                        const presets = loadPresetImages();
+                        presets.push({
+                            name: name,
+                            data: imageData
+                        });
+                        savePresetImages(presets);
+                        renderPresetImages();
+                    }
+                }
+            };
+            reader.onerror = () => {
+                alert('Error reading image file. Please try again.');
+                input.value = '';
             };
             reader.readAsDataURL(file);
+        } else {
+            alert('Please select a valid image file (PNG, JPG, GIF, etc.)');
+            input.value = '';
         }
         // Reset input
         input.value = '';
+    });
+    
+    // Paste handler - works anywhere on the desktop
+    document.addEventListener('paste', (e) => {
+        // Only handle paste if the color picker modal is open
+        const colorPickerModal = document.getElementById('colorPickerModal');
+        if (!colorPickerModal || !colorPickerModal.classList.contains('active')) {
+            return;
+        }
+        
+        const items = e.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                const blob = items[i].getAsFile();
+                
+                // Check file size (limit to 10MB)
+                if (blob.size > 10 * 1024 * 1024) {
+                    alert('Image is too large. Please use an image smaller than 10MB.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageData = event.target.result;
+                    saveBackground('image', imageData);
+                    // Close modal after setting image
+                    colorPickerModal.classList.remove('active');
+                };
+                reader.onerror = () => {
+                    alert('Error reading pasted image. Please try again.');
+                };
+                reader.readAsDataURL(blob);
+                return;
+            }
+        }
     });
 }
 
@@ -542,16 +997,47 @@ function closeStartMenu() {
     startButton.classList.remove('active');
 }
 
-async function launchApp(appType) {
+async function launchApp(appType, options = {}) {
     try {
         if (!window.electronAPI) {
             console.error('Electron API not available');
             return;
         }
         
-        const windowId = await window.electronAPI.launchApp(appType, {
+        // Check license for productivity apps
+        const productivityApps = ['word', 'finance', 'slides'];
+        if (productivityApps.includes(appType)) {
+            try {
+                const licenseStatus = await window.electronAPI.identityCheckLicense();
+                if (!licenseStatus.hasLicense) {
+                    const appName = getAppName(appType);
+                    const message = `${appName} requires an active Omega OS Pro license.\n\n` +
+                        `Please stake 1,000 OMEGA tokens for a 30-day license or purchase a lifetime license for 10,000 OMEGA tokens.\n\n` +
+                        `Open the Omega Identity app to manage your license.`;
+                    
+                    if (confirm(message + '\n\nWould you like to open the Identity app now?')) {
+                        await launchApp('identity');
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to check license:', error);
+                // If license check fails, allow app to launch (graceful degradation)
+                // But show a warning
+                if (!confirm(`${getAppName(appType)} requires an active license. License check failed.\n\nContinue anyway?`)) {
+                    return;
+                }
+            }
+        }
+        
+        const defaultOptions = {
             width: 1200,
             height: 800
+        };
+        
+        const windowId = await window.electronAPI.launchApp(appType, {
+            ...defaultOptions,
+            ...options
         });
         
         if (windowId) {
@@ -562,6 +1048,10 @@ async function launchApp(appType) {
             });
             activeWindowId = windowId;
             updateTaskbar();
+        } else if (productivityApps.includes(appType)) {
+            // App launch was blocked by backend (no license)
+            // Frontend already showed the message, but handle gracefully
+            console.log('App launch blocked: No active license');
         }
     } catch (error) {
         console.error('Failed to launch app:', error);
@@ -570,16 +1060,20 @@ async function launchApp(appType) {
 }
 
 function getAppName(appType) {
+    if (appType === 'hash-verifier') return 'Hash Verifier';
     const names = {
         'browser': 'Omega Browser',
         'terminal': 'Terminal',
         'identity': 'Omega Identity',
         'wallet': 'Omega Wallet',
         'word': 'Omega Word',
-        'sheets': 'Omega Sheets',
+        'notes': 'Omega Notes',
+        'finance': 'Omega Finance',
         'slides': 'Omega Slides',
+        'paint': 'Omega Paint',
         'filemanager': 'File Manager',
         'encrypt': 'Omega Encrypt',
+        'hash-verifier': 'Hash Verifier',
         'privacy-monitor': 'Privacy Monitor',
         'firewall': 'Omega Firewall',
         'calculator': 'Calculator',
@@ -597,10 +1091,13 @@ function getAppIcon(appType) {
         'identity': '🆔',
         'wallet': '💰',
         'word': '📄',
-        'sheets': '📊',
+        'notes': '📝',
+        'finance': '📊',
         'slides': '📽️',
+        'paint': '🎨',
         'filemanager': '📁',
         'encrypt': '💎',
+        'hash-verifier': '#',
         'privacy-monitor': '🛡️',
         'firewall': '🔥',
         'calculator': '🔢',
@@ -628,16 +1125,34 @@ async function updateTaskbar() {
             if (win.id === activeWindowId) {
                 taskbarApp.classList.add('active');
             }
+            // Add minimized class to style as border
+            if (win.isMinimized) {
+                taskbarApp.classList.add('minimized');
+            }
             
             taskbarApp.innerHTML = `
                 <div class="taskbar-app-icon">${getAppIcon(win.type)}</div>
                 <span>${getAppName(win.type)}</span>
             `;
             
-            taskbarApp.addEventListener('click', () => {
-                window.electronAPI?.focusWindow(win.id);
-                activeWindowId = win.id;
-                updateTaskbar();
+            taskbarApp.addEventListener('click', async () => {
+                // If clicking the active window, toggle minimize
+                if (win.id === activeWindowId) {
+                    // Check if window is minimized
+                    if (win.isMinimized) {
+                        // Restore and focus
+                        window.electronAPI?.focusWindow(win.id);
+                    } else {
+                        // Minimize
+                        window.electronAPI?.minimizeWindow(win.id);
+                    }
+                } else {
+                    // Focus the clicked window (will restore if minimized)
+                    window.electronAPI?.focusWindow(win.id);
+                    activeWindowId = win.id;
+                }
+                // Update taskbar after a short delay to reflect state changes
+                setTimeout(updateTaskbar, 100);
             });
             
             taskbarApps.appendChild(taskbarApp);
@@ -1078,12 +1593,15 @@ async function fetchVpnInfo(retryAttempt = 0) {
             throw new Error('VPN fetch API not available');
         }
         
+        // All VPN locations use Tor proxy, so always show TOR as ISP
+        const isp = 'TOR';
+        
         // Update VPN info with successful data
         vpnInfo = {
             ip: data.ip || 'Unknown',
             location: data.city ? `${data.city}, ${data.region || ''}`.trim() : 'Unknown',
             country: data.country_name || 'Unknown',
-            isp: data.org || 'Unknown',
+            isp: isp,
             connected: true,
             isFakeLocation: false
         };
@@ -1254,13 +1772,8 @@ function setupVpnPanel() {
         fetchVpnInfo(0);
     });
     
-    // Change location button
-    if (vpnInfoBtn) {
-        vpnInfoBtn.textContent = 'Change Location';
-        vpnInfoBtn.addEventListener('click', () => {
-            showVpnLocationModal();
-        });
-    }
+    // Remove location selection - Tor exit nodes are random
+    // Location button removed since we're using Tor
     
     // VPN Kill Switch Toggle
     const vpnKillSwitchToggle = document.getElementById('vpnKillSwitchToggle');
@@ -1738,161 +2251,59 @@ if (document.readyState === 'loading') {
 function initializeVpn() {
     setupVpnPanel();
     
-    // Check if user has explicitly selected a location or chosen to use real location
-    const hasSelectedLocation = localStorage.getItem('selectedVpnLocation');
-    const hasChosenRealLocation = localStorage.getItem('vpnUseRealLocation');
-    const hasVpnInfo = localStorage.getItem('vpnInfo');
+    // Since we're using Tor, all locations use the same Tor proxy
+    // Auto-connect to Tor without location selection (Tor exit nodes are random)
+    const torLocationKey = 'United States-New York'; // Just use any location key, they all use Tor
+    const torLocation = VPN_LOCATIONS.find(loc => 
+        `${loc.country}-${loc.city}` === torLocationKey || 
+        (loc.country === 'United States' && loc.city === 'New York')
+    );
     
-    // If no location selected and user hasn't chosen real location
-    if (!hasSelectedLocation && !hasChosenRealLocation) {
-        // Check if a default VPN location is configured for auto-connect
-        // This allows VPN to auto-connect on initial startup
-        const defaultLocationKey = 'United States-New York'; // Default location
-        const defaultLocation = VPN_LOCATIONS.find(loc => 
-            `${loc.country}-${loc.city}` === defaultLocationKey || 
-            (loc.country === 'United States' && loc.city === 'New York')
-        );
-        
-        if (defaultLocation) {
-            // Auto-select default location and connect on first startup
-            localStorage.setItem('selectedVpnLocation', JSON.stringify(defaultLocation));
-            
-            // Connect to VPN immediately
-            if (window.electronAPI && window.electronAPI.vpnSetProxy) {
-                window.electronAPI.vpnSetProxy({
-                    country: defaultLocation.country,
-                    city: defaultLocation.city
-                }).then(result => {
-                    if (result.success) {
-                        console.log('[VPN] Auto-connected to VPN on initial startup:', result.message);
-                        // Wait for Tor to bootstrap, then fetch real IP through Tor
-                        console.log('[VPN] Waiting for Tor to establish connection...');
-                        setTimeout(() => {
-                            console.log('[VPN] Verifying Tor connection by fetching IP...');
-                            fetchVpnInfo(0);
-                        }, 5000); // Wait 5 seconds for Tor to bootstrap
-                    } else {
-                        console.warn('[VPN] Auto-connect failed:', result.message);
-                        // Show fake location if proxy not configured
-                        vpnInfo = {
-                            ip: defaultLocation.ip,
-                            location: `${defaultLocation.city}, ${defaultLocation.region}`,
-                            country: defaultLocation.country,
-                            isp: defaultLocation.isp,
-                            connected: true,
-                            isFakeLocation: true
-                        };
-                        updateVpnDisplay();
-                        updateVpnIndicator();
-                    }
-                }).catch(err => {
-                    console.error('[VPN] Error auto-connecting:', err);
-                });
-            }
-            
-            // Update display immediately
-            vpnInfo = {
-                ip: defaultLocation.ip,
-                location: `${defaultLocation.city}, ${defaultLocation.region}`,
-                country: defaultLocation.country,
-                isp: defaultLocation.isp,
-                connected: true,
-                isFakeLocation: false // Will be updated after proxy connection attempt
-            };
-            updateVpnDisplay();
-            updateVpnIndicator();
-            localStorage.setItem('vpnInfo', JSON.stringify(vpnInfo));
-            return;
-        }
-        
-        // No default location configured - show location selection modal
-        vpnInfo.connected = false;
-        updateVpnDisplay();
-        updateVpnIndicator();
-        
-        // Show modal after a brief delay to let the UI render
-        setTimeout(() => {
-            showVpnLocationModal();
-        }, 500);
+    if (!torLocation) {
+        console.error('[VPN] Tor location not found');
         return;
     }
     
-    // Try to load saved VPN info
-    const saved = localStorage.getItem('vpnInfo');
-    if (saved) {
-        try {
-            vpnInfo = JSON.parse(saved);
-            updateVpnDisplay();
-            updateVpnIndicator();
-        } catch (e) {
-            console.error('Failed to load saved VPN info:', e);
-        }
-    }
+    // Clear any cached VPN info to force fresh fetch
+    localStorage.removeItem('vpnInfo');
+    localStorage.removeItem('selectedVpnLocation');
+    localStorage.removeItem('vpnUseRealLocation');
     
-    // If a location was previously selected, reconnect to the proxy on startup
-    if (hasSelectedLocation) {
-        try {
-            const location = JSON.parse(hasSelectedLocation);
-            // Reconnect to VPN proxy for this location
-            if (window.electronAPI && window.electronAPI.vpnSetProxy) {
-                window.electronAPI.vpnSetProxy({
-                    country: location.country,
-                    city: location.city
-                }).then(result => {
-                    if (result.success) {
-                        vpnInfo.isFakeLocation = false;
-                        console.log('[VPN] Reconnected to VPN proxy on startup:', result.message);
-                        
-                        // Show warning if Tor may not be running
-                        if (result.warning) {
-                            console.warn('[VPN]', result.warning);
-                        }
-                        
-                        // Wait for Tor to bootstrap, then fetch real IP through Tor
-                        console.log('[VPN] Waiting for Tor to establish connection...');
-                        setTimeout(() => {
-                            console.log('[VPN] Verifying Tor connection by fetching IP...');
-                            fetchVpnInfo(0);
-                        }, 5000); // Wait 5 seconds for Tor to bootstrap // Wait 2 seconds for proxy to take effect
-                    } else {
-                        console.warn('[VPN] Proxy not configured for saved location:', result.message);
-                        vpnInfo.isFakeLocation = result.isFakeLocation || true;
-                        updateVpnDisplay();
-                        updateVpnIndicator();
-                    }
-                }).catch(err => {
-                    console.error('[VPN] Error reconnecting proxy on startup:', err);
-                    vpnInfo.isFakeLocation = true;
-                    updateVpnDisplay();
-                    updateVpnIndicator();
-                });
+    // Show connecting state initially
+    vpnInfo.connected = false;
+    updateVpnDisplay();
+    updateVpnIndicator();
+    
+    // Auto-connect to Tor on startup (all locations use the same Tor proxy)
+    if (window.electronAPI && window.electronAPI.vpnSetProxy) {
+        window.electronAPI.vpnSetProxy({
+            country: torLocation.country,
+            city: torLocation.city
+        }).then(result => {
+            if (result.success) {
+                console.log('[VPN] Auto-connected to Tor:', result.message);
+                // Wait for Tor to bootstrap, then fetch real IP through Tor
+                console.log('[VPN] Waiting for Tor to establish connection...');
+                setTimeout(() => {
+                    console.log('[VPN] Verifying Tor connection by fetching IP...');
+                    fetchVpnInfo(0);
+                }, 5000); // Wait 5 seconds for Tor to bootstrap
             } else {
-                // No proxy API available, use fake location
-                vpnInfo.isFakeLocation = true;
+                console.warn('[VPN] Auto-connect to Tor failed:', result.message);
+                vpnInfo.connected = false;
                 updateVpnDisplay();
                 updateVpnIndicator();
             }
-        } catch (e) {
-            console.error('Failed to parse saved location:', e);
-        }
+        }).catch(err => {
+            console.error('[VPN] Error auto-connecting to Tor:', err);
+            vpnInfo.connected = false;
+            updateVpnDisplay();
+            updateVpnIndicator();
+        });
     }
     
-    // Start with connecting state if no saved info
-    if (!vpnInfo.ip) {
-        vpnInfo.connected = false;
-        updateVpnDisplay();
-        updateVpnIndicator();
-    }
-    
-    // Only fetch VPN info if user chose real location, otherwise use fake location
-    if (hasChosenRealLocation && !hasSelectedLocation) {
-        fetchVpnInfo();
-        // Refresh every 5 minutes
-        setInterval(fetchVpnInfo, 5 * 60 * 1000);
-    } else if (hasSelectedLocation) {
-        // Use fake location - already set in fetchVpnInfo logic
-        fetchVpnInfo();
-    }
+    // Refresh VPN info every 5 minutes
+    setInterval(fetchVpnInfo, 5 * 60 * 1000);
 }
 
 // Trash/Recycle Bin
@@ -2477,7 +2888,6 @@ function setupAIAssistant() {
     const aiMinimize = document.getElementById('aiAssistantMinimize');
     const aiInput = document.getElementById('aiAssistantInput');
     const aiSend = document.getElementById('aiAssistantSend');
-    const aiImage = document.getElementById('aiAssistantImage');
     const aiMessages = document.getElementById('aiAssistantMessages');
 
     if (!aiBtn || !aiModal || !aiContainer) return;
@@ -2602,11 +3012,19 @@ function setupAIAssistant() {
         // Show typing indicator
         const typingId = addTypingIndicator();
 
-        // Get AI response
+        // Check for actions first, then get AI response
         try {
-            const response = await getAIResponse(message);
+            const actionResult = await checkAndExecuteAction(message);
             removeTypingIndicator(typingId);
-            addAIMessage(response);
+            
+            if (actionResult.executed) {
+                // Action was executed, show result
+                addAIMessage(actionResult.message || `Done! ${actionResult.action || ''}`);
+            } else {
+                // No action, get normal AI response
+                const response = await getAIResponse(message);
+                addAIMessage(response);
+            }
         } catch (error) {
             removeTypingIndicator(typingId);
             addAIMessage('Sorry, I encountered an error. Please try again.');
@@ -2621,68 +3039,6 @@ function setupAIAssistant() {
         }
     });
 
-    // Image generation
-    if (aiImage) {
-        aiImage.addEventListener('click', async () => {
-            const prompt = aiInput.value.trim();
-            if (!prompt) {
-                addAIMessage('Please enter a description of the image you want to generate.');
-                return;
-            }
-
-            // Add user message
-            addUserMessage(`Generate image: ${prompt}`);
-            aiInput.value = '';
-
-            // Show typing indicator
-            const typingId = addTypingIndicator();
-
-            try {
-                // Check if SD is ready
-                if (!window.electronAPI) {
-                    throw new Error('Electron API not available');
-                }
-
-                const check = await window.electronAPI.sdCheckReady();
-                if (!check.available) {
-                    removeTypingIndicator(typingId);
-                    addAIMessage('Stable Diffusion is not running. Please install Automatic1111 WebUI and ensure it is running on port 7860.');
-                    return;
-                }
-
-                removeTypingIndicator(typingId);
-                addAIMessage('Generating image... This may take 30-60 seconds.');
-
-                // Generate image
-                const result = await window.electronAPI.sdGenerateImage(
-                    prompt,
-                    '', // negative prompt
-                    1024, // width (SDXL default)
-                    1024, // height (SDXL default)
-                    30, // steps
-                    7, // cfg scale
-                    -1 // random seed
-                );
-
-                if (result.success && result.image) {
-                    // Display the generated image
-                    const imageHtml = `
-                        <div class="ai-generated-image">
-                            <img src="data:image/png;base64,${result.image}" alt="Generated image" style="max-width: 100%; border-radius: 8px; margin-top: 8px;">
-                            <p style="margin-top: 8px; font-size: 12px; color: rgba(255, 255, 255, 0.6);">Image generated successfully!</p>
-                        </div>
-                    `;
-                    addAIMessage(imageHtml, true);
-                } else {
-                    addAIMessage(`Failed to generate image: ${result.error || 'Unknown error'}`);
-                }
-            } catch (error) {
-                removeTypingIndicator(typingId);
-                addAIMessage(`Error generating image: ${error.message}`);
-                console.error('Image generation error:', error);
-            }
-        });
-    }
 }
 
 // Save AI Assistant state (position, size, minimized)
@@ -2825,6 +3181,199 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Action execution system for AI Assistant
+async function checkAndExecuteAction(message) {
+    if (!window.electronAPI) {
+        return { executed: false };
+    }
+
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // App mapping
+    const appMap = {
+        'browser': 'browser',
+        'web browser': 'browser',
+        'omega browser': 'browser',
+        'wallet': 'wallet',
+        'omega wallet': 'wallet',
+        'crypto wallet': 'wallet',
+        'terminal': 'terminal',
+        'command line': 'terminal',
+        'cmd': 'terminal',
+        'word': 'word',
+        'omega word': 'word',
+        'document': 'word',
+        'text editor': 'word',
+        'notes': 'notes',
+        'omega notes': 'notes',
+        'notepad': 'notes',
+        'notepad++': 'notes',
+        'code editor': 'notes',
+        'spreadsheet': 'finance',
+        'excel': 'finance',
+        'finance': 'finance',
+        'omega finance': 'finance',
+        'budget': 'finance',
+        'financial': 'finance',
+        'slides': 'slides',
+        'omega slides': 'slides',
+        'presentation': 'slides',
+        'powerpoint': 'slides',
+        'paint': 'paint',
+        'omega paint': 'paint',
+        'drawing': 'paint',
+        'create': 'ai-dev',
+        'omega create': 'ai-dev',
+        'ai dev': 'ai-dev',
+        'code': 'ai-dev',
+        'file manager': 'filemanager',
+        'files': 'filemanager',
+        'explorer': 'filemanager',
+        'firewall': 'firewall',
+        'identity': 'identity',
+        'omega identity': 'identity',
+        'password': 'password-manager',
+        'password manager': 'password-manager',
+    };
+
+    // Open app actions
+    if (lowerMessage.match(/^(open|launch|start|run|show)\s+(.+)$/i)) {
+        const match = lowerMessage.match(/^(open|launch|start|run|show)\s+(.+)$/i);
+        const appName = match[2].trim();
+        
+        for (const [key, appType] of Object.entries(appMap)) {
+            if (appName.includes(key)) {
+                try {
+                    await launchApp(appType);
+                    return { executed: true, action: `Opened ${appName}`, message: `✅ Opened ${appName}` };
+                } catch (error) {
+                    return { executed: true, action: 'open app', message: `❌ Failed to open ${appName}: ${error.message}` };
+                }
+            }
+        }
+    }
+
+    // Close app actions
+    if (lowerMessage.match(/^(close|quit|exit|kill)\s+(.+)$/i) || lowerMessage === 'close all' || lowerMessage === 'close everything') {
+        if (lowerMessage === 'close all' || lowerMessage === 'close everything') {
+            try {
+                const windows = await window.electronAPI.getOpenWindows();
+                let closed = 0;
+                for (const win of windows) {
+                    await window.electronAPI.appWindowClose(win.id);
+                    closed++;
+                }
+                return { executed: true, action: 'close all', message: `✅ Closed ${closed} application(s)` };
+            } catch (error) {
+                return { executed: true, action: 'close all', message: `❌ Failed to close apps: ${error.message}` };
+            }
+        }
+        
+        const match = lowerMessage.match(/^(close|quit|exit|kill)\s+(.+)$/i);
+        const appName = match[2].trim();
+        
+        try {
+            const windows = await window.electronAPI.getOpenWindows();
+            for (const win of windows) {
+                const winName = getAppName(win.type).toLowerCase();
+                const requestedName = appName.toLowerCase();
+                // Check if the requested name matches the window name or type
+                if (winName.includes(requestedName) || requestedName.includes(winName) || 
+                    win.type.toLowerCase().includes(requestedName) || requestedName.includes(win.type.toLowerCase())) {
+                    const appDisplayName = getAppName(win.type);
+                    await window.electronAPI.appWindowClose(win.id);
+                    return { executed: true, action: 'close app', message: `✅ Closed ${appDisplayName}` };
+                }
+            }
+            return { executed: true, action: 'close app', message: `❌ Could not find ${appName} to close` };
+        } catch (error) {
+            return { executed: true, action: 'close app', message: `❌ Failed to close app: ${error.message}` };
+        }
+    }
+
+    // List open windows
+    if (lowerMessage.match(/^(list|show|what|which)\s+(apps|windows|programs|applications)/i) || 
+        lowerMessage === 'what\'s open' || lowerMessage === 'whats open' || lowerMessage === 'what is open') {
+        try {
+            const windows = await window.electronAPI.getOpenWindows();
+            if (windows.length === 0) {
+                return { executed: true, action: 'list windows', message: 'No applications are currently open.' };
+            }
+            const windowList = windows.map(w => `• ${getAppName(w.type)}`).join('\n');
+            return { executed: true, action: 'list windows', message: `**Open Applications:**\n\n${windowList}` };
+        } catch (error) {
+            return { executed: true, action: 'list windows', message: `❌ Failed to list windows: ${error.message}` };
+        }
+    }
+
+    // Check system status
+    if (lowerMessage.match(/^(check|status|show)\s+(system|vpn|tor|network|connection)/i)) {
+        try {
+            let status = '**System Status:**\n\n';
+            
+            // Check open windows
+            const windows = await window.electronAPI.getOpenWindows();
+            status += `• Open Applications: ${windows.length}\n`;
+            
+            // Check VPN/Tor (if available)
+            if (window.electronAPI.torStatus) {
+                try {
+                    const torStatus = await window.electronAPI.torStatus();
+                    status += `• Tor: ${torStatus.isRunning ? '✅ Running' : '❌ Not running'}\n`;
+                } catch (e) {
+                    status += `• Tor: Status unavailable\n`;
+                }
+            }
+            
+            // Check AI status
+            if (window.electronAPI.aiCheckReady) {
+                try {
+                    const aiStatus = await window.electronAPI.aiCheckReady();
+                    status += `• AI (Ollama): ${aiStatus.ready ? '✅ Ready' : '❌ Not ready'}\n`;
+                } catch (e) {
+                    status += `• AI: Status unavailable\n`;
+                }
+            }
+            
+            return { executed: true, action: 'check status', message: status };
+        } catch (error) {
+            return { executed: true, action: 'check status', message: `❌ Failed to check status: ${error.message}` };
+        }
+    }
+
+    // Execute command (open terminal and run)
+    if (lowerMessage.match(/^(run|execute|command|cmd)\s+(.+)$/i)) {
+        const match = lowerMessage.match(/^(run|execute|command|cmd)\s+(.+)$/i);
+        const command = match[2].trim();
+        
+        try {
+            // Open terminal first
+            await launchApp('terminal');
+            // Note: Terminal execution would need to be implemented in terminal app
+            return { executed: true, action: 'execute command', message: `✅ Opened Terminal. Command: \`${command}\`\n\nNote: You'll need to run the command in the terminal window.` };
+        } catch (error) {
+            return { executed: true, action: 'execute command', message: `❌ Failed to open terminal: ${error.message}` };
+        }
+    }
+
+    // Lock screen
+    if (lowerMessage.match(/^(lock|lock screen)/i)) {
+        try {
+            const lockBtn = document.getElementById('lockScreenBtn');
+            if (lockBtn) {
+                lockBtn.click();
+                return { executed: true, action: 'lock screen', message: '✅ Screen locked' };
+            }
+            return { executed: true, action: 'lock screen', message: '❌ Lock screen button not found' };
+        } catch (error) {
+            return { executed: true, action: 'lock screen', message: `❌ Failed to lock screen: ${error.message}` };
+        }
+    }
+
+    // No action detected
+    return { executed: false };
+}
+
 async function getAIResponse(userMessage) {
     // Check if Electron API is available
     if (!window.electronAPI) {
@@ -2836,14 +3385,61 @@ async function getAIResponse(userMessage) {
         const systemPrompt = `You are an AI assistant for Omega OS, a comprehensive desktop operating system. You know everything about Omega OS features and capabilities. Be conversational, helpful, and friendly.
 
 Omega OS Features:
-- Applications: Browser, Wallet (Solana & EVM), Terminal, Omega Sheets, Omega Slides, Omega Docs, Password Manager, AI Dev (now called Omega Create), Firewall, VPN
-- File Management: Documents folder, Trash/Recycle Bin, Desktop folders
-- Security: VPN with kill switch, Firewall, Ad Blocker, Cookie Manager, Screen Lock
-- System: Multiple desktops, Window snapping, Volume/Brightness controls, Crypto price widget
-- Shortcuts: Win+Tab (desktop switcher), Ctrl+Alt+Arrow (switch desktop), Window snapping
-- Customization: Desktop backgrounds, themes, taskbar customization
 
-Answer the user's question about Omega OS in a helpful, conversational way. If you don't know something specific, suggest where they might find it or how to explore it.`;
+APPLICATIONS:
+- Omega Browser: Secure web browser with built-in VPN/Tor, ad blocker, AI Mode, and VPN toggle button for normal browsing
+- Omega Wallet: Supports Solana and EVM chains, send/receive crypto, connect to dApps
+- Terminal: Command-line interface for developers and power users
+- Omega Word: Rich text editor with AI assistance for improving, rewriting, and formatting text
+- Omega Finance: Spreadsheet with formula support and AI assistance for calculations
+- Omega Slides: Presentation creator with AI assistance for content generation
+- Omega Create (formerly AI Dev): Code generation using AI
+- Omega Paint: Drawing and image editing application
+- Password Manager: Secure password storage and management
+- Firewall: Network traffic monitoring and control
+- Omega Identity: Decentralized identity and sync management
+- File Manager: Browse and manage files in isolated environment
+
+AI:
+- Local AI: Uses Ollama for local AI chat (no data sent to external servers)
+
+VPN & PRIVACY:
+- Bundled Tor: Tor daemon is bundled with Omega OS (no separate installation needed)
+- VPN Integration: VPN uses Tor by default for all locations
+- VPN Toggle Button: "VPN Off" button in browser toolbar to disable Tor/VPN for normal browsing
+- Tor Auto-Start: Tor automatically starts when VPN is enabled
+- Tor Auto-Stop: Tor stops when app closes or VPN is disabled
+- VPN Locations: Multiple VPN locations available, all route through Tor by default
+- Privacy Features: Ad Blocker, Cookie Manager, Screen Lock with Omega symbol
+
+FILE MANAGEMENT:
+- Documents Folder: Isolated documents storage
+- Trash/Recycle Bin: Deleted files go to Trash
+- Desktop Folders: Create folders on desktop by right-clicking
+- Isolated Environment: All data stored in isolated directory (~/.omega-os/isolated-env/)
+
+SYSTEM FEATURES:
+- Multiple Desktops: Create multiple desktops with Win+Tab or Ctrl+Alt+Arrow keys
+- Window Snapping: Drag windows to edges to snap
+- Volume/Brightness Controls: System tray controls
+- Crypto Price Widget: Real-time BTC, ETH, SOL prices in taskbar (customizable)
+- Desktop Backgrounds: Customizable wallpapers and colors
+- Taskbar Customization: Customize taskbar appearance
+
+KEYBOARD SHORTCUTS:
+- Win+Tab: Desktop switcher
+- Ctrl+Alt+Arrow: Switch between desktops
+- Window snapping: Drag to edges
+
+IMPORTANT: You have FULL ADMIN CONTROL. When users ask you to:
+- "Open [app]" → You can open it
+- "Close [app]" → You can close it
+- "What's open?" → You can list open apps
+- "Check status" → You can check system status
+- "Run [command]" → You can execute commands
+- "Lock screen" → You can lock the screen
+
+Actions are executed automatically before you respond. Acknowledge what was done and provide helpful follow-up information.`;
 
         const fullPrompt = `${systemPrompt}\n\nUser Question: ${userMessage}\n\nProvide a helpful, conversational response:`;
 
@@ -2871,17 +3467,23 @@ function getLocalResponse(message) {
     
     // Feature knowledge base
     const responses = {
-        'browser': 'Omega Browser is a secure web browser with built-in VPN, ad blocker, and privacy features. You can find it in the start menu or on the desktop.',
+        'browser': 'Omega Browser is a secure web browser with built-in VPN/Tor, ad blocker, AI Mode, and a VPN toggle button. The VPN toggle button (top toolbar) lets you disable Tor/VPN for normal browsing. You can find it in the start menu or on the desktop.',
         'wallet': 'Omega Wallet supports both Solana and EVM chains. You can send/receive crypto, view balances, and connect to dApps. Open it from the start menu.',
         'terminal': 'The Terminal app lets you run commands and scripts. It\'s perfect for developers and power users.',
-        'vpn': 'VPN is available in the top-right corner. Click the VPN badge to connect, choose a location, and enable the kill switch for extra security.',
+        'vpn': 'VPN is available in the top-right corner. Click the VPN badge to connect, choose a location. Tor is bundled with Omega OS and starts automatically. Use the "VPN Off" button in the browser toolbar to disable Tor/VPN for normal browsing.',
+        'tor': 'Tor is bundled with Omega OS - no separate installation needed! It automatically starts when you enable VPN and stops when you disable it or close the app. All VPN locations route through Tor by default.',
+        'paint': 'Omega Paint is a drawing and image editing application. You can create artwork, edit images, and use various drawing tools. Find it in the start menu or desktop.',
+        'ai': 'Omega OS uses Ollama for local AI chat - all AI runs on your computer, no data sent to external servers.',
+        'omega create': 'Omega Create (formerly AI Dev) lets you generate code using AI. It supports text-to-code generation.',
+        'identity': 'Omega Identity is a decentralized identity and sync management app. You can find it on the desktop or in the start menu.',
         'firewall': 'The Firewall app monitors and controls network traffic. You can set rules to allow or block specific connections.',
         'desktop': 'You can create multiple desktops with Win+Tab or Ctrl+Alt+Arrow keys. Each desktop can have different windows open.',
         'shortcut': 'Common shortcuts: Win+Tab (desktop switcher), Ctrl+Alt+Arrow (switch desktop), Window snapping with drag to edges.',
         'file': 'Files are stored in the Documents folder. You can create desktop folders by right-clicking the desktop. Deleted files go to Trash.',
-        'security': 'Omega OS has VPN, Firewall, Ad Blocker, Cookie Manager, and Screen Lock. Check the top-right for VPN status.',
+        'security': 'Omega OS has VPN (with bundled Tor), Firewall, Ad Blocker, Cookie Manager, and Screen Lock. Check the top-right for VPN status.',
         'crypto': 'Crypto prices (BTC, ETH, SOL) are shown in the taskbar. Click the widget to customize which coins to display.',
-        'help': 'I can help you with any Omega OS feature! Try asking about: Browser, Wallet, VPN, Firewall, File Management, Shortcuts, Security, or Customization. You can also report issues with AI in Word, Sheets, or Slides by saying "report issue" or "fix AI".',
+        'normal browsing': 'To browse normally without VPN/Tor, click the "VPN Off" button in the browser toolbar (next to the AI Mode button). This disables both Tor and VPN.',
+        'help': 'I can help you with any Omega OS feature! Try asking about: Browser, Wallet, VPN/Tor, Paint, AI, Firewall, File Management, Shortcuts, Security, or Customization. You can also report issues with AI in Word, Finance, or Slides by saying "report issue" or "fix AI".',
     };
 
     // Find matching response
@@ -2892,15 +3494,17 @@ function getLocalResponse(message) {
     }
 
     // Default response
-    return `I'd be happy to help with that! Omega OS has many features including Browser, Wallet, VPN, Firewall, Terminal, and more. Could you be more specific about what you'd like to know? For example, you could ask about:
-- How to use the Browser
+    return `I'd be happy to help with that! Omega OS has many features including Browser, Wallet, VPN/Tor, Paint, AI, Firewall, Terminal, and more. Could you be more specific about what you'd like to know? For example, you could ask about:
+- How to use the Browser (including VPN toggle for normal browsing)
 - Setting up the Wallet
-- Connecting to VPN
+- Connecting to VPN/Tor (Tor is bundled, no installation needed!)
+- Using Omega Paint for drawing and image editing
+- Local AI with Ollama
 - Managing files
 - Keyboard shortcuts
 - Security features
 
-You can also report issues with AI features in Word, Sheets, or Slides by saying "report issue with [app] AI" or "fix AI in [app]".`;
+You can also report issues with AI features in Word, Finance, or Slides by saying "report issue with [app] AI" or "fix AI in [app]".`;
 }
 
 // AI Feedback and Improvement System
@@ -2910,7 +3514,7 @@ function handleAIFeedback(message) {
     // Detect which app the issue is about
     let appName = null;
     if (lowerMessage.includes('word')) appName = 'word';
-    else if (lowerMessage.includes('sheet')) appName = 'sheets';
+    else if (lowerMessage.includes('finance') || lowerMessage.includes('spreadsheet') || lowerMessage.includes('excel')) appName = 'finance';
     else if (lowerMessage.includes('slide')) appName = 'slides';
     
     // Store the feedback
@@ -2927,7 +3531,7 @@ function handleAIFeedback(message) {
     if (appName) {
         return `Thank you for reporting the issue with ${appName} AI! I've recorded your feedback and will analyze it to improve the AI agent. The fix will be applied automatically. You can continue using the app - the improvements will take effect on the next AI request.`;
     } else {
-        return `I'd be happy to help fix AI issues! Please specify which app (Word, Sheets, or Slides) and describe the problem. For example: "Fix AI in Word - it's not improving text correctly" or "Report issue with Sheets AI - formulas are wrong".`;
+        return `I'd be happy to help fix AI issues! Please specify which app (Word, Finance, or Slides) and describe the problem. For example: "Fix AI in Word - it's not improving text correctly" or "Report issue with Finance AI - calculations are wrong".`;
     }
 }
 
@@ -2972,7 +3576,7 @@ Your task:
 
 For ${appName}:
 ${appName === 'word' ? '- This AI improves, rewrites, expands, or summarizes text\n- Current prompt: "Improve the following text..."\n- Issues might be: not following style, losing meaning, too verbose, etc.' : ''}
-${appName === 'sheets' ? '- This AI suggests Excel/Sheets formulas\n- Current prompt: "Given the user\'s request, suggest a formula..."\n- Issues might be: wrong formulas, not understanding context, missing edge cases, etc.' : ''}
+${appName === 'finance' ? '- This AI performs calculations and suggests formulas\n- Current prompt: "Given the user\'s request, calculate or suggest a formula..."\n- Issues might be: wrong calculations, not understanding context, missing edge cases, etc.' : ''}
 ${appName === 'slides' ? '- This AI helps with presentation content\n- Issues might be: wrong formatting, poor content quality, etc.' : ''}
 
 Respond in this format:
@@ -3048,6 +3652,232 @@ function showAIFixNotification(appName, fix) {
         `;
         messages.appendChild(notificationDiv);
         messages.scrollTop = messages.scrollHeight;
+    }
+}
+
+// Identity Registration Functions
+function setupIdentityRegistration() {
+    const userProfileBtn = document.getElementById('userProfileBtn');
+    const userRegisterLink = document.getElementById('userRegisterLink');
+    const identityModal = document.getElementById('identityRegistrationModal');
+    const closeBtn = document.getElementById('closeIdentityRegistration');
+    const registerBtn = document.getElementById('registerIdentityBtn');
+    
+    console.log('Setting up identity registration...', { 
+        userProfileBtn: !!userProfileBtn, 
+        userRegisterLink: !!userRegisterLink, 
+        identityModal: !!identityModal 
+    });
+    
+    if (!userProfileBtn) {
+        console.error('userProfileBtn not found!');
+        return;
+    }
+    
+    if (!identityModal) {
+        console.error('identityModal not found!');
+        return;
+    }
+    
+    // Open wallet first, then modal when clicking "Register Here"
+    if (userRegisterLink) {
+        console.log('Adding click handler to Register Here link');
+        userRegisterLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Register Here clicked!');
+            // First, open Omega Wallet (for identity registration - needs Omega Network and hot wallet mode)
+            try {
+                await launchApp('wallet', { forIdentityRegistration: true });
+                console.log('Wallet launched for identity registration');
+            } catch (error) {
+                console.error('Failed to launch wallet:', error);
+                alert('Failed to open wallet: ' + error.message);
+            }
+            // Wait a moment, then open registration modal
+            setTimeout(() => {
+                if (identityModal) {
+                    identityModal.style.display = 'flex';
+                    loadIdentityStatus();
+                }
+            }, 500);
+        });
+    } else {
+        console.error('userRegisterLink not found!');
+    }
+    
+    // Open modal when clicking user profile (but not the register link)
+    userProfileBtn.addEventListener('click', (e) => {
+        // Don't open if clicking the register link
+        if (e.target === userRegisterLink || (userRegisterLink && userRegisterLink.contains(e.target))) {
+            return;
+        }
+        identityModal.style.display = 'flex';
+        loadIdentityStatus();
+    });
+    
+    // Close modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            identityModal.style.display = 'none';
+        });
+    }
+    
+    // Register identity
+    if (registerBtn) {
+        registerBtn.addEventListener('click', async () => {
+            await registerIdentity();
+        });
+    }
+    
+    // Close on outside click
+    if (identityModal) {
+        identityModal.addEventListener('click', (e) => {
+            if (e.target === identityModal) {
+                identityModal.style.display = 'none';
+            }
+        });
+    }
+}
+
+async function loadIdentityStatus() {
+    if (!window.electronAPI) return;
+    
+    try {
+        const hasIdentity = await window.electronAPI.identityHasIdentity();
+        const userName = document.getElementById('userName');
+        const userRegisterLink = document.getElementById('userRegisterLink');
+        const identityNotRegistered = document.getElementById('identityNotRegistered');
+        const identityRegistered = document.getElementById('identityRegistered');
+        const registeredOmegaId = document.getElementById('registeredOmegaId');
+        const registeredWallet = document.getElementById('registeredWallet');
+        const registeredDate = document.getElementById('registeredDate');
+        
+        if (hasIdentity) {
+            const result = await window.electronAPI.identityGet();
+            if (result.success && result.identity) {
+                const identity = result.identity;
+                
+                // Update start menu footer
+                if (userName) {
+                    userName.textContent = identity.omegaId.substring(0, 20) + '...';
+                }
+                if (userRegisterLink) {
+                    userRegisterLink.textContent = 'Registered';
+                    userRegisterLink.style.color = 'rgba(0, 200, 0, 0.8)';
+                    userRegisterLink.style.textDecoration = 'none';
+                    userRegisterLink.style.cursor = 'default';
+                }
+                
+                // Update modal
+                if (identityRegistered) {
+                    identityRegistered.style.display = 'block';
+                }
+                if (identityNotRegistered) {
+                    identityNotRegistered.style.display = 'none';
+                }
+                if (registeredOmegaId) {
+                    registeredOmegaId.textContent = identity.omegaId;
+                }
+                if (registeredWallet) {
+                    registeredWallet.textContent = identity.address.substring(0, 10) + '...' + identity.address.substring(identity.address.length - 6);
+                }
+                if (registeredDate) {
+                    registeredDate.textContent = new Date(identity.createdAt).toLocaleString();
+                }
+            }
+        } else {
+            // Not registered
+            if (userName) {
+                userName.textContent = 'Omega User';
+            }
+            if (userRegisterLink) {
+                userRegisterLink.textContent = 'Register Here';
+                userRegisterLink.style.color = '#333';
+                userRegisterLink.style.textDecoration = 'none';
+                userRegisterLink.style.cursor = 'pointer';
+                userRegisterLink.style.pointerEvents = 'auto';
+                userRegisterLink.style.fontSize = '13px';
+                userRegisterLink.style.fontWeight = '500';
+            }
+            
+            // Update modal
+            if (identityRegistered) {
+                identityRegistered.style.display = 'none';
+            }
+            if (identityNotRegistered) {
+                identityNotRegistered.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load identity status:', error);
+    }
+}
+
+async function registerIdentity() {
+    if (!window.electronAPI) {
+        alert('Electron API not available');
+        return;
+    }
+    
+    const registerBtn = document.getElementById('registerIdentityBtn');
+    const statusDiv = document.getElementById('identityRegistrationStatus');
+    
+    try {
+        // Check if wallet is loaded
+        const walletLoaded = await window.electronAPI.walletIsLoaded();
+        if (!walletLoaded) {
+            alert('Please unlock your wallet first in Omega Wallet app');
+            return;
+        }
+        
+        // Disable button
+        if (registerBtn) {
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Registering...';
+        }
+        
+        // Show status
+        if (statusDiv) {
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'identity-registration-status';
+            statusDiv.style.color = '#333';
+            statusDiv.innerHTML = '<p>Initializing identity...</p>';
+        }
+        
+        // Initialize identity
+        const result = await window.electronAPI.identityInitialize();
+        
+        if (result.success) {
+            if (statusDiv) {
+                statusDiv.className = 'identity-registration-status success';
+                statusDiv.innerHTML = '<p>✓ Identity registered successfully!</p>';
+            }
+            
+            // Reload status
+            setTimeout(() => {
+                loadIdentityStatus();
+            }, 1000);
+        } else {
+            if (statusDiv) {
+                statusDiv.className = 'identity-registration-status error';
+                statusDiv.innerHTML = `<p>✗ Failed: ${result.error || 'Unknown error'}</p>`;
+            }
+            if (registerBtn) {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Register Omega OS';
+            }
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+        if (statusDiv) {
+            statusDiv.className = 'identity-registration-status error';
+            statusDiv.innerHTML = `<p>✗ Error: ${error.message}</p>`;
+        }
+        if (registerBtn) {
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Register Omega OS';
+        }
     }
 }
 

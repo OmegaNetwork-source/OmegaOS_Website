@@ -1,12 +1,11 @@
-const { app, BrowserWindow, ipcMain, session, dialog, shell, screen, net } = require('electron');
+const { app, BrowserWindow, ipcMain, session, dialog, shell, screen, net, clipboard, nativeImage } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 const OmegaWallet = require('./wallet');
 const OmegaIdentityManager = require('./identity-manager');
 const CryptoJS = require('crypto-js');
 const aiService = require('./ai-service');
-const sdService = require('./stable-diffusion-service');
-const sdManager = require('./stable-diffusion-manager');
 
 // Tor Manager (optional - for bundled Tor)
 let torManager;
@@ -43,6 +42,46 @@ try {
 // Set app name early for dialogs and window titles
 app.setName('Omega OS');
 
+// TOR HARDENING: Chromium command-line flags (must be set before app.whenReady)
+// These disable features that can leak IP/fingerprint data even when using Tor
+app.commandLine.appendSwitch('disable-webrtc');
+app.commandLine.appendSwitch('disable-features', 'NetworkService,NetworkPrediction,PreloadMediaEngagementData,AutofillServerCommunication');
+app.commandLine.appendSwitch('disable-background-networking');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-breakpad');
+app.commandLine.appendSwitch('disable-client-side-phishing-detection');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-default-apps');
+app.commandLine.appendSwitch('disable-domain-reliability');
+app.commandLine.appendSwitch('disable-features', 'TranslateUI,BlinkGenPropertyTrees');
+app.commandLine.appendSwitch('disable-hang-monitor');
+app.commandLine.appendSwitch('disable-ipc-flooding-protection');
+app.commandLine.appendSwitch('disable-notifications');
+app.commandLine.appendSwitch('disable-offer-store-unmasked-wallet-cards');
+app.commandLine.appendSwitch('disable-popup-blocking');
+app.commandLine.appendSwitch('disable-print-preview');
+app.commandLine.appendSwitch('disable-prompt-on-repost');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-setuid-sandbox');
+app.commandLine.appendSwitch('disable-speech-api');
+app.commandLine.appendSwitch('disable-sync');
+app.commandLine.appendSwitch('disable-tab-for-desktop-share');
+app.commandLine.appendSwitch('disable-translate');
+app.commandLine.appendSwitch('disable-windows10-custom-titlebar');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-features', 'AudioServiceOutOfProcess');
+app.commandLine.appendSwitch('disable-spell-checking');
+app.commandLine.appendSwitch('disable-remote-fonts');
+app.commandLine.appendSwitch('disable-reading-from-canvas');
+app.commandLine.appendSwitch('disable-2d-canvas-image-chromium');
+app.commandLine.appendSwitch('disable-accelerated-2d-canvas');
+app.commandLine.appendSwitch('disable-features', 'SafeBrowsing,PasswordProtectionAPI');
+app.commandLine.appendSwitch('metrics-recording-only');
+app.commandLine.appendSwitch('disable-features', 'MediaRouter');
+// Note: proxy-server will be set dynamically when Tor/VPN is enabled
+// host-resolver-rules will be set dynamically to prevent DNS leaks
+
 let desktopWindow; // Main desktop environment window
 let appWindows = new Map(); // Track all application windows
 let isDev = process.argv.includes('--dev');
@@ -74,7 +113,6 @@ const ISOLATED_DATA_PATH = path.join(app.getPath('userData'), 'isolated-env');
 const ISOLATED_DOCUMENTS_PATH = path.join(ISOLATED_DATA_PATH, 'documents');
 const ISOLATED_TRASH_PATH = path.join(ISOLATED_DATA_PATH, 'trash');
 const ISOLATED_DESKTOP_PATH = path.join(ISOLATED_DATA_PATH, 'desktop');
-const fs = require('fs');
 if (!fs.existsSync(ISOLATED_DATA_PATH)) {
   fs.mkdirSync(ISOLATED_DATA_PATH, { recursive: true });
 }
@@ -98,6 +136,30 @@ if (!fs.existsSync(ISOLATED_DESKTOP_PATH)) {
 // Or configure a proxy server here:
 const PROXY_SERVER = process.env.OMEGA_PROXY || null;
 
+// Helper function to get icon path (works in both dev and packaged app)
+function getIconPath() {
+  // In packaged app, icon is embedded in executable, but we can still reference it
+  // electron-builder puts build/ folder in resources/ directory (outside app.asar)
+  const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : __dirname);
+  
+  // Try multiple possible locations
+  const possiblePaths = [
+    path.join(resourcesPath, 'build', 'icon.ico'),
+    path.join(__dirname, 'build', 'icon.ico'),
+    path.join(resourcesPath, 'icon.ico'),
+    path.join(__dirname, 'icon.ico'),
+  ];
+  
+  for (const iconPath of possiblePaths) {
+    if (fs.existsSync(iconPath)) {
+      return iconPath;
+    }
+  }
+  
+  // Fallback: return the most likely path (electron-builder embeds it in exe, but this is for window icon)
+  return path.join(resourcesPath, 'build', 'icon.ico');
+}
+
 function createDesktopWindow() {
   desktopWindow = new BrowserWindow({
     width: 1920,
@@ -108,7 +170,7 @@ function createDesktopWindow() {
     titleBarStyle: 'hidden',
     backgroundColor: '#1a1a1a',
     fullscreen: false,
-    icon: path.join(__dirname, 'build', 'icon.ico'),
+    icon: getIconPath(),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -161,14 +223,22 @@ function createAppWindow(appType, options = {}) {
     appFile = 'word.html';
     width = options.width || 1000;
     height = options.height || 700;
-  } else if (appType === 'sheets') {
-    appFile = 'sheets.html';
+  } else if (appType === 'notes') {
+    appFile = 'notes.html';
+    width = options.width || 1000;
+    height = options.height || 700;
+  } else if (appType === 'finance') {
+    appFile = 'finance.html';
     width = options.width || 1200;
     height = options.height || 800;
   } else if (appType === 'slides') {
     appFile = 'slides.html';
     width = options.width || 1200;
     height = options.height || 800;
+  } else if (appType === 'paint') {
+    appFile = 'paint.html';
+    width = options.width || 1000;
+    height = options.height || 700;
   } else if (appType === 'filemanager') {
     appFile = 'filemanager.html';
     width = options.width || 900;
@@ -187,6 +257,10 @@ function createAppWindow(appType, options = {}) {
     appFile = 'encrypt.html';
     width = options.width || 800;
     height = options.height || 600;
+  } else if (appType === 'hash-verifier') {
+    appFile = 'hash-verifier.html';
+    width = options.width || 900;
+    height = options.height || 800;
   } else if (appType === 'privacy-monitor') {
     appFile = 'privacy-monitor.html';
     width = options.width || 1000;
@@ -197,8 +271,8 @@ function createAppWindow(appType, options = {}) {
     height = options.height || 700;
   } else if (appType === 'calculator') {
     appFile = 'calculator.html';
-    width = options.width || 400;
-    height = options.height || 600;
+    width = options.width || 700;
+    height = options.height || 800;
   } else if (appType === 'wallet') {
     appFile = 'wallet.html';
     width = options.width || 600;
@@ -232,7 +306,8 @@ function createAppWindow(appType, options = {}) {
     backgroundColor: '#ffffff',
     parent: desktopWindow,
     modal: false,
-    icon: path.join(__dirname, 'build', 'icon.ico'),
+    skipTaskbar: false,
+    icon: getIconPath(),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -246,61 +321,75 @@ function createAppWindow(appType, options = {}) {
         partition: 'offline-wallet', // Isolated session with no network
       }),
     },
-    show: false
+    show: false,
+    // Prevent window thumbnails/previews that might show as black boxes
+    transparent: false,
+    hasShadow: true,
+    // On Windows, ensure proper rendering for thumbnails
+    ...(process.platform === 'win32' && {
+      skipTaskbar: false,
+      autoHideMenuBar: true,
+      // Ensure window paints even when hidden (helps with thumbnails)
+      paintWhenInitiallyHidden: true
+    })
   });
+  
+  const windowId = Date.now();
   
   // Wallet starts in cold storage mode (offline)
   // Network access can be enabled via IPC when user toggles hot wallet mode
-  // We'll handle this dynamically via IPC messages
   if (isWallet) {
     const walletSession = appWindow.webContents.session;
     
-    // Start with network blocked (cold storage)
-    let networkEnabled = false;
+    // Store network state in window data
+    appWindows.set(windowId, { 
+      window: appWindow, 
+      type: appType, 
+      id: windowId,
+      snapped: false,
+      snapPosition: null,
+      walletNetworkEnabled: false // Start with network disabled (cold storage)
+    });
     
     // Block all HTTP/HTTPS requests by default
     walletSession.webRequest.onBeforeRequest((details, callback) => {
       // Allow only file:// protocol for local files
       if (details.url.startsWith('file://')) {
         callback({});
-      } else if (networkEnabled) {
-        // Allow network requests when hot wallet mode is enabled
-        callback({});
       } else {
-        // Block all other network requests (cold storage mode)
-        callback({ cancel: true });
+        // Check if network is enabled for this wallet window
+        const appData = appWindows.get(windowId);
+        if (appData && appData.walletNetworkEnabled) {
+          callback({});
+        } else {
+          // Block all other network requests (cold storage mode)
+          callback({ cancel: true });
+        }
       }
     }, { urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] });
-    
-    // IPC handler to toggle network access
-    ipcMain.handle('wallet-toggle-network', (event, enable) => {
-      // Only allow if this is the wallet window
-      if (appWindow && appWindow.webContents.id === event.sender.id) {
-        networkEnabled = enable;
-        return true;
-      }
-      return false;
-    });
     
     // Disable webview tag completely (always)
     walletSession.setPermissionRequestHandler(() => false);
     walletSession.setPermissionCheckHandler(() => false);
+  } else {
+    appWindows.set(windowId, { 
+      window: appWindow, 
+      type: appType, 
+      id: windowId,
+      snapped: false,
+      snapPosition: null
+    });
   }
-
-  const windowId = Date.now();
-  appWindows.set(windowId, { 
-    window: appWindow, 
-    type: appType, 
-    id: windowId,
-    snapped: false,
-    snapPosition: null
-  });
 
   // Send window ID and file path to renderer
   appWindow.webContents.once('did-finish-load', () => {
     appWindow.webContents.send('app-window-id', windowId);
     if (options.filePath) {
       appWindow.webContents.send('open-file', options.filePath);
+    }
+    // Send options to wallet if it's for identity registration
+    if (appType === 'wallet' && options.forIdentityRegistration) {
+      appWindow.webContents.send('wallet-configure-for-identity');
     }
   });
 
@@ -320,6 +409,21 @@ function createAppWindow(appType, options = {}) {
       appWindow.maximize();
     }
     appWindow.show();
+    // On Windows, ensure window is always ready for thumbnail capture
+    if (process.platform === 'win32') {
+      // Set initial thumbnail clip to full window
+      appWindow.webContents.once('did-finish-load', () => {
+        setTimeout(() => {
+          if (appWindow && !appWindow.isDestroyed()) {
+            const bounds = appWindow.getBounds();
+            // Set thumbnail clip immediately after load
+            appWindow.setThumbnailClip({ x: 0, y: 0, width: bounds.width, height: bounds.height });
+            // Force a repaint
+            appWindow.webContents.executeJavaScript('void(document.body.offsetHeight);').catch(() => {});
+          }
+        }, 200);
+      });
+    }
     // DevTools disabled - only show in development mode if needed
     // if (appType === 'firewall' && isDev) {
     //   appWindow.webContents.openDevTools();
@@ -495,7 +599,30 @@ function setupIPCHandlers() {
   });
 
   // Launch Application
-  ipcMain.handle('launch-app', (event, appType, options) => {
+  ipcMain.handle('launch-app', async (event, appType, options) => {
+    // Check license for productivity apps
+    const productivityApps = ['word', 'finance', 'slides'];
+    if (productivityApps.includes(appType)) {
+      try {
+        // Initialize provider if wallet is loaded
+        if (wallet.isLoaded()) {
+          const evmWallet = wallet.getEvmWallet();
+          if (evmWallet) {
+            await identityManager.initializeProvider(evmWallet);
+          }
+        }
+        const licenseStatus = await identityManager.checkLicense();
+        if (!licenseStatus.hasLicense) {
+          // Return null to indicate app launch was blocked
+          // Frontend will handle showing the error message
+          return null;
+        }
+      } catch (error) {
+        console.error('License check failed in main process:', error);
+        // If license check fails, block the app for security
+        return null;
+      }
+    }
     return createAppWindow(appType, options);
   });
 
@@ -518,6 +645,82 @@ function setupIPCHandlers() {
       appData.window.focus();
       if (appData.window.isMinimized()) {
         appData.window.restore();
+      }
+    }
+  });
+
+  ipcMain.handle('minimize-window', (event, windowId) => {
+    const appData = appWindows.get(windowId);
+    if (appData && appData.window) {
+      if (process.platform === 'win32') {
+        // CRITICAL FIX: Capture and set thumbnail BEFORE minimizing
+        // This ensures Windows has a valid thumbnail to show
+        if (!appData.window.isVisible()) {
+          appData.window.show();
+        }
+        appData.window.setOpacity(1);
+        appData.window.focus();
+        
+        // FORCE WINDOW TO BE FULLY RENDERED BEFORE MINIMIZE
+        // This is the most reliable way to prevent black thumbnails
+        const ensureRenderedAndMinimize = () => {
+          if (!appData.window || appData.window.isDestroyed()) return;
+          
+          // Step 1: Ensure window is visible and focused
+          appData.window.show();
+          appData.window.setOpacity(1);
+          appData.window.focus();
+          
+          // Step 2: Force multiple paint cycles (5 frames)
+          appData.window.webContents.executeJavaScript(`
+            new Promise((resolve) => {
+              let frameCount = 0;
+              function waitForFrames() {
+                requestAnimationFrame(() => {
+                  frameCount++;
+                  if (frameCount >= 5) {
+                    // Force layout recalculation multiple times
+                    document.body.offsetHeight;
+                    document.body.offsetHeight;
+                    document.body.offsetHeight;
+                    resolve();
+                  } else {
+                    waitForFrames();
+                  }
+                });
+              }
+              waitForFrames();
+            });
+          `).then(() => {
+            // Step 3: Capture page to ensure it's rendered
+            return appData.window.webContents.capturePage();
+          }).then((image) => {
+            if (!appData.window || appData.window.isDestroyed()) return;
+            
+            // Step 4: Set thumbnail clip
+            const size = image.getSize();
+            appData.window.setThumbnailClip({ x: 0, y: 0, width: size.width, height: size.height });
+            
+            // Step 5: Wait LONGER for Windows DWM to process thumbnail
+            setTimeout(() => {
+              if (appData.window && !appData.window.isDestroyed()) {
+                appData.window.minimize();
+              }
+            }, 300); // Increased delay to 300ms
+          }).catch(() => {
+            // Fallback: minimize with longer delay
+            setTimeout(() => {
+              if (appData.window && !appData.window.isDestroyed()) {
+                appData.window.minimize();
+              }
+            }, 400);
+          });
+        };
+        
+        // Start the process
+        ensureRenderedAndMinimize();
+      } else {
+        appData.window.minimize();
       }
     }
   });
@@ -701,7 +904,78 @@ function setupIPCHandlers() {
       }
     }
     const appData = appWindows.get(targetWindowId);
-    if (appData && appData.window) appData.window.minimize();
+    if (appData && appData.window) {
+      if (process.platform === 'win32') {
+        // CRITICAL FIX: Capture and set thumbnail BEFORE minimizing
+        // This ensures Windows has a valid thumbnail to show
+        if (!appData.window.isVisible()) {
+          appData.window.show();
+        }
+        appData.window.setOpacity(1);
+        appData.window.focus();
+        
+        // FORCE WINDOW TO BE FULLY RENDERED BEFORE MINIMIZE
+        // This is the most reliable way to prevent black thumbnails
+        const ensureRenderedAndMinimize = () => {
+          if (!appData.window || appData.window.isDestroyed()) return;
+          
+          // Step 1: Ensure window is visible and focused
+          appData.window.show();
+          appData.window.setOpacity(1);
+          appData.window.focus();
+          
+          // Step 2: Force multiple paint cycles (5 frames)
+          appData.window.webContents.executeJavaScript(`
+            new Promise((resolve) => {
+              let frameCount = 0;
+              function waitForFrames() {
+                requestAnimationFrame(() => {
+                  frameCount++;
+                  if (frameCount >= 5) {
+                    // Force layout recalculation multiple times
+                    document.body.offsetHeight;
+                    document.body.offsetHeight;
+                    document.body.offsetHeight;
+                    resolve();
+                  } else {
+                    waitForFrames();
+                  }
+                });
+              }
+              waitForFrames();
+            });
+          `).then(() => {
+            // Step 3: Capture page to ensure it's rendered
+            return appData.window.webContents.capturePage();
+          }).then((image) => {
+            if (!appData.window || appData.window.isDestroyed()) return;
+            
+            // Step 4: Set thumbnail clip
+            const size = image.getSize();
+            appData.window.setThumbnailClip({ x: 0, y: 0, width: size.width, height: size.height });
+            
+            // Step 5: Wait LONGER for Windows DWM to process thumbnail
+            setTimeout(() => {
+              if (appData.window && !appData.window.isDestroyed()) {
+                appData.window.minimize();
+              }
+            }, 300); // Increased delay to 300ms
+          }).catch(() => {
+            // Fallback: minimize with longer delay
+            setTimeout(() => {
+              if (appData.window && !appData.window.isDestroyed()) {
+                appData.window.minimize();
+              }
+            }, 400);
+          });
+        };
+        
+        // Start the process
+        ensureRenderedAndMinimize();
+      } else {
+        appData.window.minimize();
+      }
+    }
   });
 
   ipcMain.on('app-window-maximize', (event, windowId) => {
@@ -870,6 +1144,16 @@ function setupIPCHandlers() {
     }
   });
 
+  // Open external URL in default browser
+  ipcMain.handle('open-external-url', async (event, url) => {
+    try {
+      shell.openExternal(url);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
   // Omega Wallet Provider IPC Handlers (for webview preload)
   ipcMain.handle('omega-wallet-request', async (event, request) => {
     try {
@@ -896,6 +1180,14 @@ function setupIPCHandlers() {
             const serialized = signedTx.serialize();
             const base64 = Buffer.from(serialized).toString('base64');
             response = { data: base64 };
+            
+            // Notify wallet window of app interaction
+            notifyWalletAppInteraction('app_interaction', {
+              type: 'signTransaction',
+              network: 'solana',
+              action: 'Signed Transaction',
+              source: request.source || 'External App'
+            });
           } catch (error) {
             response = { error: error.message };
           }
@@ -910,6 +1202,14 @@ function setupIPCHandlers() {
             const signatureBytes = bs58.decode(signature);
             const base64 = Buffer.from(signatureBytes).toString('base64');
             response = { data: base64 };
+            
+            // Notify wallet window of app interaction
+            notifyWalletAppInteraction('app_interaction', {
+              type: 'signMessage',
+              network: 'solana',
+              action: 'Signed Message',
+              source: request.source || 'External App'
+            });
           } catch (error) {
             response = { error: error.message };
           }
@@ -960,6 +1260,19 @@ function setupIPCHandlers() {
           const txChainId = parseInt(tx.chainId || '0x1', 16);
           const txHash = await wallet.sendEvmTransaction(tx.to, valueEth, tx.data || '0x', txChainId);
           response = { result: txHash };
+          
+          // Notify wallet window of app interaction
+          const chainName = txChainId === 1313161768 ? 'omega' : txChainId === 56 ? 'bsc' : 'evm';
+          notifyWalletAppInteraction('app_interaction', {
+            type: 'send',
+            network: chainName,
+            action: 'Sent Transaction',
+            source: request.source || 'External App',
+            hash: txHash,
+            to: tx.to,
+            amount: valueEth,
+            symbol: chainName === 'omega' ? 'OMEGA' : chainName === 'bsc' ? 'BNB' : 'ETH'
+          });
           break;
           
         case 'eth_sign':
@@ -967,11 +1280,27 @@ function setupIPCHandlers() {
           const message = request.params[0] || request.params[1];
           const signature = await wallet.signEvmMessage(message);
           response = { result: signature };
+          
+          // Notify wallet window of app interaction
+          notifyWalletAppInteraction('app_interaction', {
+            type: 'signMessage',
+            network: 'evm',
+            action: 'Signed Message',
+            source: request.source || 'External App'
+          });
           break;
           
         case 'eth_signTransaction':
           const signedTx = await wallet.signEvmTransaction(request.params[0]);
           response = { result: signedTx };
+          
+          // Notify wallet window of app interaction
+          notifyWalletAppInteraction('app_interaction', {
+            type: 'signTransaction',
+            network: 'evm',
+            action: 'Signed Transaction',
+            source: request.source || 'External App'
+          });
           break;
           
         default:
@@ -990,6 +1319,95 @@ function setupIPCHandlers() {
     } catch (error) {
       throw error;
     }
+  });
+
+  // Multi-wallet IPC Handlers
+  ipcMain.handle('wallet-create-for-network', async (event, password, network, name = null) => {
+    try {
+      return await wallet.createWalletForNetwork(password, network, name);
+    } catch (error) {
+      throw error;
+    }
+  });
+  
+  ipcMain.handle('wallet-update-name', async (event, walletId, name) => {
+    try {
+      return wallet.updateWalletName(walletId, name);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-get-wallets-for-network', async (event, network) => {
+    try {
+      return wallet.getWalletsForNetwork(network);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-set-current-wallet', async (event, network, walletId, password) => {
+    try {
+      // Load the wallet to verify password
+      await wallet.loadWalletById(password, walletId, network);
+      wallet.setCurrentWalletId(network, walletId);
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-get-current-wallet-id', async (event, network) => {
+    try {
+      return wallet.getCurrentWalletId(network);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-delete', async (event, walletId) => {
+    try {
+      return wallet.deleteWallet(walletId);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-cleanup-duplicates', async (event) => {
+    try {
+      return wallet.cleanupDuplicateWallets();
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  ipcMain.handle('wallet-load-by-network', async (event, password, network) => {
+    try {
+      return await wallet.loadWallet(password, network);
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  // Wallet network toggle (global handler - checks which window is calling)
+  // Remove existing handler first to avoid duplicates
+  try {
+    ipcMain.removeHandler('wallet-toggle-network');
+  } catch (e) {
+    // Handler doesn't exist yet, that's fine
+  }
+  
+  ipcMain.handle('wallet-toggle-network', (event, enable) => {
+    // Find the wallet window that's making this request
+    for (const [windowId, appData] of appWindows.entries()) {
+      if (appData.window && appData.window.webContents && appData.window.webContents.id === event.sender.id) {
+        if (appData.type === 'wallet') {
+          appData.walletNetworkEnabled = enable;
+          return true;
+        }
+      }
+    }
+    return false;
   });
 
   // Omega Identity IPC Handlers
@@ -1046,7 +1464,7 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('identity-get-synced-documents', async () => {
+  ipcMain.handle('identity-get-synced-documents', async (event) => {
     try {
       if (!wallet.isLoaded()) {
         return { success: false, documents: [] };
@@ -1065,26 +1483,52 @@ function setupIPCHandlers() {
     }
   });
 
-  ipcMain.handle('identity-check-license', async (event, appName) => {
+  ipcMain.handle('identity-check-license', async (event) => {
     try {
       if (!wallet.isLoaded()) {
-        return { hasLicense: false, reason: 'Wallet not loaded' };
+        return { hasLicense: false, licenseType: 'None', reason: 'Wallet not loaded' };
       }
       
-      const evmWallet = wallet.getEvmWallet();
-      if (!evmWallet) {
-        return { hasLicense: false, reason: 'EVM wallet not available' };
-      }
-      
-      await identityManager.initializeProvider(evmWallet);
-      const result = await identityManager.checkLicense(appName);
+      await identityManager.initializeProvider(wallet.getEvmWallet());
+      const result = await identityManager.checkLicense();
       return result;
     } catch (error) {
-      return { hasLicense: false, reason: error.message };
+      return { hasLicense: false, licenseType: 'None', reason: error.message };
     }
   });
 
-  ipcMain.handle('identity-purchase-license', async (event, appName, price) => {
+  ipcMain.handle('identity-get-license-details', async (event) => {
+    try {
+      if (!wallet.isLoaded()) {
+        return null;
+      }
+      
+      await identityManager.initializeProvider(wallet.getEvmWallet());
+      const details = await identityManager.getLicenseDetails();
+      return details;
+    } catch (error) {
+      console.error('Failed to get license details:', error);
+      return null;
+    }
+  });
+
+  ipcMain.handle('identity-get-license-pricing', async (event) => {
+    try {
+      await identityManager.initializeProvider(wallet.getEvmWallet());
+      const pricing = await identityManager.getLicensePricing();
+      return pricing;
+    } catch (error) {
+      console.error('Failed to get license pricing:', error);
+      // Return defaults
+      return {
+        stakingAmount: '1000000000000000000000', // 1000 * 10^18
+        purchaseAmount: '10000000000000000000000', // 10000 * 10^18
+        stakingPeriod: 30 * 24 * 60 * 60
+      };
+    }
+  });
+
+  ipcMain.handle('identity-stake-for-license', async (event) => {
     try {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
@@ -1096,7 +1540,45 @@ function setupIPCHandlers() {
       }
       
       await identityManager.initializeProvider(evmWallet);
-      const result = await identityManager.purchaseLicense(appName, price);
+      const result = await identityManager.stakeForLicense();
+      return result;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('identity-purchase-license', async (event) => {
+    try {
+      if (!wallet.isLoaded()) {
+        return { success: false, error: 'Wallet not loaded' };
+      }
+      
+      const evmWallet = wallet.getEvmWallet();
+      if (!evmWallet) {
+        return { success: false, error: 'EVM wallet not available' };
+      }
+      
+      await identityManager.initializeProvider(evmWallet);
+      const result = await identityManager.purchaseLicense();
+      return result;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('identity-withdraw-stake', async (event) => {
+    try {
+      if (!wallet.isLoaded()) {
+        return { success: false, error: 'Wallet not loaded' };
+      }
+      
+      const evmWallet = wallet.getEvmWallet();
+      if (!evmWallet) {
+        return { success: false, error: 'EVM wallet not available' };
+      }
+      
+      await identityManager.initializeProvider(evmWallet);
+      const result = await identityManager.withdrawStake();
       return result;
     } catch (error) {
       return { success: false, error: error.message };
@@ -1126,6 +1608,16 @@ function setupIPCHandlers() {
     try {
       const isValid = await identityManager.verifySignature(message, signature, address);
       return { success: true, isValid: isValid };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Clipboard operations
+  ipcMain.handle('clipboard-write-text', (event, text) => {
+    try {
+      clipboard.writeText(text);
+      return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -1283,43 +1775,6 @@ function setupIPCHandlers() {
     }
   });
 
-  // Stable Diffusion Service IPC Handlers
-  ipcMain.handle('sd-generate-image', async (event, prompt, negativePrompt = '', width = 512, height = 512, steps = 20, cfgScale = 7, seed = -1) => {
-    try {
-      const result = await sdService.generateImage(prompt, negativePrompt, width, height, steps, cfgScale, seed);
-      return { success: true, ...result };
-    } catch (error) {
-      console.error('[SD IPC] Generate image error:', error);
-      return { success: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle('sd-check-ready', async () => {
-    try {
-      const check = await sdService.checkStableDiffusion();
-      return { ready: check.available, available: check.available, apiType: check.apiType || null };
-    } catch (error) {
-      return { ready: false, available: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle('sd-get-models', async () => {
-    try {
-      const models = await sdService.getModels();
-      return { success: true, models };
-    } catch (error) {
-      return { success: false, error: error.message, models: [] };
-    }
-  });
-
-  ipcMain.handle('sd-set-model', async (event, modelName) => {
-    try {
-      const result = await sdService.setModel(modelName);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  });
 
   ipcMain.handle('ai-get-recommended-models', async () => {
     try {
@@ -1334,11 +1789,23 @@ function setupIPCHandlers() {
       const axios = require('axios');
       const ollamaUrl = 'http://127.0.0.1:11434';
       
+      // Ollama is localhost, so it should bypass proxy (handled by shouldBypassProxy)
+      // But we'll explicitly not use proxy for localhost connections
+      const proxyUrl = shouldBypassProxy(ollamaUrl) ? null : getCurrentProxyForNode();
+      let axiosConfig = { timeout: 600000 }; // 10 minute timeout
+      
+      // Only configure proxy if not localhost and proxy is available
+      if (proxyUrl && !shouldBypassProxy(ollamaUrl)) {
+        const { SocksProxyAgent } = require('socks-proxy-agent');
+        axiosConfig.httpAgent = new SocksProxyAgent(proxyUrl);
+        axiosConfig.httpsAgent = new SocksProxyAgent(proxyUrl);
+      }
+      
       // Start pull request
       await axios.post(`${ollamaUrl}/api/pull`, {
         name: modelName,
         stream: false
-      }, { timeout: 600000 }); // 10 minute timeout
+      }, axiosConfig);
       
       return { success: true };
     } catch (error) {
@@ -1355,10 +1822,17 @@ function setupIPCHandlers() {
       const { URL } = require('url');
       
       const urlObj = new URL(url);
+      const proxyUrl = getCurrentProxyForNode();
+      const agent = createHttpAgent(url, proxyUrl);
+      
       const client = urlObj.protocol === 'https:' ? https : http;
+      const options = {
+        ...urlObj,
+        agent: agent
+      };
       
       return new Promise((resolve) => {
-        const request = client.get(url, (response) => {
+        const request = client.get(options, (response) => {
           let data = '';
           
           response.on('data', (chunk) => {
@@ -1436,12 +1910,43 @@ function setupIPCHandlers() {
     }
   });
 
+  // Read file from absolute path (for background images only)
+  ipcMain.handle('read-file-from-path', async (event, filePath, encoding = 'base64') => {
+    try {
+      // Only allow image files for security
+      const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg'];
+      const ext = path.extname(filePath).toLowerCase();
+      if (!allowedExtensions.includes(ext)) {
+        throw new Error('Only image files are allowed');
+      }
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error('File not found');
+      }
+      
+      // Read file
+      if (encoding === 'base64') {
+        const buffer = fs.readFileSync(filePath);
+        return buffer.toString('base64');
+      } else {
+        return fs.readFileSync(filePath, encoding);
+      }
+    } catch (error) {
+      throw error;
+    }
+  });
+
   ipcMain.handle('read-file', async (event, filePath, encoding = 'utf8') => {
     try {
       // Validate path is within isolated environment
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
+      
+      // Notify privacy monitor
+      const appName = getAppNameFromWindow(event.sender);
+      notifyPrivacyMonitor('read', filePath, appName);
       
       if (encoding === 'base64') {
         // Return as base64 for binary files
@@ -1477,6 +1982,11 @@ function setupIPCHandlers() {
         // Write as text (UTF-8)
         fs.writeFileSync(filePath, content, 'utf-8');
       }
+      
+      // Notify privacy monitor after successful write
+      const appName = getAppNameFromWindow(event.sender);
+      notifyPrivacyMonitor('write', filePath, appName);
+      
       return true;
     } catch (error) {
       throw error;
@@ -1620,6 +2130,11 @@ function setupIPCHandlers() {
       // Generate and save
       const buffer = await Packer.toBuffer(doc);
       fs.writeFileSync(filePath, buffer);
+      
+      // Notify privacy monitor
+      const appName = getAppNameFromWindow(event.sender);
+      notifyPrivacyMonitor('write', filePath, appName);
+      
       return { success: true };
     } catch (error) {
       console.error('DOCX conversion error:', error);
@@ -1772,6 +2287,11 @@ function setupIPCHandlers() {
           throw writeError;
         }
       }
+      
+      // Notify privacy monitor
+      const appName = getAppNameFromWindow(event.sender);
+      notifyPrivacyMonitor('write', filePath, appName);
+      
       return { success: true };
     } catch (error) {
       console.error('PPTX conversion error:', error);
@@ -1830,6 +2350,11 @@ function setupIPCHandlers() {
       
       // Write file
       XLSX.writeFile(workbook, filePath);
+      
+      // Notify privacy monitor
+      const appName = getAppNameFromWindow(event.sender);
+      notifyPrivacyMonitor('write', filePath, appName);
+      
       return { success: true };
     } catch (error) {
       console.error('XLSX conversion error:', error);
@@ -1952,7 +2477,7 @@ function setupIPCHandlers() {
       if (['.doc', '.docx', '.txt', '.rtf', '.html', '.htm'].includes(ext)) {
         appType = 'word';
       } else if (['.xls', '.xlsx', '.csv', '.json'].includes(ext)) {
-        appType = 'sheets';
+        appType = 'finance';
       }
 
       if (appType) {
@@ -1999,11 +2524,19 @@ function setupIPCHandlers() {
       if (enabled) {
         // Configure Tor proxy (default Tor SOCKS5 port)
         // Note: This requires Tor to be running locally or a Tor proxy
+        const torProxy = 'socks5://127.0.0.1:9050';
         session.defaultSession.setProxy({
-          proxyRules: 'socks5://127.0.0.1:9050'
+          proxyRules: torProxy
         });
+        torModeEnabled = true;
+        
+        // TOR HARDENING: Set Chromium proxy and DNS rules to prevent leaks
+        // Note: commandLine switches must be set before app.whenReady(),
+        // but we can update session proxy which affects new connections
         console.log('[Tor] Tor mode enabled - routing through Tor proxy');
+        console.log('[Tor] Chromium hardening: All browser traffic will route through Tor');
       } else {
+        torModeEnabled = false;
         // Disable Tor - check if VPN is active, otherwise use no proxy
         if (currentVpnProxy) {
           // VPN is active, keep it
@@ -2194,6 +2727,35 @@ function setupIPCHandlers() {
       // Copy file
       fs.copyFileSync(sourcePath, destPath);
       return true;
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  // Get file stats/properties
+  ipcMain.handle('get-file-stats', async (event, filePath) => {
+    try {
+      if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
+        throw new Error('File access is restricted to the isolated environment');
+      }
+      
+      if (!fs.existsSync(filePath)) {
+        throw new Error('File does not exist');
+      }
+      
+      const stats = fs.statSync(filePath);
+      return {
+        name: path.basename(filePath),
+        path: filePath,
+        size: stats.size,
+        isDirectory: stats.isDirectory(),
+        isFile: stats.isFile(),
+        created: stats.birthtime.getTime(),
+        modified: stats.mtime.getTime(),
+        accessed: stats.atime.getTime(),
+        extension: path.extname(filePath).toLowerCase(),
+        mode: stats.mode.toString(8)
+      };
     } catch (error) {
       throw error;
     }
@@ -2538,9 +3100,16 @@ function setupIPCHandlers() {
       if (!locationData) {
         // Disconnect VPN - clear all proxies for normal browsing
         // (Tor will be handled separately if enabled)
-        session.defaultSession.setProxy({
-          proxyRules: ''
-        });
+        if (!torModeEnabled) {
+          session.defaultSession.setProxy({
+            proxyRules: ''
+          });
+        } else {
+          // Tor is enabled, keep it active
+          session.defaultSession.setProxy({
+            proxyRules: 'socks5://127.0.0.1:9050'
+          });
+        }
         currentVpnProxy = null;
         console.log('[VPN] VPN disconnected, proxies cleared for normal browsing');
         return { success: true, message: 'VPN disconnected' };
@@ -2553,9 +3122,11 @@ function setupIPCHandlers() {
       if (!proxyServer) {
         // No proxy configured for this location - show warning but allow fake location
         console.warn(`[VPN] No proxy server configured for ${locationKey}. Using fake location only.`);
-        session.defaultSession.setProxy({
-          proxyRules: PROXY_SERVER || ''
-        });
+        if (!torModeEnabled) {
+          session.defaultSession.setProxy({
+            proxyRules: PROXY_SERVER || ''
+          });
+        }
         currentVpnProxy = null;
         return { 
           success: false, 
@@ -2637,17 +3208,22 @@ function setupIPCHandlers() {
   });
 
   // Fetch IP address through VPN proxy (uses session proxy settings)
-  // Note: We use the desktop window's webContents to make the request,
-  // which automatically uses the session's proxy settings
+  // Use desktop window's webContents.executeJavaScript to make fetch request
+  // which automatically uses the session's proxy settings (including Tor)
   ipcMain.handle('vpn-fetch-ip', async (event) => {
-    // Use the sender's webContents to make the request (it uses the session proxy)
-    const webContents = event.sender;
-    
+    if (!desktopWindow || desktopWindow.isDestroyed()) {
+      return { success: false, error: 'Desktop window not available' };
+    }
+
     const apis = [
       { url: 'https://ipapi.co/json/', name: 'ipapi' },
       { url: 'https://api.ipify.org?format=json', name: 'ipify' },
       { url: 'https://ip-api.com/json/', name: 'ip-api' }
     ];
+
+    // Use desktop window's webContents to make the request
+    // This automatically uses the session's proxy settings (including Tor)
+    const webContents = desktopWindow.webContents;
 
     for (const api of apis) {
       try {
@@ -2696,6 +3272,8 @@ function setupIPCHandlers() {
           };
         }
 
+        console.log('[VPN] Successfully fetched IP via', api.name + ':', normalizedData.ip, normalizedData.country_name);
+        console.log('[VPN] Using desktop window session (proxy: ' + currentVpnProxy + ')');
         return { success: true, data: normalizedData };
       } catch (error) {
         console.warn(`[VPN] Failed to fetch IP from ${api.name}:`, error.message);
@@ -2914,6 +3492,177 @@ function setupIPCHandlers() {
       }
     });
   });
+
+  // Register privacy monitor window for file access event notifications
+  ipcMain.on('privacy-monitor-register', (event) => {
+    console.log('[PRIVACY MONITOR] Registering privacy monitor window, webContents ID:', event.sender.id);
+    
+    // Remove any existing listener with same webContents ID
+    privacyMonitorListeners.forEach(listener => {
+      if (listener.webContents.id === event.sender.id) {
+        privacyMonitorListeners.delete(listener);
+      }
+    });
+    
+    // Add new listener
+    privacyMonitorListeners.add({
+      webContents: event.sender,
+      windowId: event.sender.id
+    });
+    
+    console.log('[PRIVACY MONITOR] Privacy monitor registered. Total listeners:', privacyMonitorListeners.size);
+  });
+
+  // Unregister privacy monitor window
+  ipcMain.on('privacy-monitor-unregister', (event) => {
+    privacyMonitorListeners.forEach(listener => {
+      if (listener.webContents.id === event.sender.id) {
+        privacyMonitorListeners.delete(listener);
+      }
+    });
+    console.log('[PRIVACY MONITOR] Privacy monitor unregistered. Total listeners:', privacyMonitorListeners.size);
+  });
+
+  // Burn to Hell (B2H) - Wipe ALL data
+  ipcMain.handle('burn-to-hell', async (event) => {
+    try {
+      console.log('[B2H] Starting complete data wipe...');
+      
+      // 1. Clear all browser storage (cookies, cache, localStorage, sessionStorage)
+      const defaultSession = session.defaultSession;
+      await defaultSession.clearStorageData({
+        storages: ['cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+      });
+      console.log('[B2H] Cleared all browser storage');
+      
+      // 2. Clear all webview sessions
+      appWindows.forEach((appData) => {
+        if (appData.window && appData.window.webContents) {
+          appData.window.webContents.session.clearStorageData({
+            storages: ['cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+          });
+        }
+      });
+      console.log('[B2H] Cleared all webview sessions');
+      
+      // 3. Delete all files in isolated environment
+      const deleteRecursive = (dirPath) => {
+        if (!fs.existsSync(dirPath)) return;
+        try {
+          fs.readdirSync(dirPath).forEach((file) => {
+            const curPath = path.join(dirPath, file);
+            try {
+              if (fs.lstatSync(curPath).isDirectory()) {
+                deleteRecursive(curPath);
+                // Delete directory after contents are deleted
+                if (curPath !== ISOLATED_DATA_PATH) {
+                  fs.rmdirSync(curPath);
+                }
+              } else {
+                fs.unlinkSync(curPath);
+              }
+            } catch (e) {
+              console.warn(`[B2H] Error deleting ${curPath}:`, e.message);
+            }
+          });
+        } catch (e) {
+          console.warn(`[B2H] Error reading directory ${dirPath}:`, e.message);
+        }
+      };
+      
+      // Delete all subdirectories and files in isolated-env (but keep the directory itself)
+      if (fs.existsSync(ISOLATED_DATA_PATH)) {
+        try {
+          fs.readdirSync(ISOLATED_DATA_PATH).forEach((item) => {
+            const itemPath = path.join(ISOLATED_DATA_PATH, item);
+            try {
+              if (fs.lstatSync(itemPath).isDirectory()) {
+                deleteRecursive(itemPath);
+              } else {
+                fs.unlinkSync(itemPath);
+              }
+            } catch (e) {
+              console.warn(`[B2H] Error deleting ${itemPath}:`, e.message);
+            }
+          });
+          console.log('[B2H] Deleted all files in isolated environment');
+        } catch (e) {
+          console.warn('[B2H] Error accessing isolated environment:', e.message);
+        }
+      }
+      
+      // 4. Reset wallet (clear browser wallet data)
+      try {
+        const browserWalletPath = path.join(ISOLATED_DATA_PATH, 'browser-wallet');
+        if (fs.existsSync(browserWalletPath)) {
+          deleteRecursive(browserWalletPath);
+        }
+        // Reset wallet instance
+        wallet = new OmegaWallet();
+        console.log('[B2H] Cleared wallet data');
+      } catch (e) {
+        console.warn('[B2H] Error clearing wallet:', e.message);
+      }
+      
+      // 5. Reset identity manager
+      try {
+        identityManager = new OmegaIdentityManager();
+        console.log('[B2H] Cleared identity data');
+      } catch (e) {
+        console.warn('[B2H] Error clearing identity:', e.message);
+      }
+      
+      // 6. Reset integrations manager
+      try {
+        if (integrationsManager) {
+          const integrationsPath = path.join(ISOLATED_DATA_PATH, 'integrations');
+          if (fs.existsSync(integrationsPath)) {
+            deleteRecursive(integrationsPath);
+          }
+          integrationsManager = IntegrationsManager ? new IntegrationsManager() : null;
+          console.log('[B2H] Cleared integrations data');
+        }
+      } catch (e) {
+        console.warn('[B2H] Error clearing integrations:', e.message);
+      }
+      
+      // 7. Clear Electron app data (except isolated-env which we already cleared)
+      const userDataPath = app.getPath('userData');
+      const otherDataPaths = [
+        path.join(userDataPath, 'Cache'),
+        path.join(userDataPath, 'Code Cache'),
+        path.join(userDataPath, 'GPUCache'),
+        path.join(userDataPath, 'Local Storage'),
+        path.join(userDataPath, 'Session Storage'),
+        path.join(userDataPath, 'IndexedDB'),
+        path.join(userDataPath, 'Service Worker'),
+      ];
+      
+      otherDataPaths.forEach((dataPath) => {
+        if (fs.existsSync(dataPath)) {
+          try {
+            deleteRecursive(dataPath);
+            console.log(`[B2H] Cleared ${path.basename(dataPath)}`);
+          } catch (e) {
+            console.warn(`[B2H] Error clearing ${dataPath}:`, e.message);
+          }
+        }
+      });
+      
+      console.log('[B2H] Complete data wipe finished');
+      
+      // Restart the app after a short delay
+      setTimeout(() => {
+        app.relaunch();
+        app.exit(0);
+      }, 1000);
+      
+      return { success: true, message: 'All data wiped. Application will restart...' };
+    } catch (error) {
+      console.error('[B2H] Error during data wipe:', error);
+      throw error;
+    }
+  });
 }
 
 // Setup IPC handlers before app is ready
@@ -2922,12 +3671,162 @@ setupIPCHandlers();
 // Firewall network interceptor (needs to be in scope)
 let firewallNetworkEvents = [];
 let firewallListeners = new Set();
+let privacyMonitorListeners = new Set();
+
+// Helper function to get app name from window
+function getAppNameFromWindow(sender) {
+  for (const [windowId, appData] of appWindows.entries()) {
+    if (appData.window && appData.window.webContents && appData.window.webContents.id === sender.id) {
+      const appType = appData.type;
+      const appNames = {
+        'word': 'Omega Word',
+        'notes': 'Omega Notes',
+        'slides': 'Omega Slides',
+        'paint': 'Omega Paint',
+        'filemanager': 'File Manager',
+        'browser': 'Omega Browser',
+        'terminal': 'Terminal',
+        'calculator': 'Calculator',
+        'wallet': 'Omega Wallet',
+        'identity': 'Omega Identity',
+        'ai-dev': 'Omega Create',
+        'encrypt': 'Encrypt',
+        'firewall': 'Firewall',
+        'privacy-monitor': 'Privacy Monitor'
+      };
+      return appNames[appType] || appType;
+    }
+  }
+  // Fallback: try to determine from sender URL/path if available
+  const senderUrl = sender.getURL();
+  if (senderUrl && senderUrl.includes('paint.html')) return 'Omega Paint';
+  if (senderUrl && senderUrl.includes('word.html')) return 'Omega Word';
+  if (senderUrl && senderUrl.includes('notes.html')) return 'Omega Notes';
+  if (senderUrl && senderUrl.includes('slides.html')) return 'Omega Slides';
+  return 'Unknown App';
+}
+
+// Helper function to notify wallet window of app interactions
+function notifyWalletAppInteraction(type, data) {
+  try {
+    // Find all wallet windows and send notification
+    appWindows.forEach((appData) => {
+      if (appData.type === 'wallet' && appData.window && !appData.window.isDestroyed()) {
+        appData.window.webContents.send('wallet-app-interaction', { type, data });
+      }
+    });
+  } catch (error) {
+    console.error('Error notifying wallet of app interaction:', error);
+  }
+}
+
+// Helper function to notify privacy monitor of file access
+function notifyPrivacyMonitor(type, filePath, appName) {
+  if (privacyMonitorListeners.size === 0) return;
+  
+  // Extract just the filename from the path
+  const fileName = path.basename(filePath);
+  
+  const eventData = {
+    type: type, // 'read' or 'write'
+    file: fileName,
+    app: appName,
+    timestamp: Date.now()
+  };
+  
+  privacyMonitorListeners.forEach(listener => {
+    try {
+      if (!listener.webContents.isDestroyed()) {
+        listener.webContents.send('privacy-file-access', eventData);
+      }
+    } catch (e) {
+      // WebContents might be destroyed, ignore
+    }
+  });
+}
 let firewallRules = [];
 let firewallEnabled = true;
 const interceptedSessions = new Set();
 
 // VPN proxy state (needs to be accessible from multiple functions)
 let currentVpnProxy = null;
+let torModeEnabled = false; // Track if Tor mode is explicitly enabled
+
+// TOR HARDENING: Helper functions for routing Node.js requests through Tor
+// Check if URL should bypass proxy (localhost connections)
+function shouldBypassProxy(url) {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    // Bypass proxy for localhost/127.0.0.1/local IPs
+    return hostname === 'localhost' || 
+           hostname === '127.0.0.1' || 
+           hostname === '::1' ||
+           hostname.startsWith('192.168.') ||
+           hostname.startsWith('10.') ||
+           hostname.startsWith('172.16.') ||
+           hostname.startsWith('172.17.') ||
+           hostname.startsWith('172.18.') ||
+           hostname.startsWith('172.19.') ||
+           hostname.startsWith('172.20.') ||
+           hostname.startsWith('172.21.') ||
+           hostname.startsWith('172.22.') ||
+           hostname.startsWith('172.23.') ||
+           hostname.startsWith('172.24.') ||
+           hostname.startsWith('172.25.') ||
+           hostname.startsWith('172.26.') ||
+           hostname.startsWith('172.27.') ||
+           hostname.startsWith('172.28.') ||
+           hostname.startsWith('172.29.') ||
+           hostname.startsWith('172.30.') ||
+           hostname.startsWith('172.31.');
+  } catch (e) {
+    return false;
+  }
+}
+
+// TOR HARDENING: Get current proxy for Node.js requests
+// Returns the proxy URL if Tor/VPN is active, null otherwise
+function getCurrentProxyForNode() {
+  // Check if Tor mode is enabled
+  if (torModeEnabled && currentVpnProxy && currentVpnProxy.includes('127.0.0.1:9050')) {
+    return 'socks5://127.0.0.1:9050';
+  }
+  // Check if VPN proxy is active
+  if (currentVpnProxy) {
+    return currentVpnProxy;
+  }
+  // Check if environment proxy is set
+  if (PROXY_SERVER) {
+    return PROXY_SERVER;
+  }
+  return null;
+}
+
+// TOR HARDENING: Create HTTP agent that routes through proxy if needed
+function createHttpAgent(url, proxyUrl) {
+  const https = require('https');
+  const http = require('http');
+  const { SocksProxyAgent } = require('socks-proxy-agent');
+  
+  // Bypass proxy for localhost
+  if (shouldBypassProxy(url)) {
+    return url.startsWith('https:') ? new https.Agent() : new http.Agent();
+  }
+  
+  // Use proxy if available
+  if (proxyUrl) {
+    try {
+      return new SocksProxyAgent(proxyUrl);
+    } catch (e) {
+      console.warn('[Tor Hardening] Failed to create SOCKS agent, falling back to direct:', e.message);
+      return url.startsWith('https:') ? new https.Agent() : new http.Agent();
+    }
+  }
+  
+  // No proxy, use direct connection
+  return url.startsWith('https:') ? new https.Agent() : new http.Agent();
+}
 
 // Helper function to log webview requests
 function logWebviewRequest(url, method) {
@@ -3162,10 +4061,10 @@ function setupFirewallInterceptor() {
     // Get the session for this webContents (webviews have their own partitions)
     const webviewSession = contents.session;
     
-    // Set Chrome user agent for webviews (so Chrome Web Store works)
-    const chromeUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    // TOR HARDENING: Set consistent User-Agent for webviews (standardized for fingerprinting protection)
+    const standardUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     if (webviewSession) {
-      webviewSession.setUserAgent(chromeUserAgent);
+      webviewSession.setUserAgent(standardUserAgent);
       
       // Apply VPN proxy settings to webview sessions (they don't inherit from defaultSession)
       if (currentVpnProxy) {
@@ -3176,7 +4075,7 @@ function setupFirewallInterceptor() {
       }
     }
     // Also set on the webContents directly
-    contents.setUserAgent(chromeUserAgent);
+    contents.setUserAgent(standardUserAgent);
     
     // Set up webRequest interceptor for this session if not already done
     if (webviewSession && !interceptedSessions.has(webviewSession)) {
@@ -3488,29 +4387,21 @@ app.whenReady().then(async () => {
     // Continue anyway - AI features will show error messages
   }
   
-  // Initialize Stable Diffusion (SDXL) - non-blocking, optional
-  try {
-    console.log('[SD] Checking for Stable Diffusion WebUI...');
-    const sdPath = sdManager.getStableDiffusionPath();
-    if (sdPath) {
-      console.log('[SD] Found Stable Diffusion WebUI at:', sdPath);
-      // Don't auto-start immediately - let it start on first use
-      // This prevents blocking app startup if SD takes time to load
-      console.log('[SD] Stable Diffusion will start automatically on first image generation request');
-    } else {
-      console.log('[SD] Stable Diffusion WebUI not found. Image generation will require manual installation.');
-      console.log('[SD] Install from: https://github.com/AUTOMATIC1111/stable-diffusion-webui');
-    }
-  } catch (error) {
-    console.error('[SD] Error checking Stable Diffusion:', error);
-    // Continue anyway - image generation will show error messages
-  }
   
-  // Set user agent to Chrome for all sessions
-  // This makes Chrome Web Store recognize us as Chrome and enables extension installation
-  const chromeUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-  session.defaultSession.setUserAgent(chromeUserAgent);
-  console.log('User agent set to Chrome for Chrome Web Store compatibility');
+  // TOR HARDENING: Set consistent User-Agent (standardized for fingerprinting protection)
+  // Use a consistent, common User-Agent that doesn't expose Electron version or unique details
+  const standardUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  session.defaultSession.setUserAgent(standardUserAgent);
+  console.log('[Tor Hardening] User agent standardized for fingerprinting protection');
+  
+  // TOR HARDENING: Block dangerous protocols via webRequest
+  // FTP and other non-HTTP protocols are blocked by Chromium security by default
+  // chrome:// and devtools:// are blocked by Chromium's security model
+  // file:// is only allowed for local app files (sandboxed, webSecurity enabled)
+  session.defaultSession.webRequest.onBeforeRequest({ urls: ['ftp://*/*'] }, (details, callback) => {
+    console.warn('[Tor Hardening] Blocked FTP protocol request:', details.url);
+    callback({ cancel: true });
+  });
   
   // Configure proxy/VPN if specified
   if (PROXY_SERVER) {

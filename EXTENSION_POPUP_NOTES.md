@@ -33,3 +33,4 @@ Even if popups don't work perfectly, extensions should still work when injected 
 Test by visiting dApp websites - the extensions should connect automatically.
 
 
+

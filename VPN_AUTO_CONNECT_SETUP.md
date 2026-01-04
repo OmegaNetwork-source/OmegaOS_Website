@@ -103,3 +103,4 @@ const defaultLocation = VPN_LOCATIONS.find(loc =>
 
 The code is already configured to auto-connect - you just need to add your VPN proxy addresses!
 
+

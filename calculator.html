@@ -75,7 +75,7 @@
             flex-direction: column;
             background: #000;
             padding: 0;
-            max-width: 400px;
+            max-width: 700px;
             margin: 0 auto;
             width: 100%;
             justify-content: center;
@@ -84,10 +84,10 @@
         .display {
             background: #000;
             color: white;
-            padding: 30px 20px;
-            font-size: 64px;
+            padding: 20px 24px;
+            font-size: 48px;
             text-align: right;
-            min-height: 120px;
+            min-height: 100px;
             display: flex;
             align-items: center;
             justify-content: flex-end;
@@ -100,20 +100,27 @@
 
         .buttons {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
             padding: 12px;
         }
 
+        .buttons-scientific {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            padding: 0 12px 8px 12px;
+        }
+
         .btn {
-            padding: 24px;
+            padding: 16px 8px;
             border: none;
-            border-radius: 50%;
-            font-size: 28px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
             transition: all 0.15s;
             font-weight: 400;
-            aspect-ratio: 1;
+            min-height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -151,17 +158,250 @@
         .btn-function {
             background: #a6a6a6;
             color: #000;
-            font-size: 24px;
+            font-size: 16px;
         }
 
         .btn-function:hover {
             background: #d4d4d4;
         }
 
+        .btn-scientific {
+            background: #505050;
+            color: white;
+            font-size: 14px;
+        }
+
+        .btn-scientific:hover {
+            background: #6a6a6a;
+        }
+
         .btn-zero {
             grid-column: span 2;
-            border-radius: 40px;
-            aspect-ratio: 2.2;
+            border-radius: 8px;
+        }
+
+        .calculator-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* AI Sidebar */
+        .ai-sidebar {
+            position: fixed;
+            right: -400px;
+            top: 32px;
+            bottom: 0;
+            width: 400px;
+            background: #1a1a1a;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+            z-index: 1000;
+        }
+
+        .ai-sidebar.active {
+            right: 0;
+        }
+
+        .ai-sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-sidebar-header h3 {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .ai-sidebar-close {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .ai-sidebar-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .ai-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ai-message {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+
+        .ai-message-user {
+            align-self: flex-end;
+        }
+
+        .ai-message-assistant {
+            align-self: flex-start;
+        }
+
+        .ai-message-content {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .ai-message-user .ai-message-content {
+            background: #ff9500;
+            color: white;
+        }
+
+        .ai-message-assistant .ai-message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .ai-message-assistant .ai-message-content ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .ai-message-assistant .ai-message-content li {
+            margin: 4px 0;
+        }
+
+        .ai-chat-input-container {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .ai-chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+        }
+
+        .ai-chat-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .ai-chat-input:focus {
+            outline: none;
+            border-color: #ff9500;
+        }
+
+        .ai-chat-send {
+            padding: 10px 20px;
+            background: #ff9500;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .ai-chat-send:hover:not(:disabled) {
+            background: #ffaa33;
+        }
+
+        .ai-chat-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* AI Toggle Button */
+        .ai-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            min-width: 56px;
+            height: 56px;
+            padding: 0 16px;
+            border-radius: 28px;
+            background: #ff9500;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            box-shadow: 0 4px 12px rgba(255, 149, 0, 0.4);
+            transition: all 0.3s;
+            z-index: 999;
+        }
+
+        .ai-toggle-btn:hover {
+            background: #ffaa33;
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(255, 149, 0, 0.5);
+        }
+
+        .ai-toggle-btn.active {
+            background: #333333;
+        }
+
+        .ai-toggle-btn.active:hover {
+            background: #4a4a4a;
+        }
+
+        .ai-toggle-btn svg {
+            display: none;
+        }
+
+        /* Scrollbar styling */
+        .ai-chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ai-chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .ai-chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .ai-chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
@@ -187,41 +427,114 @@
         </div>
     </div>
 
-    <div class="calculator">
-        <div class="display" id="display">0</div>
-        <div class="buttons">
-            <button class="btn btn-function" onclick="clearAll()">AC</button>
-            <button class="btn btn-function" onclick="clearEntry()">CE</button>
-            <button class="btn btn-function" onclick="percent()">%</button>
-            <button class="btn btn-operator" onclick="setOperator('/')">÷</button>
-            
-            <button class="btn btn-number" onclick="appendNumber('7')">7</button>
-            <button class="btn btn-number" onclick="appendNumber('8')">8</button>
-            <button class="btn btn-number" onclick="appendNumber('9')">9</button>
-            <button class="btn btn-operator" onclick="setOperator('*')">×</button>
-            
-            <button class="btn btn-number" onclick="appendNumber('4')">4</button>
-            <button class="btn btn-number" onclick="appendNumber('5')">5</button>
-            <button class="btn btn-number" onclick="appendNumber('6')">6</button>
-            <button class="btn btn-operator" onclick="setOperator('-')">−</button>
-            
-            <button class="btn btn-number" onclick="appendNumber('1')">1</button>
-            <button class="btn btn-number" onclick="appendNumber('2')">2</button>
-            <button class="btn btn-number" onclick="appendNumber('3')">3</button>
-            <button class="btn btn-operator" onclick="setOperator('+')">+</button>
-            
-            <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
-            <button class="btn btn-number" onclick="appendDecimal()">.</button>
-            <button class="btn btn-operator" onclick="calculate()">=</button>
+    <div class="calculator-container">
+        <div class="calculator">
+            <div class="display" id="display">0</div>
+            <!-- Scientific Functions Row -->
+            <div class="buttons-scientific">
+                <button class="btn btn-scientific" onclick="appendFunction('sin(')">sin</button>
+                <button class="btn btn-scientific" onclick="appendFunction('cos(')">cos</button>
+                <button class="btn btn-scientific" onclick="appendFunction('tan(')">tan</button>
+                <button class="btn btn-scientific" onclick="appendFunction('asin(')">sin⁻¹</button>
+                <button class="btn btn-scientific" onclick="appendFunction('acos(')">cos⁻¹</button>
+                <button class="btn btn-scientific" onclick="appendFunction('atan(')">tan⁻¹</button>
+                <button class="btn btn-scientific" onclick="appendFunction('log(')">log</button>
+            </div>
+            <div class="buttons-scientific">
+                <button class="btn btn-scientific" onclick="appendFunction('ln(')">ln</button>
+                <button class="btn btn-scientific" onclick="appendFunction('sqrt(')">√</button>
+                <button class="btn btn-scientific" onclick="appendFunction('cbrt(')">∛</button>
+                <button class="btn btn-scientific" onclick="appendFunction('pow(')">x^y</button>
+                <button class="btn btn-scientific" onclick="appendFunction('exp(')">e^x</button>
+                <button class="btn btn-scientific" onclick="appendConstant('PI')">π</button>
+                <button class="btn btn-scientific" onclick="appendConstant('E')">e</button>
+            </div>
+            <!-- Main Calculator Buttons -->
+            <div class="buttons">
+                <button class="btn btn-function" onclick="clearAll()">AC</button>
+                <button class="btn btn-function" onclick="clearEntry()">CE</button>
+                <button class="btn btn-function" onclick="deleteLast()">⌫</button>
+                <button class="btn btn-function" onclick="appendFunction('(')">(</button>
+                <button class="btn btn-function" onclick="appendFunction(')')">)</button>
+                <button class="btn btn-function" onclick="appendFunction('fact(')">x!</button>
+                <button class="btn btn-operator" onclick="setOperator('/')">÷</button>
+                
+                <button class="btn btn-function" onclick="percent()">%</button>
+                <button class="btn btn-number" onclick="appendNumber('7')">7</button>
+                <button class="btn btn-number" onclick="appendNumber('8')">8</button>
+                <button class="btn btn-number" onclick="appendNumber('9')">9</button>
+                <button class="btn btn-operator" onclick="setOperator('*')">×</button>
+                <button class="btn btn-scientific" onclick="appendFunction('pow(')">x²</button>
+                <button class="btn btn-scientific" onclick="appendFunction('sqrt(')">√x</button>
+                <button class="btn btn-scientific" onclick="appendFunction('1/')">1/x</button>
+                
+                <button class="btn btn-scientific" onclick="appendFunction('abs(')">|x|</button>
+                <button class="btn btn-number" onclick="appendNumber('4')">4</button>
+                <button class="btn btn-number" onclick="appendNumber('5')">5</button>
+                <button class="btn btn-number" onclick="appendNumber('6')">6</button>
+                <button class="btn btn-operator" onclick="setOperator('-')">−</button>
+                <button class="btn btn-scientific" onclick="appendFunction('pow(')">10^x</button>
+                <button class="btn btn-scientific" onclick="appendFunction('log(')">log₁₀</button>
+                <button class="btn btn-scientific" onclick="appendFunction('ln(')">ln</button>
+                
+                <button class="btn btn-scientific" onclick="appendFunction('(')">(</button>
+                <button class="btn btn-number" onclick="appendNumber('1')">1</button>
+                <button class="btn btn-number" onclick="appendNumber('2')">2</button>
+                <button class="btn btn-number" onclick="appendNumber('3')">3</button>
+                <button class="btn btn-operator" onclick="setOperator('+')">+</button>
+                <button class="btn btn-scientific" onclick="appendFunction('deg(')">deg</button>
+                <button class="btn btn-scientific" onclick="appendFunction('rad(')">rad</button>
+                <button class="btn btn-scientific" onclick="appendFunction('(')">ANS</button>
+                
+                <button class="btn btn-scientific" onclick="appendFunction(')')">)</button>
+                <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
+                <button class="btn btn-number" onclick="appendDecimal()">.</button>
+                <button class="btn btn-operator" onclick="calculate()">=</button>
+                <button class="btn btn-scientific" onclick="appendFunction('sin(')">sin</button>
+                <button class="btn btn-scientific" onclick="appendFunction('cos(')">cos</button>
+                <button class="btn btn-scientific" onclick="appendFunction('tan(')">tan</button>
+            </div>
+        </div>
+
+        <!-- AI Sidebar -->
+        <div class="ai-sidebar" id="aiSidebar">
+            <div class="ai-sidebar-header">
+                <h3>AI Math Assistant</h3>
+                <button class="ai-sidebar-close" id="aiSidebarClose">×</button>
+            </div>
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <div class="ai-message ai-message-assistant">
+                    <div class="ai-message-content">
+                        Hello! I'm your AI Math Assistant for this scientific calculator. I can help you:
+                        <ul>
+                            <li>Solve equations and math problems</li>
+                            <li>Explain mathematical concepts</li>
+                            <li>Show step-by-step solutions</li>
+                            <li>Help with trigonometry, logarithms, calculus, and more</li>
+                            <li>Guide you on which calculator functions to use</li>
+                        </ul>
+                        <strong>Available functions:</strong> sin, cos, tan, log, ln, √, x², x^y, π, e, factorial, and more!
+                        <br><br>
+                        What would you like to solve?
+                    </div>
+                </div>
+            </div>
+            <div class="ai-chat-input-container">
+                <textarea class="ai-chat-input" id="aiChatInput" placeholder="Ask a math question or enter an equation..." rows="2"></textarea>
+                <button class="ai-chat-send" id="aiChatSend">Send</button>
+            </div>
         </div>
     </div>
+
+    <!-- AI Toggle Button -->
+    <button class="ai-toggle-btn" id="aiToggleBtn" title="AI Math Assistant">AI</button>
 
     <script>
         let currentWindowId = null;
         let display = document.getElementById('display');
-        let currentValue = '0';
-        let previousValue = null;
-        let operator = null;
+        let currentExpression = '0';
+        let lastAnswer = null;
+        let angleMode = 'rad'; // 'deg' or 'rad'
         let shouldResetDisplay = false;
 
         // Get window ID
@@ -251,91 +564,223 @@
         });
 
         function updateDisplay() {
-            display.textContent = currentValue;
+            display.textContent = currentExpression.length > 30 ? 
+                currentExpression.substring(0, 30) + '...' : currentExpression;
         }
 
         function appendNumber(num) {
             if (shouldResetDisplay) {
-                currentValue = '0';
+                currentExpression = '0';
                 shouldResetDisplay = false;
             }
             
-            if (currentValue === '0') {
-                currentValue = num;
+            if (currentExpression === '0') {
+                currentExpression = num;
             } else {
-                currentValue += num;
+                currentExpression += num;
             }
             updateDisplay();
         }
 
         function appendDecimal() {
             if (shouldResetDisplay) {
-                currentValue = '0';
+                currentExpression = '0';
                 shouldResetDisplay = false;
             }
             
-            if (!currentValue.includes('.')) {
-                currentValue += '.';
+            // Check if the last number already has a decimal
+            const parts = currentExpression.match(/\d+\.?\d*$/);
+            if (!parts || !parts[0].includes('.')) {
+                currentExpression += '.';
+            }
+            updateDisplay();
+        }
+
+        function appendFunction(func) {
+            if (shouldResetDisplay) {
+                currentExpression = '0';
+                shouldResetDisplay = false;
+            }
+            
+            if (currentExpression === '0') {
+                currentExpression = func;
+            } else if (func === 'pow(') {
+                currentExpression += '^';
+            } else if (func === '1/') {
+                currentExpression = '1/(' + currentExpression + ')';
+            } else {
+                currentExpression += func;
+            }
+            updateDisplay();
+        }
+
+        function appendConstant(constant) {
+            if (shouldResetDisplay) {
+                currentExpression = '0';
+                shouldResetDisplay = false;
+            }
+            
+            const value = constant === 'PI' ? Math.PI : Math.E;
+            
+            if (currentExpression === '0') {
+                currentExpression = value.toString();
+            } else {
+                currentExpression += value.toString();
             }
             updateDisplay();
         }
 
         function setOperator(op) {
-            if (previousValue !== null && operator !== null) {
-                calculate();
+            shouldResetDisplay = false;
+            
+            if (currentExpression === '0') {
+                currentExpression = op === '-' ? '-' : '0';
             } else {
-                previousValue = parseFloat(currentValue);
+                // Replace last operator if it exists
+                const lastChar = currentExpression.slice(-1);
+                if (['+', '-', '*', '/', '^'].includes(lastChar)) {
+                    currentExpression = currentExpression.slice(0, -1) + op;
+                } else {
+                    currentExpression += op;
+                }
             }
-            
-            operator = op;
-            shouldResetDisplay = true;
-            
-            // Update operator button states
-            document.querySelectorAll('.btn-operator').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-        }
-
-        function calculate() {
-            if (previousValue === null || operator === null) return;
-            
-            const current = parseFloat(currentValue);
-            let result;
-            
-            switch(operator) {
-                case '+':
-                    result = previousValue + current;
-                    break;
-                case '-':
-                    result = previousValue - current;
-                    break;
-                case '*':
-                    result = previousValue * current;
-                    break;
-                case '/':
-                    result = previousValue / current;
-                    break;
-                default:
-                    return;
-            }
-            
-            // Remove operator active state
-            document.querySelectorAll('.btn-operator').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            currentValue = result.toString();
-            previousValue = null;
-            operator = null;
-            shouldResetDisplay = true;
             updateDisplay();
         }
 
+        function deleteLast() {
+            if (currentExpression.length > 1) {
+                currentExpression = currentExpression.slice(0, -1);
+            } else {
+                currentExpression = '0';
+            }
+            updateDisplay();
+        }
+
+        function evaluateFunction(funcName, arg) {
+            try {
+                const value = parseFloat(arg);
+                if (isNaN(value)) return 'NaN';
+                
+                switch(funcName) {
+                    case 'sin':
+                        return (angleMode === 'deg' ? Math.sin(value * Math.PI / 180) : Math.sin(value)).toString();
+                    case 'cos':
+                        return (angleMode === 'deg' ? Math.cos(value * Math.PI / 180) : Math.cos(value)).toString();
+                    case 'tan':
+                        return (angleMode === 'deg' ? Math.tan(value * Math.PI / 180) : Math.tan(value)).toString();
+                    case 'asin':
+                        const asinResult = Math.asin(value);
+                        return (angleMode === 'deg' ? asinResult * 180 / Math.PI : asinResult).toString();
+                    case 'acos':
+                        const acosResult = Math.acos(value);
+                        return (angleMode === 'deg' ? acosResult * 180 / Math.PI : acosResult).toString();
+                    case 'atan':
+                        const atanResult = Math.atan(value);
+                        return (angleMode === 'deg' ? atanResult * 180 / Math.PI : atanResult).toString();
+                    case 'sqrt':
+                        return Math.sqrt(value).toString();
+                    case 'cbrt':
+                        return Math.cbrt(value).toString();
+                    case 'log':
+                        return Math.log10(value).toString();
+                    case 'ln':
+                        return Math.log(value).toString();
+                    case 'exp':
+                        return Math.exp(value).toString();
+                    case 'abs':
+                        return Math.abs(value).toString();
+                    case 'fact':
+                        if (value < 0 || value !== Math.floor(value)) return 'NaN';
+                        let result = 1;
+                        for (let i = 2; i <= value; i++) result *= i;
+                        return result.toString();
+                    default:
+                        return value.toString();
+                }
+            } catch (error) {
+                return 'NaN';
+            }
+        }
+
+        function parseExpression(expr) {
+            // Replace constants first
+            expr = expr.replace(/\bPI\b/g, Math.PI.toString());
+            expr = expr.replace(/\bE\b/g, Math.E.toString());
+            expr = expr.replace(/\bANS\b/g, lastAnswer !== null ? lastAnswer.toString() : '0');
+            
+            // Process functions from innermost to outermost
+            let maxIterations = 50;
+            let iteration = 0;
+            
+            while (iteration < maxIterations) {
+                let changed = false;
+                
+                // Match innermost function calls: funcName(number or expression)
+                const functionPattern = /(sin|cos|tan|asin|acos|atan|sqrt|cbrt|log|ln|exp|abs|fact)\(([^()]+)\)/;
+                let match = expr.match(functionPattern);
+                
+                if (match) {
+                    const funcName = match[1];
+                    const arg = match[2];
+                    // Evaluate the argument first (might contain operations)
+                    let argValue = arg;
+                    try {
+                        // Replace ^ with ** for evaluation
+                        argValue = argValue.replace(/\^/g, '**');
+                        argValue = Function('"use strict"; return (' + argValue + ')')();
+                        const result = evaluateFunction(funcName, argValue.toString());
+                        expr = expr.replace(functionPattern, result);
+                        changed = true;
+                    } catch (e) {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+                
+                iteration++;
+                if (!changed) break;
+            }
+            
+            // Replace ^ with ** for exponentiation
+            expr = expr.replace(/\^/g, '**');
+            
+            return expr;
+        }
+
+        function calculate() {
+            try {
+                let expr = currentExpression;
+                
+                // Parse the expression
+                expr = parseExpression(expr);
+                
+                // Evaluate safely using Function constructor
+                const result = Function('"use strict"; return (' + expr + ')')();
+                
+                if (isNaN(result) || !isFinite(result)) {
+                    currentExpression = 'Error';
+                } else {
+                    lastAnswer = result;
+                    currentExpression = result.toString();
+                }
+                
+                shouldResetDisplay = true;
+                updateDisplay();
+                
+                // Remove operator active states
+                document.querySelectorAll('.btn-operator').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            } catch (error) {
+                currentExpression = 'Error';
+                updateDisplay();
+                shouldResetDisplay = true;
+            }
+        }
+
         function clearAll() {
-            currentValue = '0';
-            previousValue = null;
-            operator = null;
+            currentExpression = '0';
             shouldResetDisplay = false;
             updateDisplay();
             
@@ -345,17 +790,32 @@
         }
 
         function clearEntry() {
-            currentValue = '0';
+            currentExpression = '0';
             updateDisplay();
         }
 
         function percent() {
-            currentValue = (parseFloat(currentValue) / 100).toString();
-            updateDisplay();
+            try {
+                const value = parseFloat(currentExpression);
+                currentExpression = (value / 100).toString();
+                updateDisplay();
+            } catch (error) {
+                currentExpression = 'Error';
+                updateDisplay();
+            }
         }
 
         // Keyboard support
         document.addEventListener('keydown', (e) => {
+            // Don't intercept if typing in AI chat
+            if (e.target.id === 'aiChatInput') {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendAIMessage();
+                }
+                return;
+            }
+
             if (e.key >= '0' && e.key <= '9') {
                 appendNumber(e.key);
             } else if (e.key === '.') {
@@ -372,9 +832,145 @@
             } else if (e.key === 'Escape') {
                 clearAll();
             } else if (e.key === 'Backspace') {
-                clearEntry();
+                deleteLast();
+            } else if (e.key === '(') {
+                appendFunction('(');
+            } else if (e.key === ')') {
+                appendFunction(')');
+            } else if (e.key === '^') {
+                appendFunction('pow(');
             }
         });
+
+        // AI Features
+        let aiSidebarOpen = false;
+
+        function setupAIFeatures() {
+            const aiToggleBtn = document.getElementById('aiToggleBtn');
+            const aiSidebar = document.getElementById('aiSidebar');
+            const aiSidebarClose = document.getElementById('aiSidebarClose');
+            const aiChatInput = document.getElementById('aiChatInput');
+            const aiChatSend = document.getElementById('aiChatSend');
+
+            // Toggle sidebar
+            aiToggleBtn.addEventListener('click', () => {
+                aiSidebarOpen = !aiSidebarOpen;
+                aiSidebar.classList.toggle('active', aiSidebarOpen);
+                aiToggleBtn.classList.toggle('active', aiSidebarOpen);
+                if (aiSidebarOpen) {
+                    aiChatInput.focus();
+                }
+            });
+
+            // Close sidebar
+            aiSidebarClose.addEventListener('click', () => {
+                aiSidebarOpen = false;
+                aiSidebar.classList.remove('active');
+                aiToggleBtn.classList.remove('active');
+            });
+
+            // Send message
+            aiChatSend.addEventListener('click', sendAIMessage);
+            
+            // Auto-resize textarea
+            aiChatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+        }
+
+        function addAIMessage(role, content, isThinking = false) {
+            const messagesContainer = document.getElementById('aiChatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ai-message-${role}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'ai-message-content';
+            if (isThinking) {
+                contentDiv.textContent = content;
+                contentDiv.style.fontStyle = 'italic';
+                contentDiv.style.opacity = '0.7';
+            } else {
+                // Convert markdown-style formatting to HTML
+                content = content.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                content = content.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                content = content.replace(/`(.+?)`/g, '<code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px;">$1</code>');
+                // Convert line breaks
+                content = content.replace(/\n/g, '<br>');
+                contentDiv.innerHTML = content;
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        async function sendAIMessage() {
+            const aiChatInput = document.getElementById('aiChatInput');
+            const aiChatSend = document.getElementById('aiChatSend');
+            const message = aiChatInput.value.trim();
+
+            if (!message) return;
+
+            if (!window.electronAPI || !window.electronAPI.aiChat) {
+                addAIMessage('assistant', 'Error: AI service is not available. Please make sure Ollama is running.');
+                return;
+            }
+
+            // Add user message
+            addAIMessage('user', message);
+            aiChatInput.value = '';
+            aiChatInput.style.height = 'auto';
+            aiChatSend.disabled = true;
+
+            // Show thinking indicator
+            const thinkingDiv = addAIMessage('assistant', 'Solving...', true);
+
+            try {
+                // Create math-focused prompt with scientific calculator awareness
+                const mathPrompt = `You are a helpful math assistant for a scientific calculator. The user is asking: "${message}"
+
+IMPORTANT: The user has access to a scientific calculator with the following functions:
+- Basic operations: +, -, ×, ÷, %, parentheses
+- Trigonometry: sin, cos, tan, sin⁻¹, cos⁻¹, tan⁻¹ (supports degrees and radians)
+- Logarithms: log (base 10), ln (natural log), e^x, 10^x
+- Powers/Roots: x², x^y, √x, ∛x, 1/x
+- Constants: π (pi), e (Euler's number)
+- Other: factorial (x!), absolute value (|x|), ANS (previous answer)
+- Angle modes: degrees and radians
+
+Your task:
+1. If this is a math problem or equation, solve it step-by-step
+2. Show all work clearly with explanations
+3. Explain each step
+4. Provide the final answer clearly
+5. If appropriate, suggest which calculator functions could be used
+6. If it's a conceptual question, explain the concept clearly
+7. Mention if trigonometric calculations need to be in degrees or radians
+
+Be concise but thorough. Use mathematical notation when appropriate. Format your response clearly with line breaks between steps.`;
+
+                const result = await window.electronAPI.aiChat(mathPrompt, []);
+
+                thinkingDiv.remove();
+
+                if (result && result.success) {
+                    addAIMessage('assistant', result.response);
+                } else {
+                    addAIMessage('assistant', 'Error: ' + (result?.error || 'Failed to get AI response'));
+                }
+            } catch (error) {
+                thinkingDiv.remove();
+                addAIMessage('assistant', 'Error: ' + error.message);
+            } finally {
+                aiChatSend.disabled = false;
+            }
+        }
+
+        // Initialize AI features
+        setupAIFeatures();
     </script>
 </body>
 </html>

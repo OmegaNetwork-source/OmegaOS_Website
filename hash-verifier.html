@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Hash Verifier</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+
+        .hash-window {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: transparent;
+        }
+
+        .hash-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            -webkit-app-region: drag;
+        }
+
+        .hash-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .hash-window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .hash-window-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hash-window-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .hash-body {
+            padding: 28px;
+            overflow-y: auto;
+            flex: 1;
+            background: transparent;
+        }
+
+        .hash-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hash-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .hash-input-group {
+            margin-bottom: 20px;
+        }
+
+        .hash-input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+        }
+
+        .hash-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+        }
+
+        .hash-input:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .hash-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 12px;
+            margin-bottom: 12px;
+        }
+
+        .hash-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 255, 0.3);
+        }
+
+        .hash-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hash-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .hash-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .hash-result {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .hash-result.success {
+            border-color: rgba(0, 255, 0, 0.3);
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .hash-result.error {
+            border-color: rgba(255, 0, 0, 0.3);
+            background: rgba(255, 0, 0, 0.05);
+        }
+
+        .file-drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .file-drop-zone:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-drop-zone.dragover {
+            border-color: rgba(102, 126, 234, 0.8);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .file-info {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .comparison-result {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .comparison-result.match {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: rgba(0, 255, 0, 0.9);
+        }
+
+        .comparison-result.mismatch {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: rgba(255, 0, 0, 0.9);
+        }
+
+        .synced-documents-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+
+        .synced-document-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .synced-document-info {
+            flex: 1;
+        }
+
+        .synced-document-name {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 4px;
+        }
+
+        .synced-document-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .copy-hash-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-hash-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="hash-window">
+        <div class="hash-header">
+            <h2># Omega Hash Verifier</h2>
+            <div class="hash-window-controls">
+                <button class="hash-window-btn" id="minimizeBtn" title="Minimize">−</button>
+                <button class="hash-window-btn" id="maximizeBtn" title="Maximize">□</button>
+                <button class="hash-window-btn" id="closeBtn" title="Close">×</button>
+            </div>
+        </div>
+
+        <div class="hash-body">
+            <!-- Hash File Section -->
+            <div class="hash-section">
+                <h3>Hash a File</h3>
+                <div class="file-drop-zone" id="fileDropZone">
+                    <p style="font-size: 16px; margin: 0 0 8px 0;">📁 Drop a file here or click to browse</p>
+                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin: 0;">Calculate SHA-256 hash of any file</p>
+                    <input type="file" id="fileInput" style="display: none;" multiple>
+                </div>
+                <div id="fileInfo" class="file-info" style="display: none;"></div>
+                <div id="hashResult" class="hash-result" style="display: none;"></div>
+                <div style="margin-top: 16px;">
+                    <button class="hash-btn" id="hashFileBtn" disabled>Calculate Hash</button>
+                    <button class="hash-btn secondary" id="syncHashBtn" disabled>Sync to Blockchain</button>
+                    <button class="hash-btn secondary" id="copyHashBtn" disabled>Copy Hash</button>
+                </div>
+            </div>
+
+            <!-- Compare Hashes Section -->
+            <div class="hash-section">
+                <h3>Compare Hashes</h3>
+                <div class="hash-input-group">
+                    <label>Hash 1</label>
+                    <input type="text" id="hash1Input" class="hash-input" placeholder="0x... or paste hash here">
+                </div>
+                <div class="hash-input-group">
+                    <label>Hash 2</label>
+                    <input type="text" id="hash2Input" class="hash-input" placeholder="0x... or paste hash here">
+                </div>
+                <button class="hash-btn" id="compareHashesBtn">Compare Hashes</button>
+                <div id="comparisonResult" style="display: none;"></div>
+            </div>
+
+            <!-- Verify Against Blockchain Section -->
+            <div class="hash-section">
+                <h3>Verify Against Blockchain</h3>
+                <p style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-bottom: 16px;">
+                    Compare a file's hash with hashes stored on Omega Network blockchain
+                </p>
+                <div class="file-drop-zone" id="verifyFileDropZone" style="padding: 20px;">
+                    <p style="font-size: 14px; margin: 0;">📁 Drop file to verify</p>
+                    <input type="file" id="verifyFileInput" style="display: none;">
+                </div>
+                <div id="verifyResult" class="hash-result" style="display: none; margin-top: 16px;"></div>
+                <button class="hash-btn" id="verifyFileBtn" disabled style="margin-top: 16px;">Verify File</button>
+            </div>
+
+            <!-- Synced Documents Section -->
+            <div class="hash-section">
+                <h3>Your Synced Documents</h3>
+                <p style="font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-bottom: 16px;">
+                    Documents synced to Omega Network blockchain
+                </p>
+                <div id="syncedDocumentsList" class="synced-documents-list">
+                    <p style="text-align: center; color: rgba(255, 255, 255, 0.5);">Loading synced documents...</p>
+                </div>
+                <button class="hash-btn secondary" id="refreshSyncedBtn" style="margin-top: 16px;">Refresh List</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="hash-verifier.js"></script>
+</body>
+</html>
+

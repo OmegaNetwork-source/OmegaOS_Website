@@ -169,3 +169,4 @@ const VPN_PROXY_MAP = {
 3. **Edit `desktop.js`** → `initializeVpn()` → add auto-connect code
 4. **Test** - VPN should auto-connect on startup!
 
+

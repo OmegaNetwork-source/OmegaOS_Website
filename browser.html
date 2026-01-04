@@ -22,10 +22,10 @@
                     </svg>
                 </button>
                 <button class="nav-btn-compact" id="reloadBtn" title="Reload">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 10 C3 6 6 3 10 3 C13 3 15.5 5 16.5 8"/>
-                        <path d="M17 10 C17 14 14 17 10 17 C7 17 4.5 15 3.5 12"/>
-                        <path d="M17 10 L14 7 M3 10 L6 7"/>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"/>
+                        <path d="M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                     </svg>
                 </button>
             </div>
@@ -150,6 +150,18 @@
                                 <path d="M8 1 L8 3 M8 13 L8 15 M15 8 L13 8 M3 8 L1 8 M13.07 2.93 L11.66 4.34 M4.34 11.66 L2.93 13.07 M13.07 13.07 L11.66 11.66 M4.34 4.34 L2.93 2.93"/>
                             </svg>
                             <span>Settings</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown-divider"></div>
+                    
+                    <div class="dropdown-section">
+                        <div class="dropdown-item" id="burnToHellDropdownBtn" style="color: rgba(255, 100, 100, 0.9);">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M8 2 L8 6 M8 10 L8 14 M2 8 L6 8 M10 8 L14 8"/>
+                                <circle cx="8" cy="8" r="5" stroke-width="1.5"/>
+                            </svg>
+                            <span style="color: rgba(255, 100, 100, 0.9); font-weight: 600;">🔥 Burn to Hell (B2H)</span>
                         </div>
                     </div>
                 </div>
@@ -380,6 +392,26 @@
                         <span>Clear browsing data on close</span>
                     </label>
                 </div>
+                <div class="settings-section" style="border-top: 2px solid rgba(255, 0, 0, 0.3); margin-top: 30px; padding-top: 20px;">
+                    <h3 style="color: rgba(255, 100, 100, 0.9);">⚠️ Nuclear Option</h3>
+                    <p class="settings-desc" style="color: rgba(255, 150, 150, 0.8);">Permanently delete ALL data: browser history, bookmarks, files, cookies, wallet data, and everything else. This cannot be undone!</p>
+                    <button class="settings-btn" id="burnToHellBtn" style="
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+                        color: white;
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: 700;
+                        margin-top: 15px;
+                        box-shadow: 0 0 15px rgba(255, 68, 68, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+                        transition: all 0.3s ease;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    ">🔥 BURN TO HELL (B2H)</button>
+                    <p style="margin-top: 10px; font-size: 12px; color: rgba(255, 200, 200, 0.6);">⚠️ This will delete everything and restart the application</p>
+                </div>
                 <div class="settings-section">
                     <h3>Developer Tools</h3>
                     <p class="settings-desc">Console logs and debugging information</p>
@@ -428,28 +460,6 @@
                             </ul>
                         </div>
                     </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Tor Mode</h3>
-                    <p class="settings-desc">Route traffic through Tor network for enhanced anonymity</p>
-                    <label class="settings-checkbox">
-                        <input type="checkbox" id="torEnabled">
-                        <span>Enable Tor Browser Mode</span>
-                    </label>
-                    <div id="torStatus" style="margin-top: 12px; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.7); display: none;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                            <div class="status-dot" id="torStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #107c10;"></div>
-                            <span id="torStatusText" style="color: rgba(255, 255, 255, 0.95);">Tor Connected</span>
-                        </div>
-                        <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6);">
-                            <div>Exit Node: <span id="torExitNode">Loading...</span></div>
-                            <div>IP Address: <span id="torIpAddress">Loading...</span></div>
-                        </div>
-                    </div>
-                    <p style="margin-top: 12px; font-size: 11px; color: rgba(255, 255, 255, 0.6);">
-                        Note: Tor mode routes all browser traffic through the Tor network. 
-                        Requires Tor proxy to be running on localhost:9050 or configured proxy.
-                    </p>
                 </div>
             </div>
         </div>

@@ -39,3 +39,4 @@ Webviews were using `partition="persist:default"` which creates a **separate ses
 - This allows webviews to access the extensions
 
 
+

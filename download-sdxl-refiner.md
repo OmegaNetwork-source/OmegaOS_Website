@@ -51,3 +51,4 @@ hf_hub_download(
 - Base model: `models/Stable-diffusion/sd_xl_base_1.0.safetensors`
 - Refiner model: `models/Stable-diffusion/sd_xl_refiner_1.0.safetensors`
 
+

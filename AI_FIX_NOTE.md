@@ -34,3 +34,4 @@ Transformers.js is designed primarily for browser environments and has issues wi
 3. Or bundle Ollama if possible (larger installer)
 
 
+

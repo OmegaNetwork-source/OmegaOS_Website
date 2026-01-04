@@ -1176,11 +1176,23 @@ function closeAllPanels() {
 const settingsDropdown = document.getElementById('settingsDropdown');
 
 // Ad Blocker Toggle
+// Store event handlers to prevent duplicates
+let adBlockerChangeHandler = null;
+let adBlockerClickHandler = null;
+
 function setupAdBlockerToggle() {
     const adBlockerCheckbox = document.getElementById('adBlockerCheckbox');
     const adBlockerToggle = document.getElementById('adBlockerToggle');
     
     if (adBlockerCheckbox && window.electronAPI) {
+        // Remove existing listeners if they exist
+        if (adBlockerChangeHandler) {
+            adBlockerCheckbox.removeEventListener('change', adBlockerChangeHandler);
+        }
+        if (adBlockerClickHandler && adBlockerToggle) {
+            adBlockerToggle.removeEventListener('click', adBlockerClickHandler);
+        }
+        
         // Load current status
         window.electronAPI.adBlockerGetStatus().then(status => {
             adBlockerCheckbox.checked = status.enabled;
@@ -1190,7 +1202,8 @@ function setupAdBlockerToggle() {
         });
         
         // Handle checkbox change
-        adBlockerCheckbox.addEventListener('change', async (e) => {
+        adBlockerChangeHandler = async (e) => {
+            e.stopPropagation(); // Prevent dropdown from closing
             const enabled = e.target.checked;
             try {
                 await window.electronAPI.adBlockerSetStatus(enabled);
@@ -1201,17 +1214,28 @@ function setupAdBlockerToggle() {
                 adBlockerCheckbox.checked = !enabled;
                 updateAdBlockerToggleVisual(!enabled);
             }
-        });
+        };
+        adBlockerCheckbox.addEventListener('change', adBlockerChangeHandler);
         
         // Handle click on toggle container (to ensure it works)
         if (adBlockerToggle) {
-            adBlockerToggle.addEventListener('click', (e) => {
+            adBlockerClickHandler = (e) => {
+                e.stopPropagation(); // Prevent dropdown from closing
                 // Don't toggle if clicking directly on the checkbox (it handles itself)
-                if (e.target !== adBlockerCheckbox && !e.target.closest('label')) {
+                if (e.target !== adBlockerCheckbox && !e.target.closest('label') && !e.target.closest('input')) {
                     adBlockerCheckbox.checked = !adBlockerCheckbox.checked;
                     adBlockerCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-            });
+            };
+            adBlockerToggle.addEventListener('click', adBlockerClickHandler);
+            
+            // Also handle clicks on the label
+            const label = adBlockerToggle.querySelector('label');
+            if (label) {
+                label.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent dropdown from closing
+                });
+            }
         }
     }
 }
@@ -1488,11 +1512,25 @@ function initializeButtons() {
         });
         
         // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (dropdownOpen && !settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
-                closeDropdown();
-            }
-        });
+        // Use a single handler to prevent duplicates
+        if (!window._dropdownCloseHandler) {
+            window._dropdownCloseHandler = (e) => {
+                if (dropdownOpen && settingsDropdown && settingsBtn) {
+                    // Don't close if clicking on interactive elements inside dropdown
+                    const isClickOnToggle = e.target.closest('#adBlockerToggle') || 
+                                          e.target.closest('#adBlockerCheckbox') ||
+                                          e.target.closest('label[for="adBlockerCheckbox"]') ||
+                                          e.target.id === 'adBlockerCheckbox';
+                    
+                    if (!settingsDropdown.contains(e.target) && 
+                        !settingsBtn.contains(e.target) && 
+                        !isClickOnToggle) {
+                        closeDropdown();
+                    }
+                }
+            };
+            document.addEventListener('click', window._dropdownCloseHandler);
+        }
     }
     
     // Dropdown Menu Items
@@ -1535,6 +1573,56 @@ function initializeButtons() {
     document.getElementById('downloadsClose')?.addEventListener('click', () => closePanel('downloadsPanel'));
     document.getElementById('settingsClose')?.addEventListener('click', () => closePanel('settingsPanel'));
     document.getElementById('consoleClose')?.addEventListener('click', () => closePanel('consolePanel'));
+    
+    // Burn to Hell (B2H) Button (in Settings Panel)
+    const handleBurnToHell = async () => {
+        // Double confirmation for safety
+        const firstConfirm = confirm('⚠️ BURN TO HELL (B2H) ⚠️\n\nThis will PERMANENTLY DELETE:\n• All browser history\n• All bookmarks\n• All downloads\n• All files in Documents/Desktop/Trash\n• All cookies and cache\n• All wallet data\n• All identity data\n• ALL DATA\n\nThis CANNOT be undone!\n\nAre you absolutely sure?');
+        if (!firstConfirm) return;
+        
+        const secondConfirm = confirm('🔥 FINAL WARNING 🔥\n\nYou are about to DELETE EVERYTHING.\n\nThe application will restart after wiping all data.\n\nClick OK to proceed with BURN TO HELL.');
+        if (!secondConfirm) return;
+        
+        try {
+            const burnBtn = document.getElementById('burnToHellBtn');
+            if (burnBtn) {
+                burnBtn.disabled = true;
+                burnBtn.textContent = '🔥 BURNING...';
+                burnBtn.style.opacity = '0.6';
+            }
+            
+            const result = await window.electronAPI.burnToHell();
+            if (result.success) {
+                alert('✅ All data wiped successfully!\n\nThe application will restart in a moment...');
+            }
+        } catch (error) {
+            console.error('B2H Error:', error);
+            alert('❌ Error during data wipe: ' + error.message);
+            const burnBtn = document.getElementById('burnToHellBtn');
+            if (burnBtn) {
+                burnBtn.disabled = false;
+                burnBtn.textContent = '🔥 BURN TO HELL (B2H)';
+                burnBtn.style.opacity = '1';
+            }
+        }
+    };
+    
+    document.getElementById('burnToHellBtn')?.addEventListener('click', handleBurnToHell);
+    
+    // Burn to Hell (B2H) Button (in Dropdown Menu)
+    document.getElementById('burnToHellDropdownBtn')?.addEventListener('click', async () => {
+        closeDropdown();
+        openPanel('settingsPanel');
+        // Scroll to B2H button after a brief delay
+        setTimeout(() => {
+            const btn = document.getElementById('burnToHellBtn');
+            if (btn) {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight the button briefly
+                btn.style.animation = 'pulse 0.5s ease';
+            }
+        }, 300);
+    });
     
     // Developer Console
     document.getElementById('openConsoleBtn')?.addEventListener('click', () => {
@@ -2009,12 +2097,37 @@ function openWalletPanel() {
 
 // Position dropdown relative to settings button (already positioned via CSS, no need to adjust)
 
+// Auto-connect to VPN/Tor on browser startup
+async function autoConnectVpn() {
+    if (window.electronAPI && window.electronAPI.vpnSetProxy) {
+        try {
+            // Connect to Tor (all locations use Tor proxy)
+            const result = await window.electronAPI.vpnSetProxy({
+                country: 'United States',
+                city: 'New York'
+            });
+            if (result.success) {
+                console.log('[Browser] Auto-connected to Tor on startup');
+                // Update VPN button state
+                const vpnToggleBtn = document.getElementById('vpnToggleBtn');
+                if (vpnToggleBtn) {
+                    vpnToggleBtn.classList.add('active');
+                }
+            }
+        } catch (error) {
+            console.warn('[Browser] Failed to auto-connect VPN:', error);
+        }
+    }
+}
+
 // Wait for DOM to be ready before initializing
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initializeButtons();
         initializeExtensionIcons();
         setupAdBlockerToggle();
+        // Auto-connect to VPN/Tor
+        autoConnectVpn();
         // Initialize first tab
         createTab(getHomeUrl());
     });
@@ -2023,6 +2136,8 @@ if (document.readyState === 'loading') {
     initializeButtons();
     setupAdBlockerToggle();
     initializeExtensionIcons();
+    // Auto-connect to VPN/Tor
+    autoConnectVpn();
     createTab(getHomeUrl());
 }
 
@@ -2259,11 +2374,41 @@ async function handleWalletRequest(webview, request) {
             case 'signTransaction':
                 const signedTx = await window.electronAPI.walletSignTransaction(request.data);
                 response = { data: signedTx };
+                
+                // Track app interaction
+                if (typeof addActivity === 'function') {
+                    try {
+                        addActivity({
+                            type: 'app_interaction',
+                            network: 'solana',
+                            action: 'Signed Transaction',
+                            source: webview.getURL() || 'External App',
+                            timestamp: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Error adding app interaction activity:', e);
+                    }
+                }
                 break;
                 
             case 'signMessage':
                 const signature = await window.electronAPI.walletSignMessage(request.data);
                 response = { data: signature };
+                
+                // Track app interaction
+                if (typeof addActivity === 'function') {
+                    try {
+                        addActivity({
+                            type: 'app_interaction',
+                            network: 'solana',
+                            action: 'Signed Message',
+                            source: webview.getURL() || 'External App',
+                            timestamp: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Error adding app interaction activity:', e);
+                    }
+                }
                 break;
                 
             default:
@@ -2466,6 +2611,26 @@ async function handleEVMRequest(webview, request) {
                     txChainId
                 );
                 response = { result: txHash };
+                
+                // Track app interaction
+                if (typeof addActivity === 'function') {
+                    try {
+                        const chainName = txChainId === 1313161768 ? 'omega' : txChainId === 56 ? 'bsc' : 'evm';
+                        addActivity({
+                            type: 'app_interaction',
+                            network: chainName,
+                            action: 'Sent Transaction',
+                            source: webview.getURL() || 'External App',
+                            hash: txHash,
+                            to: tx.to,
+                            amount: valueEth,
+                            symbol: chainName === 'omega' ? 'OMEGA' : chainName === 'bsc' ? 'BNB' : 'ETH',
+                            timestamp: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Error adding app interaction activity:', e);
+                    }
+                }
                 break;
                 
             case 'eth_sign':
@@ -2473,11 +2638,41 @@ async function handleEVMRequest(webview, request) {
                 const message = request.params[0] || request.params[1];
                 const signature = await window.electronAPI.walletSignEvmMessage(message);
                 response = { result: signature };
+                
+                // Track app interaction
+                if (typeof addActivity === 'function') {
+                    try {
+                        addActivity({
+                            type: 'app_interaction',
+                            network: 'evm',
+                            action: 'Signed Message',
+                            source: webview.getURL() || 'External App',
+                            timestamp: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Error adding app interaction activity:', e);
+                    }
+                }
                 break;
                 
             case 'eth_signTransaction':
                 const signedTx = await window.electronAPI.walletSignEvmTransaction(request.params[0]);
                 response = { result: signedTx };
+                
+                // Track app interaction
+                if (typeof addActivity === 'function') {
+                    try {
+                        addActivity({
+                            type: 'app_interaction',
+                            network: 'evm',
+                            action: 'Signed Transaction',
+                            source: webview.getURL() || 'External App',
+                            timestamp: Date.now()
+                        });
+                    } catch (e) {
+                        console.error('Error adding app interaction activity:', e);
+                    }
+                }
                 break;
                 
             default:

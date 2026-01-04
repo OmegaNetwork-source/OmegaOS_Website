@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Toolbar Buttons
-    setupToolbar();
+    // Ribbon Interface
+    setupRibbon();
 
     // Editor
     setupEditor();
@@ -54,169 +54,421 @@ document.addEventListener('DOMContentLoaded', () => {
     // File Operations
     setupFileOperations();
 
+    // Theme Toggle
+    setupThemeToggle();
+
     // AI Features
     setupAIFeatures();
 });
 
-function setupToolbar() {
-    const editor = document.getElementById('editor');
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const underlineBtn = document.getElementById('underlineBtn');
-    const strikethroughBtn = document.getElementById('strikethroughBtn');
-    const alignLeftBtn = document.getElementById('alignLeftBtn');
-    const alignCenterBtn = document.getElementById('alignCenterBtn');
-    const alignRightBtn = document.getElementById('alignRightBtn');
-    const bulletListBtn = document.getElementById('bulletListBtn');
-    const numberListBtn = document.getElementById('numberListBtn');
-    const fontFamilySelect = document.getElementById('fontFamilySelect');
-    const fontSizeSelect = document.getElementById('fontSizeSelect');
-    const fontColorPicker = document.getElementById('fontColorPicker');
+// Theme Management
+let currentTheme = localStorage.getItem('word-theme') || 'light';
+document.documentElement.setAttribute('data-theme', currentTheme);
 
-    // Format buttons
-    boldBtn.addEventListener('click', () => {
-        document.execCommand('bold', false, null);
-        updateToolbarState();
+function setupThemeToggle() {
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    if (!themeToggleBtn) {
+        console.warn('[WORD] Theme toggle button not found');
+        return;
+    }
+    
+    // Set initial icon
+    themeToggleBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    
+    themeToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        localStorage.setItem('word-theme', currentTheme);
+        themeToggleBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    });
+}
+
+// Ribbon Interface Setup
+function setupRibbon() {
+    // Tab switching
+    const ribbonTabs = document.querySelectorAll('.ribbon-tab');
+    const ribbonContents = document.querySelectorAll('.ribbon-content');
+    
+    ribbonTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+            
+            // Update active tab
+            ribbonTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            // Show/hide content
+            ribbonContents.forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            const targetContent = document.getElementById(`ribbon${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`);
+            if (targetContent) {
+                targetContent.classList.remove('hidden');
+            }
+        });
     });
 
-    italicBtn.addEventListener('click', () => {
-        document.execCommand('italic', false, null);
-        updateToolbarState();
-    });
-
-    underlineBtn.addEventListener('click', () => {
-        document.execCommand('underline', false, null);
-        updateToolbarState();
-    });
-
-    strikethroughBtn.addEventListener('click', () => {
-        document.execCommand('strikeThrough', false, null);
-        updateToolbarState();
-    });
-
-    bulletListBtn.addEventListener('click', () => {
-        document.execCommand('insertUnorderedList', false, null);
-    });
-
-    numberListBtn.addEventListener('click', () => {
-        document.execCommand('insertOrderedList', false, null);
-    });
-
-    // Font family
-    fontFamilySelect.addEventListener('change', (e) => {
-        document.execCommand('fontName', false, e.target.value);
-    });
-
-    // Alignment
-    alignLeftBtn.addEventListener('click', () => {
-        document.execCommand('justifyLeft', false, null);
-        updateToolbarState();
-    });
-
-    alignCenterBtn.addEventListener('click', () => {
-        document.execCommand('justifyCenter', false, null);
-        updateToolbarState();
-    });
-
-    alignRightBtn.addEventListener('click', () => {
-        document.execCommand('justifyRight', false, null);
-        updateToolbarState();
-    });
-
-    // Font size
-    fontSizeSelect.addEventListener('change', (e) => {
-        document.execCommand('fontSize', false, '3');
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const selectedText = range.extractContents();
-            const span = document.createElement('span');
-            span.style.fontSize = e.target.value + 'pt';
-            span.appendChild(selectedText);
-            range.insertNode(span);
-        }
-    });
-
+    // Clipboard buttons
+    const ribbonPaste = document.getElementById('ribbonPaste');
+    const ribbonCut = document.getElementById('ribbonCut');
+    const ribbonCopy = document.getElementById('ribbonCopy');
+    const ribbonFormatPainter = document.getElementById('ribbonFormatPainter');
+    
+    if (ribbonPaste) {
+        ribbonPaste.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.execCommand('insertText', false, text);
+            } catch (err) {
+                console.error('Failed to paste:', err);
+                document.execCommand('paste', false, null);
+            }
+        });
+    }
+    
+    if (ribbonCut) {
+        ribbonCut.addEventListener('click', () => {
+            document.execCommand('cut', false, null);
+        });
+    }
+    
+    if (ribbonCopy) {
+        ribbonCopy.addEventListener('click', () => {
+            document.execCommand('copy', false, null);
+        });
+    }
+    
+    if (ribbonFormatPainter) {
+        let formatPainterActive = false;
+        let formatSource = null;
+        ribbonFormatPainter.addEventListener('click', () => {
+            if (!formatPainterActive) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    formatSource = selection.getRangeAt(0).commonAncestorContainer;
+                    formatPainterActive = true;
+                    ribbonFormatPainter.style.backgroundColor = '#0078d4';
+                    ribbonFormatPainter.style.color = 'white';
+                }
+            } else {
+                formatPainterActive = false;
+                formatSource = null;
+                ribbonFormatPainter.style.backgroundColor = '';
+                ribbonFormatPainter.style.color = '';
+            }
+        });
+        
+        // Apply format on click in editor when format painter is active
+        document.addEventListener('click', (e) => {
+            if (formatPainterActive && formatSource && e.target.closest('#editor')) {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                    const sourceEl = formatSource.nodeType === 1 ? formatSource : formatSource.parentElement;
+                    const targetEl = selection.getRangeAt(0).commonAncestorContainer;
+                    const targetElement = targetEl.nodeType === 1 ? targetEl : targetEl.parentElement;
+                    
+                    if (sourceEl && targetElement) {
+                        const computed = window.getComputedStyle(sourceEl);
+                        targetElement.style.fontWeight = computed.fontWeight;
+                        targetElement.style.fontStyle = computed.fontStyle;
+                        targetElement.style.textDecoration = computed.textDecoration;
+                        targetElement.style.fontSize = computed.fontSize;
+                        targetElement.style.color = computed.color;
+                    }
+                    formatPainterActive = false;
+                    formatSource = null;
+                    ribbonFormatPainter.style.backgroundColor = '';
+                    ribbonFormatPainter.style.color = '';
+                }
+            }
+        }, true);
+    }
+    
+    // Font formatting
+    const ribbonBold = document.getElementById('ribbonBold');
+    const ribbonItalic = document.getElementById('ribbonItalic');
+    const ribbonUnderline = document.getElementById('ribbonUnderline');
+    const ribbonStrikethrough = document.getElementById('ribbonStrikethrough');
+    
+    if (ribbonBold) {
+        ribbonBold.addEventListener('click', () => {
+            document.execCommand('bold', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonItalic) {
+        ribbonItalic.addEventListener('click', () => {
+            document.execCommand('italic', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonUnderline) {
+        ribbonUnderline.addEventListener('click', () => {
+            document.execCommand('underline', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonStrikethrough) {
+        ribbonStrikethrough.addEventListener('click', () => {
+            document.execCommand('strikeThrough', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    // Font family and size
+    const ribbonFontFamily = document.getElementById('ribbonFontFamily');
+    const ribbonFontSize = document.getElementById('ribbonFontSize');
+    
+    if (ribbonFontFamily) {
+        ribbonFontFamily.addEventListener('change', (e) => {
+            document.execCommand('fontName', false, e.target.value);
+        });
+    }
+    
+    if (ribbonFontSize) {
+        ribbonFontSize.addEventListener('change', (e) => {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (!selection.isCollapsed) {
+                    const selectedText = range.extractContents();
+                    const span = document.createElement('span');
+                    span.style.fontSize = e.target.value + 'pt';
+                    span.appendChild(selectedText);
+                    range.insertNode(span);
+                } else {
+                    document.execCommand('fontSize', false, '3');
+                    const span = document.querySelector('#editor span[style*="font-size"]');
+                    if (span) span.style.fontSize = e.target.value + 'pt';
+                }
+            }
+        });
+    }
+    
     // Font color
-    fontColorPicker.addEventListener('change', (e) => {
-        document.execCommand('foreColor', false, e.target.value);
-    });
-
-    // Heading style
-    const headingSelect = document.getElementById('headingSelect');
-    if (headingSelect) {
-        headingSelect.addEventListener('change', (e) => {
+    const ribbonFontColor = document.getElementById('ribbonFontColor');
+    const ribbonFontColorPicker = document.getElementById('ribbonFontColorPicker');
+    
+    if (ribbonFontColor) {
+        ribbonFontColor.addEventListener('click', () => {
+            ribbonFontColorPicker.click();
+        });
+    }
+    
+    if (ribbonFontColorPicker) {
+        ribbonFontColorPicker.addEventListener('change', (e) => {
+            document.execCommand('foreColor', false, e.target.value);
+        });
+    }
+    
+    // Highlight color
+    const ribbonHighlight = document.getElementById('ribbonHighlight');
+    const ribbonHighlightPicker = document.getElementById('ribbonHighlightPicker');
+    
+    if (ribbonHighlight) {
+        ribbonHighlight.addEventListener('click', () => {
+            ribbonHighlightPicker.click();
+        });
+    }
+    
+    if (ribbonHighlightPicker) {
+        ribbonHighlightPicker.addEventListener('change', (e) => {
+            document.execCommand('backColor', false, e.target.value);
+        });
+    }
+    
+    // Paragraph formatting
+    const ribbonBullets = document.getElementById('ribbonBullets');
+    const ribbonNumbering = document.getElementById('ribbonNumbering');
+    const ribbonAlignLeft = document.getElementById('ribbonAlignLeft');
+    const ribbonAlignCenter = document.getElementById('ribbonAlignCenter');
+    const ribbonAlignRight = document.getElementById('ribbonAlignRight');
+    const ribbonJustify = document.getElementById('ribbonJustify');
+    const ribbonDecreaseIndent = document.getElementById('ribbonDecreaseIndent');
+    const ribbonIncreaseIndent = document.getElementById('ribbonIncreaseIndent');
+    const ribbonLineSpacing = document.getElementById('ribbonLineSpacing');
+    
+    if (ribbonBullets) {
+        ribbonBullets.addEventListener('click', () => {
+            document.execCommand('insertUnorderedList', false, null);
+        });
+    }
+    
+    if (ribbonNumbering) {
+        ribbonNumbering.addEventListener('click', () => {
+            document.execCommand('insertOrderedList', false, null);
+        });
+    }
+    
+    if (ribbonAlignLeft) {
+        ribbonAlignLeft.addEventListener('click', () => {
+            document.execCommand('justifyLeft', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonAlignCenter) {
+        ribbonAlignCenter.addEventListener('click', () => {
+            document.execCommand('justifyCenter', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonAlignRight) {
+        ribbonAlignRight.addEventListener('click', () => {
+            document.execCommand('justifyRight', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonJustify) {
+        ribbonJustify.addEventListener('click', () => {
+            document.execCommand('justifyFull', false, null);
+            updateRibbonState();
+        });
+    }
+    
+    if (ribbonDecreaseIndent) {
+        ribbonDecreaseIndent.addEventListener('click', () => {
+            document.execCommand('outdent', false, null);
+        });
+    }
+    
+    if (ribbonIncreaseIndent) {
+        ribbonIncreaseIndent.addEventListener('click', () => {
+            document.execCommand('indent', false, null);
+        });
+    }
+    
+    if (ribbonLineSpacing) {
+        ribbonLineSpacing.addEventListener('change', (e) => {
+            const editor = document.getElementById('editor');
+            editor.style.lineHeight = e.target.value;
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const element = range.commonAncestorContainer;
+                const blockElement = element.nodeType === 1 ? element : element.parentElement;
+                if (blockElement && blockElement !== editor) {
+                    blockElement.style.lineHeight = e.target.value;
+                }
+            }
+        });
+    }
+    
+    // Styles
+    const ribbonStyles = document.getElementById('ribbonStyles');
+    
+    if (ribbonStyles) {
+        ribbonStyles.addEventListener('change', (e) => {
             const value = e.target.value;
             if (value === '') {
-                // Normal text - remove heading
                 document.execCommand('formatBlock', false, '<div>');
-            } else if (value === 'p') {
+            } else if (value === 'no-spacing') {
                 document.execCommand('formatBlock', false, '<p>');
-            } else {
-                document.execCommand('formatBlock', false, `<${value}>`);
-            }
-            // Reset select to show current state after a delay
-            setTimeout(() => {
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0) {
                     const range = selection.getRangeAt(0);
                     const element = range.commonAncestorContainer;
                     const blockElement = element.nodeType === 1 ? element : element.parentElement;
                     if (blockElement) {
-                        const tagName = blockElement.tagName.toLowerCase();
-                        if (['h1', 'h2', 'h3', 'h4', 'p'].includes(tagName)) {
-                            headingSelect.value = tagName;
-                        } else {
-                            headingSelect.value = '';
-                        }
+                        blockElement.style.margin = '0';
+                        blockElement.style.padding = '0';
                     }
                 }
-            }, 10);
+            } else if (value === 'title') {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const element = range.commonAncestorContainer;
+                    const blockElement = element.nodeType === 1 ? element : element.parentElement;
+                    if (blockElement) {
+                        blockElement.style.fontSize = '26pt';
+                        blockElement.style.fontWeight = 'bold';
+                        blockElement.style.marginBottom = '12px';
+                    }
+                }
+            } else if (['h1', 'h2', 'h3'].includes(value)) {
+                document.execCommand('formatBlock', false, `<${value}>`);
+            }
         });
     }
-
-    // Update toolbar state on selection change
-    editor.addEventListener('selectionchange', updateToolbarState);
-    editor.addEventListener('keyup', updateToolbarState);
-    editor.addEventListener('mouseup', updateToolbarState);
+    
+    // Editing buttons
+    const ribbonFind = document.getElementById('ribbonFind');
+    const ribbonReplace = document.getElementById('ribbonReplace');
+    const ribbonSelect = document.getElementById('ribbonSelect');
+    
+    if (ribbonFind) {
+        ribbonFind.addEventListener('click', () => {
+            showFindDialog();
+        });
+    }
+    
+    if (ribbonReplace) {
+        ribbonReplace.addEventListener('click', () => {
+            showReplaceDialog();
+        });
+    }
+    
+    if (ribbonSelect) {
+        ribbonSelect.addEventListener('click', () => {
+            const editor = document.getElementById('editor');
+            const range = document.createRange();
+            range.selectNodeContents(editor);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        });
+    }
+    
+    // Update ribbon state on selection change
+    const editor = document.getElementById('editor');
+    editor.addEventListener('selectionchange', updateRibbonState);
+    editor.addEventListener('keyup', updateRibbonState);
+    editor.addEventListener('mouseup', updateRibbonState);
 }
 
-function updateToolbarState() {
-    const editor = document.getElementById('editor');
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const underlineBtn = document.getElementById('underlineBtn');
-    const strikethroughBtn = document.getElementById('strikethroughBtn');
-    const fontSizeSelect = document.getElementById('fontSizeSelect');
-
+function updateRibbonState() {
+    const ribbonBold = document.getElementById('ribbonBold');
+    const ribbonItalic = document.getElementById('ribbonItalic');
+    const ribbonUnderline = document.getElementById('ribbonUnderline');
+    const ribbonStrikethrough = document.getElementById('ribbonStrikethrough');
+    const ribbonFontSize = document.getElementById('ribbonFontSize');
+    
     // Check formatting state
-    boldBtn.classList.toggle('active', document.queryCommandState('bold'));
-    italicBtn.classList.toggle('active', document.queryCommandState('italic'));
-    underlineBtn.classList.toggle('active', document.queryCommandState('underline'));
-    strikethroughBtn.classList.toggle('active', document.queryCommandState('strikeThrough'));
+    if (ribbonBold) ribbonBold.style.backgroundColor = document.queryCommandState('bold') ? '#e5e5e5' : '';
+    if (ribbonItalic) ribbonItalic.style.backgroundColor = document.queryCommandState('italic') ? '#e5e5e5' : '';
+    if (ribbonUnderline) ribbonUnderline.style.backgroundColor = document.queryCommandState('underline') ? '#e5e5e5' : '';
+    if (ribbonStrikethrough) ribbonStrikethrough.style.backgroundColor = document.queryCommandState('strikeThrough') ? '#e5e5e5' : '';
     
     // Update font size selector based on selected text
-    if (fontSizeSelect) {
+    if (ribbonFontSize) {
         const selection = window.getSelection();
         if (selection.rangeCount > 0 && !selection.isCollapsed) {
             const range = selection.getRangeAt(0);
+            const editor = document.getElementById('editor');
             let element = range.commonAncestorContainer;
             
-            // Get the actual element (not text node)
             if (element.nodeType === Node.TEXT_NODE) {
                 element = element.parentElement;
             }
             
-            // Walk up the DOM to find font-size
             while (element && element !== editor) {
                 const computedStyle = window.getComputedStyle(element);
                 const fontSize = computedStyle.fontSize;
                 if (fontSize && fontSize !== 'inherit' && fontSize !== 'initial') {
-                    // Extract numeric value (e.g., "20pt" -> 20)
                     const sizeMatch = fontSize.match(/(\d+\.?\d*)/);
                     if (sizeMatch) {
                         const sizeValue = Math.round(parseFloat(sizeMatch[1]));
-                        fontSizeSelect.value = sizeValue;
+                        ribbonFontSize.value = sizeValue;
                         break;
                     }
                 }
@@ -263,11 +515,11 @@ function setupEditor() {
     updateCounts();
 }
 
+// Store file menu handlers to prevent duplicates
+let fileMenuCloseHandler = null;
+let fileMenuSaveAsHandler = null;
+
 function setupFileOperations() {
-    const newBtn = document.getElementById('newBtn');
-    const openBtn = document.getElementById('openBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    
     // File menu
     const fileMenuBtn = document.getElementById('fileMenuBtn');
     const fileMenuDropdown = document.getElementById('fileMenuDropdown');
@@ -281,98 +533,115 @@ function setupFileOperations() {
     if (fileMenuBtn && fileMenuDropdown) {
         const fileMenuContainer = fileMenuBtn.closest('.file-menu-container');
         
+        // Remove existing close handler if it exists
+        if (fileMenuCloseHandler) {
+            document.removeEventListener('click', fileMenuCloseHandler);
+        }
+        
         fileMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             fileMenuDropdown.classList.toggle('show');
         });
         
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (fileMenuContainer && !fileMenuContainer.contains(e.target)) {
+        // Close menu when clicking outside - but NOT when clicking menu items
+        fileMenuCloseHandler = (e) => {
+            // Don't close if clicking on menu items or the button
+            const isClickOnMenuItem = e.target.closest('.file-menu-item') || 
+                                     e.target.closest('.file-menu-dropdown') ||
+                                     e.target === fileMenuBtn ||
+                                     fileMenuContainer?.contains(e.target);
+            
+            if (!isClickOnMenuItem) {
                 fileMenuDropdown.classList.remove('show');
             }
-        });
+        };
+        document.addEventListener('click', fileMenuCloseHandler);
         
         // File menu actions
         if (fileMenuNew) {
-            fileMenuNew.addEventListener('click', () => {
+            fileMenuNew.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 fileMenuDropdown.classList.remove('show');
-                newBtn.click();
+                if (hasUnsavedChanges) {
+                    if (!confirm('You have unsaved changes. Create a new document anyway?')) {
+                        return;
+                    }
+                }
+                document.getElementById('editor').innerHTML = '';
+                currentFileName = null;
+                hasUnsavedChanges = false;
+                updateWindowTitle();
             });
         }
         
         if (fileMenuOpen) {
-            fileMenuOpen.addEventListener('click', () => {
+            fileMenuOpen.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 fileMenuDropdown.classList.remove('show');
-                openBtn.click();
+                if (hasUnsavedChanges) {
+                    if (!confirm('You have unsaved changes. Open a new file anyway?')) {
+                        return;
+                    }
+                }
+                if (window.electronAPI && window.electronAPI.openFileDialog) {
+                    try {
+                        const result = await window.electronAPI.openFileDialog({
+                            filters: [
+                                { name: 'HTML Files', extensions: ['html', 'htm'] },
+                                { name: 'Text Files', extensions: ['txt'] },
+                                { name: 'All Files', extensions: ['*'] }
+                            ]
+                        });
+                        if (result && !result.canceled && result.filePaths && result.filePaths.length > 0) {
+                            await loadFile(result.filePaths[0]);
+                        }
+                    } catch (error) {
+                        console.error('Error opening file:', error);
+                        alert('Error opening file: ' + error.message);
+                    }
+                }
             });
         }
         
         if (fileMenuSave) {
-            fileMenuSave.addEventListener('click', async () => {
+            fileMenuSave.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 fileMenuDropdown.classList.remove('show');
                 await saveDocument();
             });
         }
         
+        // Remove existing Save As handler if it exists
+        if (fileMenuSaveAsHandler && fileMenuSaveAs) {
+            fileMenuSaveAs.removeEventListener('click', fileMenuSaveAsHandler);
+        }
+        
         if (fileMenuSaveAs) {
-            fileMenuSaveAs.addEventListener('click', async () => {
+            fileMenuSaveAsHandler = async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('[WORD] Save As clicked');
                 fileMenuDropdown.classList.remove('show');
                 await saveDocumentAs();
-            });
+            };
+            fileMenuSaveAs.addEventListener('click', fileMenuSaveAsHandler);
+            console.log('[WORD] Save As handler attached');
+        } else {
+            console.warn('[WORD] Save As button not found!');
         }
         
         if (fileMenuPrint) {
-            fileMenuPrint.addEventListener('click', () => {
+            fileMenuPrint.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 fileMenuDropdown.classList.remove('show');
                 window.print();
             });
         }
     }
-
-    newBtn.addEventListener('click', async () => {
-        if (hasUnsavedChanges) {
-            if (!confirm('You have unsaved changes. Create a new document anyway?')) {
-                return;
-            }
-        }
-        document.getElementById('editor').innerHTML = '';
-        currentFileName = null;
-        hasUnsavedChanges = false;
-        updateWindowTitle();
-    });
-
-    openBtn.addEventListener('click', async () => {
-        if (hasUnsavedChanges) {
-            if (!confirm('You have unsaved changes. Open a new file anyway?')) {
-                return;
-            }
-        }
-        if (window.electronAPI && window.electronAPI.openFileDialog) {
-            try {
-                const result = await window.electronAPI.openFileDialog({
-                    filters: [
-                        { name: 'HTML Files', extensions: ['html', 'htm'] },
-                        { name: 'Text Files', extensions: ['txt'] },
-                        { name: 'All Files', extensions: ['*'] }
-                    ]
-                });
-                if (result && !result.canceled && result.filePaths && result.filePaths.length > 0) {
-                    await loadFile(result.filePaths[0]);
-                }
-            } catch (error) {
-                console.error('Error opening file:', error);
-                alert('Error opening file: ' + error.message);
-            }
-        }
-    });
-
-    saveBtn.addEventListener('click', async () => {
-        await saveDocument();
-    });
-    
-    // Fix the fileMenuContainer reference issue
-    const fileMenuContainer = fileMenuBtn ? fileMenuBtn.closest('.file-menu-container') : null;
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -395,11 +664,41 @@ function setupFileOperations() {
         }
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
             e.preventDefault();
-            newBtn.click();
+            // New document
+            if (hasUnsavedChanges) {
+                if (!confirm('You have unsaved changes. Create a new document anyway?')) {
+                    return;
+                }
+            }
+            document.getElementById('editor').innerHTML = '';
+            currentFileName = null;
+            hasUnsavedChanges = false;
+            updateWindowTitle();
         }
         if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
             e.preventDefault();
-            openBtn.click();
+            // Open file
+            if (hasUnsavedChanges) {
+                if (!confirm('You have unsaved changes. Open a new file anyway?')) {
+                    return;
+                }
+            }
+            if (window.electronAPI && window.electronAPI.openFileDialog) {
+                window.electronAPI.openFileDialog({
+                    filters: [
+                        { name: 'HTML Files', extensions: ['html', 'htm'] },
+                        { name: 'Text Files', extensions: ['txt'] },
+                        { name: 'All Files', extensions: ['*'] }
+                    ]
+                }).then(result => {
+                    if (result && !result.canceled && result.filePaths && result.filePaths.length > 0) {
+                        loadFile(result.filePaths[0]);
+                    }
+                }).catch(error => {
+                    console.error('Error opening file:', error);
+                    alert('Error opening file: ' + error.message);
+                });
+            }
         }
         // Undo
         if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
@@ -493,6 +792,75 @@ async function saveDocument() {
     }
 }
 
+async function saveDocumentAs() {
+    const content = document.getElementById('editor').innerHTML;
+    
+    if (window.electronAPI && window.electronAPI.saveFileDialog) {
+        try {
+            // Always show save dialog, even if file already exists
+            const result = await window.electronAPI.saveFileDialog({
+                defaultPath: currentFileName || 'document.docx',
+                filters: [
+                    { name: 'Word Documents', extensions: ['docx'] },
+                    { name: 'HTML Files', extensions: ['html', 'htm'] },
+                    { name: 'Text Files', extensions: ['txt'] },
+                    { name: 'All Files', extensions: ['*'] }
+                ]
+            });
+            
+            if (result && !result.canceled && result.filePath) {
+                let filePath = result.filePath;
+                let ext = filePath.toLowerCase().split('.').pop();
+                
+                // If no extension, default to docx
+                if (!ext || ext === filePath.toLowerCase()) {
+                    filePath = filePath + '.docx';
+                    ext = 'docx';
+                }
+                
+                // Check if user wants DOCX format
+                if (ext === 'docx' && window.electronAPI.convertToDocx) {
+                    const convertResult = await window.electronAPI.convertToDocx(content, filePath);
+                    if (convertResult && convertResult.success) {
+                        currentFileName = filePath.split(/[\\/]/).pop();
+                        hasUnsavedChanges = false;
+                        updateWindowTitle();
+                        alert('Document saved as Word format (.docx)');
+                        // Sync to Omega Network
+                        await syncDocumentToOmega(content, currentFileName);
+                    } else {
+                        alert('Error converting to DOCX: ' + (convertResult?.error || 'Unknown error'));
+                    }
+                } else {
+                    // Save as HTML or text
+                    await window.electronAPI.writeFile(filePath, content);
+                    currentFileName = filePath.split(/[\\/]/).pop();
+                    hasUnsavedChanges = false;
+                    updateWindowTitle();
+                    // Sync to Omega Network
+                    await syncDocumentToOmega(content, currentFileName);
+                }
+            }
+        } catch (error) {
+            console.error('Error saving file:', error);
+            alert('Error saving file: ' + error.message);
+        }
+    } else {
+        // Fallback to browser download
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentFileName || 'document.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        hasUnsavedChanges = false;
+        updateWindowTitle();
+    }
+}
+
 async function loadFile(filePath) {
     try {
         if (window.electronAPI && window.electronAPI.readFile) {
@@ -528,38 +896,30 @@ function setupAIFeatures() {
         });
     }
 
-    const aiImproveBtn = document.getElementById('aiImproveBtn');
+    const aiBtn = document.getElementById('aiBtn');
     const aiSidebar = document.getElementById('aiSidebar');
-    const aiSidebarToggle = document.getElementById('aiSidebarToggle');
     const aiChatInput = document.getElementById('aiChatInput');
     const aiChatSend = document.getElementById('aiChatSend');
     const aiChatMessages = document.getElementById('aiChatMessages');
     const aiWelcomeMessage = document.querySelector('.ai-welcome-message');
 
-    if (!aiImproveBtn || !aiSidebar || !aiSidebarToggle || !aiChatInput || !aiChatSend) {
+    if (!aiBtn || !aiSidebar || !aiChatInput || !aiChatSend) {
         console.error('AI elements not found in DOM');
         return;
     }
 
-    // Toggle sidebar when AI button is clicked
-    aiImproveBtn.addEventListener('click', () => {
+    // AI button toggle sidebar
+    aiBtn.addEventListener('click', () => {
         aiSidebarCollapsed = !aiSidebarCollapsed;
         if (aiSidebarCollapsed) {
             aiSidebar.classList.add('collapsed');
+            aiBtn.classList.remove('active');
         } else {
             aiSidebar.classList.remove('collapsed');
-            aiChatInput.focus();
-        }
-    });
-
-    // Toggle sidebar with toggle button
-    aiSidebarToggle.addEventListener('click', () => {
-        aiSidebarCollapsed = !aiSidebarCollapsed;
-        if (aiSidebarCollapsed) {
-            aiSidebar.classList.add('collapsed');
-        } else {
-            aiSidebar.classList.remove('collapsed');
-            aiChatInput.focus();
+            aiBtn.classList.add('active');
+            setTimeout(() => {
+                if (aiChatInput) aiChatInput.focus();
+            }, 100);
         }
     });
 
@@ -1029,6 +1389,207 @@ function showFindDialog() {
         if (findDialog) {
             findDialog.remove();
             findDialog = null;
+        }
+        // Clear selection
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+    }
+}
+
+// Replace Dialog
+let replaceDialog = null;
+let replaceMatchIndex = 0;
+let replaceMatches = [];
+
+function showReplaceDialog() {
+    // Remove existing dialog if any
+    if (replaceDialog) {
+        replaceDialog.remove();
+    }
+    
+    // Also close find dialog if open
+    if (findDialog) {
+        findDialog.remove();
+        findDialog = null;
+    }
+    
+    // Create replace dialog
+    replaceDialog = document.createElement('div');
+    replaceDialog.id = 'replaceDialog';
+    replaceDialog.style.cssText = `
+        position: fixed;
+        top: 60px;
+        right: 20px;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        min-width: 320px;
+    `;
+    
+    replaceDialog.innerHTML = `
+        <div style="margin-bottom: 8px;">
+            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Find:</label>
+            <input type="text" id="replaceFindInput" placeholder="Find..." 
+                   style="width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;"
+                   autocomplete="off">
+        </div>
+        <div style="margin-bottom: 8px;">
+            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Replace with:</label>
+            <input type="text" id="replaceWithInput" placeholder="Replace with..." 
+                   style="width: 100%; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;"
+                   autocomplete="off">
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <button id="replaceFindNextBtn" style="flex: 1; padding: 6px 12px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer; font-size: 13px;">Find Next</button>
+            <button id="replaceReplaceBtn" style="flex: 1; padding: 6px 12px; border: 1px solid #0078d4; background: #0078d4; color: white; border-radius: 4px; cursor: pointer; font-size: 13px;">Replace</button>
+            <button id="replaceReplaceAllBtn" style="flex: 1; padding: 6px 12px; border: 1px solid #0078d4; background: #0078d4; color: white; border-radius: 4px; cursor: pointer; font-size: 13px;">Replace All</button>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+            <button id="replaceCloseBtn" style="padding: 6px 12px; border: 1px solid #ccc; background: white; border-radius: 4px; cursor: pointer; font-size: 13px;">Close</button>
+        </div>
+        <div id="replaceStatus" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
+    `;
+    
+    document.body.appendChild(replaceDialog);
+    
+    const findInput = document.getElementById('replaceFindInput');
+    const replaceInput = document.getElementById('replaceWithInput');
+    const findNextBtn = document.getElementById('replaceFindNextBtn');
+    const replaceBtn = document.getElementById('replaceReplaceBtn');
+    const replaceAllBtn = document.getElementById('replaceReplaceAllBtn');
+    const closeBtn = document.getElementById('replaceCloseBtn');
+    const status = document.getElementById('replaceStatus');
+    
+    // Focus input
+    setTimeout(() => findInput.focus(), 100);
+    
+    // Find function
+    function performReplaceFind() {
+        const searchTerm = findInput.value.trim();
+        if (!searchTerm) {
+            status.textContent = '';
+            replaceMatches = [];
+            return;
+        }
+        
+        const editor = document.getElementById('editor');
+        const text = editor.innerText || editor.textContent || '';
+        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        
+        replaceMatches = [];
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            replaceMatches.push(match.index);
+        }
+        
+        if (replaceMatches.length === 0) {
+            status.textContent = 'No matches found';
+            return;
+        }
+        
+        replaceMatchIndex = (replaceMatchIndex + 1) % replaceMatches.length;
+        status.textContent = `${replaceMatchIndex + 1} of ${replaceMatches.length}`;
+        
+        // Highlight and scroll to match
+        const matchIndex = replaceMatches[replaceMatchIndex];
+        selectTextInEditor(matchIndex, searchTerm.length);
+    }
+    
+    // Replace function
+    function performReplace() {
+        const searchTerm = findInput.value.trim();
+        const replaceText = replaceInput.value;
+        
+        if (!searchTerm || replaceMatches.length === 0) {
+            return;
+        }
+        
+        const editor = document.getElementById('editor');
+        const text = editor.innerText || editor.textContent || '';
+        const matchIndex = replaceMatches[replaceMatchIndex];
+        
+        // Select the text at this position
+        selectTextInEditor(matchIndex, searchTerm.length);
+        
+        // Replace selected text
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0 && !selection.isCollapsed) {
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(replaceText));
+            
+            // Remove from matches array
+            replaceMatches.splice(replaceMatchIndex, 1);
+            if (replaceMatchIndex >= replaceMatches.length) {
+                replaceMatchIndex = 0;
+            }
+            
+            // Find next match
+            if (replaceMatches.length > 0) {
+                performReplaceFind();
+            } else {
+                status.textContent = 'No more matches';
+            }
+        }
+    }
+    
+    // Replace all function
+    function performReplaceAll() {
+        const searchTerm = findInput.value.trim();
+        const replaceText = replaceInput.value;
+        
+        if (!searchTerm) {
+            return;
+        }
+        
+        const editor = document.getElementById('editor');
+        const html = editor.innerHTML;
+        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        
+        const newHtml = html.replace(regex, replaceText);
+        editor.innerHTML = newHtml;
+        
+        status.textContent = 'Replaced all matches';
+        replaceMatches = [];
+        replaceMatchIndex = 0;
+    }
+    
+    // Event listeners
+    findInput.addEventListener('input', () => {
+        replaceMatchIndex = -1;
+        performReplaceFind();
+    });
+    
+    findInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performReplaceFind();
+        } else if (e.key === 'Escape') {
+            closeReplaceDialog();
+        }
+    });
+    
+    replaceInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            performReplace();
+        } else if (e.key === 'Escape') {
+            closeReplaceDialog();
+        }
+    });
+    
+    findNextBtn.addEventListener('click', performReplaceFind);
+    replaceBtn.addEventListener('click', performReplace);
+    replaceAllBtn.addEventListener('click', performReplaceAll);
+    closeBtn.addEventListener('click', closeReplaceDialog);
+    
+    function closeReplaceDialog() {
+        if (replaceDialog) {
+            replaceDialog.remove();
+            replaceDialog = null;
         }
         // Clear selection
         const selection = window.getSelection();

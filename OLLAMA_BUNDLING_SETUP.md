@@ -52,3 +52,4 @@ The `electron-ollama` package handles bundling automatically. No additional elec
 - No data sent to external servers
 
 
+

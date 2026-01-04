@@ -76,3 +76,4 @@ if (typeof window !== 'undefined') {
 fs.writeFileSync(path.join(__dirname, 'game-templates.js'), output, 'utf8');
 console.log('✅ game-templates.js built successfully!');
 
+

@@ -66,3 +66,4 @@ WalletConnect is an open protocol that connects mobile wallets to desktop dApps 
 You can also use the built-in **Omega Wallet** (if we get it working as a provider). Check the Wallet panel in the browser.
 
 
+

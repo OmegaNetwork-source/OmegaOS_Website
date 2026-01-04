@@ -39,14 +39,18 @@ document.addEventListener('DOMContentLoaded', () => {
         await testAuthentication();
     });
 
-    // Purchase Pro License Button
-    document.getElementById('purchaseProBtn').addEventListener('click', async () => {
-        await purchaseProLicense();
+    // License action buttons
+    document.getElementById('stakeLicenseBtn')?.addEventListener('click', async () => {
+        await stakeForLicense();
+    });
+
+    document.getElementById('purchaseLicenseBtn')?.addEventListener('click', async () => {
+        await purchaseLifetimeLicense();
     });
 
     // Load identity status on startup
     loadIdentityStatus();
-    checkLicenses();
+    checkLicenseStatus();
 });
 
 async function loadIdentityStatus() {
@@ -136,71 +140,226 @@ async function loadSyncedDocuments() {
         
         if (result.success && result.documents && result.documents.length > 0) {
             syncStatus.innerHTML = `<p>Found ${result.documents.length} synced document(s)</p>`;
-            syncedDocumentsDiv.innerHTML = result.documents.map(doc => `
+            syncedDocumentsDiv.innerHTML = result.documents.map(doc => {
+                const date = new Date(doc.timestamp);
+                const typeIcon = doc.documentType === 'word' ? '📄' : 
+                                doc.documentType === 'sheets' ? '📊' : 
+                                doc.documentType === 'slides' ? '📽️' : '📁';
+                return `
                 <div class="document-item">
-                    <div>
-                        <div class="document-name">${doc.name || doc.documentId}</div>
-                        <div class="document-hash">${doc.hash}</div>
+                    <div class="document-icon">${typeIcon}</div>
+                    <div class="document-info">
+                        <div class="document-name">${doc.fileName || doc.documentId}</div>
+                        <div class="document-meta">
+                            <span class="document-type">${doc.documentType || 'file'}</span>
+                            <span class="document-date">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+                        </div>
+                        <div class="document-hash">Hash: ${doc.documentHash.substring(0, 16)}...</div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         } else {
             syncStatus.innerHTML = '<p>No synced documents yet. Documents will appear here when synced.</p>';
             syncedDocumentsDiv.innerHTML = '';
         }
     } catch (error) {
         syncStatus.innerHTML = '<p class="error">Error loading synced documents: ' + error.message + '</p>';
+        syncedDocumentsDiv.innerHTML = '';
     }
 }
 
-async function checkLicenses() {
-    const proLicenseStatus = document.getElementById('proLicenseStatus');
-    const purchaseProBtn = document.getElementById('purchaseProBtn');
+async function checkLicenseStatus() {
+    const licenseStatus = document.getElementById('licenseStatus');
+    const licenseActions = document.getElementById('licenseActions');
+    const licenseInfo = document.getElementById('licenseInfo');
     
     try {
-        const result = await window.electronAPI.identityCheckLicense('omega-os-pro');
+        // Check if identity exists first
+        const hasIdentity = await window.electronAPI.identityHasIdentity();
+        if (!hasIdentity) {
+            licenseStatus.innerHTML = '<p class="error">Please register your Omega OS identity first.</p>';
+            licenseActions.style.display = 'none';
+            licenseInfo.style.display = 'none';
+            return;
+        }
+        
+        // Get license status
+        const result = await window.electronAPI.identityCheckLicense();
+        const pricing = await window.electronAPI.identityGetLicensePricing();
+        const details = await window.electronAPI.identityGetLicenseDetails();
+        
+        // Update pricing display
+        if (pricing) {
+            const stakingPrice = parseFloat(pricing.stakingAmount) / 1e18;
+            const purchasePrice = parseFloat(pricing.purchaseAmount) / 1e18;
+            document.getElementById('stakingPrice').textContent = `${stakingPrice.toLocaleString()} OMEGA`;
+            document.getElementById('purchasePrice').textContent = `${purchasePrice.toLocaleString()} OMEGA`;
+        }
         
         if (result.hasLicense) {
-            proLicenseStatus.textContent = '✓ Active';
-            proLicenseStatus.className = 'license-status active';
-            purchaseProBtn.style.display = 'none';
+            // User has an active license
+            licenseStatus.innerHTML = `
+                <p class="success">✓ License Active</p>
+                <p class="license-type">Type: ${result.licenseType}</p>
+            `;
+            licenseActions.style.display = 'none';
+            
+            // Show license details
+            if (details) {
+                let expiryText = 'Never (Lifetime)';
+                if (details.expiryTime) {
+                    const expiryDate = new Date(details.expiryTime);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                    expiryText = `${expiryDate.toLocaleDateString()} (${daysLeft} days remaining)`;
+                }
+                
+                licenseInfo.innerHTML = `
+                    <div class="license-details">
+                        <h4>License Details</h4>
+                        <p><strong>Type:</strong> ${details.licenseType}</p>
+                        <p><strong>Started:</strong> ${new Date(details.startTime).toLocaleDateString()}</p>
+                        <p><strong>Expires:</strong> ${expiryText}</p>
+                        ${details.licenseType === 'Staked' ? `
+                            <p><strong>Staked Amount:</strong> ${(parseFloat(details.stakedAmount) / 1e18).toLocaleString()} OMEGA</p>
+                            <button id="withdrawStakeBtn" class="identity-btn secondary" style="margin-top: 10px;">
+                                Withdraw Stake (After Expiry)
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                licenseInfo.style.display = 'block';
+                
+                // Add withdraw button listener if present
+                const withdrawBtn = document.getElementById('withdrawStakeBtn');
+                if (withdrawBtn) {
+                    withdrawBtn.addEventListener('click', async () => {
+                        await withdrawStake();
+                    });
+                }
+            }
         } else {
-            proLicenseStatus.textContent = '✗ Not Licensed';
-            proLicenseStatus.className = 'license-status inactive';
-            purchaseProBtn.style.display = 'block';
+            // No active license
+            licenseStatus.innerHTML = `
+                <p class="error">✗ Not Licensed</p>
+                <p>Choose an option below to unlock Omega OS Pro</p>
+            `;
+            licenseActions.style.display = 'block';
+            licenseInfo.style.display = 'none';
         }
     } catch (error) {
-        proLicenseStatus.textContent = 'Error checking license';
-        proLicenseStatus.className = 'license-status inactive';
+        licenseStatus.innerHTML = `<p class="error">Error checking license: ${error.message}</p>`;
+        licenseActions.style.display = 'none';
+        licenseInfo.style.display = 'none';
     }
 }
 
-async function purchaseProLicense() {
-    const purchaseProBtn = document.getElementById('purchaseProBtn');
-    const proLicenseStatus = document.getElementById('proLicenseStatus');
+async function stakeForLicense() {
+    const stakeBtn = document.getElementById('stakeLicenseBtn');
     
     try {
-        purchaseProBtn.disabled = true;
-        purchaseProBtn.textContent = 'Processing...';
+        // Get pricing
+        const pricing = await window.electronAPI.identityGetLicensePricing();
+        const stakingAmount = parseFloat(pricing.stakingAmount) / 1e18;
         
-        // Price in Omega tokens (example: 100 tokens)
-        const price = 100;
-        const result = await window.electronAPI.identityPurchaseLicense('omega-os-pro', price);
+        // Show confirmation
+        const confirmMessage = `Stake ${stakingAmount.toLocaleString()} OMEGA tokens for a 30-day license?\n\n` +
+            `Your tokens will be locked for 30 days. After the license expires, you can withdraw your staked tokens.\n\n` +
+            `Make sure your wallet is unlocked and has enough Omega tokens.`;
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        stakeBtn.disabled = true;
+        stakeBtn.textContent = 'Staking...';
+        
+        const result = await window.electronAPI.identityStakeForLicense();
         
         if (result.success) {
-            proLicenseStatus.textContent = '✓ Active';
-            proLicenseStatus.className = 'license-status active';
-            purchaseProBtn.style.display = 'none';
-            alert('License purchased successfully! Transaction: ' + result.txHash);
+            alert(`License staked successfully!\n\nTransaction: ${result.txHash}\n\nYour license is active for 30 days.`);
+            await checkLicenseStatus(); // Refresh status
+        } else {
+            alert('Failed to stake for license: ' + (result.error || 'Unknown error'));
+            stakeBtn.disabled = false;
+            stakeBtn.textContent = 'Stake for License';
+        }
+    } catch (error) {
+        alert('Error staking for license: ' + error.message);
+        stakeBtn.disabled = false;
+        stakeBtn.textContent = 'Stake for License';
+    }
+}
+
+async function purchaseLifetimeLicense() {
+    const purchaseBtn = document.getElementById('purchaseLicenseBtn');
+    
+    try {
+        // Get pricing
+        const pricing = await window.electronAPI.identityGetLicensePricing();
+        const purchaseAmount = parseFloat(pricing.purchaseAmount) / 1e18;
+        
+        // Show confirmation
+        const confirmMessage = `Purchase lifetime license for ${purchaseAmount.toLocaleString()} OMEGA tokens?\n\n` +
+            `This is a one-time payment. You'll have access to Omega OS Pro forever.\n\n` +
+            `Make sure your wallet is unlocked and has enough Omega tokens.`;
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        purchaseBtn.disabled = true;
+        purchaseBtn.textContent = 'Processing...';
+        
+        const result = await window.electronAPI.identityPurchaseLicense();
+        
+        if (result.success) {
+            alert(`Lifetime license purchased successfully!\n\nTransaction: ${result.txHash}\n\nYou now have lifetime access to Omega OS Pro!`);
+            await checkLicenseStatus(); // Refresh status
         } else {
             alert('Failed to purchase license: ' + (result.error || 'Unknown error'));
-            purchaseProBtn.disabled = false;
-            purchaseProBtn.textContent = 'Purchase License';
+            purchaseBtn.disabled = false;
+            purchaseBtn.textContent = 'Purchase License';
         }
     } catch (error) {
         alert('Error purchasing license: ' + error.message);
-        purchaseProBtn.disabled = false;
-        purchaseProBtn.textContent = 'Purchase License';
+        purchaseBtn.disabled = false;
+        purchaseBtn.textContent = 'Purchase License';
+    }
+}
+
+async function withdrawStake() {
+    const withdrawBtn = document.getElementById('withdrawStakeBtn');
+    
+    try {
+        if (!confirm('Withdraw your staked tokens?\n\nThis will deactivate your license if it\'s still active. Make sure your license has expired first.')) {
+            return;
+        }
+        
+        if (withdrawBtn) {
+            withdrawBtn.disabled = true;
+            withdrawBtn.textContent = 'Withdrawing...';
+        }
+        
+        const result = await window.electronAPI.identityWithdrawStake();
+        
+        if (result.success) {
+            alert(`Stake withdrawn successfully!\n\nTransaction: ${result.txHash}\n\nYour tokens have been returned to your wallet.`);
+            await checkLicenseStatus(); // Refresh status
+        } else {
+            alert('Failed to withdraw stake: ' + (result.error || 'Unknown error'));
+            if (withdrawBtn) {
+                withdrawBtn.disabled = false;
+                withdrawBtn.textContent = 'Withdraw Stake (After Expiry)';
+            }
+        }
+    } catch (error) {
+        alert('Error withdrawing stake: ' + error.message);
+        if (withdrawBtn) {
+            withdrawBtn.disabled = false;
+            withdrawBtn.textContent = 'Withdraw Stake (After Expiry)';
+        }
     }
 }
 
@@ -238,4 +397,5 @@ async function testAuthentication() {
         testLoginBtn.disabled = false;
     }
 }
+
 

@@ -101,15 +101,26 @@ function setupWindowControls() {
     }
 }
 
+// Store toggle handler to prevent duplicates
+let firewallToggleHandler = null;
+
 function setupEventListeners() {
     try {
         const toggleBtn = document.getElementById('toggleFirewallBtn');
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', (e) => {
+            // Remove existing listener if it exists
+            if (firewallToggleHandler) {
+                toggleBtn.removeEventListener('click', firewallToggleHandler);
+            }
+            
+            // Create new handler
+            firewallToggleHandler = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 toggleFirewall();
-            });
+            };
+            
+            toggleBtn.addEventListener('click', firewallToggleHandler);
             console.log('[FIREWALL] Toggle button setup');
         } else {
             console.error('[FIREWALL] Toggle button not found!');

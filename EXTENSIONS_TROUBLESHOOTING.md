@@ -109,3 +109,4 @@ If extensions still don't work:
 4. Check that extension files are complete and not corrupted
 
 
+

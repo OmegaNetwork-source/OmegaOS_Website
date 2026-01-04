@@ -42,3 +42,4 @@ We need to:
 **Bottom line: YES, this will work!** dApps don't care if it's MetaMask or Omega Wallet - they just check for `window.ethereum`/`window.solana` and use whatever is there.
 
 
+

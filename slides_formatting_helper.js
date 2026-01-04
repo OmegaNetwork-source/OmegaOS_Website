@@ -36,3 +36,4 @@ function applyFormattingToSlideHTML(html, instructions) {
     return temp.innerHTML;
 }
 
+

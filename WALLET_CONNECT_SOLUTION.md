@@ -39,3 +39,4 @@ If WalletConnect isn't sufficient, we could:
 **Use WalletConnect** - it's the industry standard solution for this exact problem. Most dApps already support it, and it works perfectly in Electron.
 
 
+

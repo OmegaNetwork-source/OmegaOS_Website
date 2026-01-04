@@ -49,6 +49,8 @@
     "electron-ollama": "^0.1.25",
     "ethers": "^6.16.0",
     "pptxgenjs": "^4.0.1",
+    "smart-buffer": "^4.2.0",
+    "socks-proxy-agent": "^8.0.5",
     "xlsx": "^0.18.5"
   },
   "build": {
@@ -73,6 +75,8 @@
       "extensions/**/*",
       "build/models/**/*",
       "build/tor/tor.exe",
+      "build/icon.ico",
+      "build/icon.png",
       "!dist/**/*",
       "!build/installer.nsh",
       "!.git/**/*",
@@ -98,7 +102,8 @@
       "icon": "build/icon.ico",
       "publisherName": "OmegaNetwork",
       "sign": null,
-      "signDlls": false
+      "signDlls": false,
+      "requestedExecutionLevel": "asInvoker"
     },
     "mac": {
       "target": [
@@ -121,7 +126,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "include": "build/installer.nsh"
+      "runAfterFinish": false,
+      "include": "build/installer.nsh",
+      "artifactName": "${productName} Setup ${version}.${ext}",
+      "shortcutName": "${productName}",
+      "menuCategory": false,
+      "warningsAsErrors": false
     },
     "publish": {
       "provider": "github",

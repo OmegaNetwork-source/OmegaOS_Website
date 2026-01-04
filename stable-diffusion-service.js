@@ -135,6 +135,20 @@ class StableDiffusionService {
   }
 
   async generateImage(prompt, negativePrompt = '', width = 512, height = 512, steps = 20, cfgScale = 7, seed = -1) {
+    // Always check and auto-start if needed before generating
+    const isRunning = await this.checkStableDiffusionRunning();
+    if (!isRunning) {
+      console.log('[SD Service] Stable Diffusion not running, attempting to auto-start...');
+      try {
+        await sdManager.start();
+        // Wait for WebUI to be ready (manager already waits, but give extra time for model loading)
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      } catch (error) {
+        console.error('[SD Service] Failed to auto-start Stable Diffusion:', error.message);
+        throw new Error(`Failed to start Stable Diffusion: ${error.message}. Please ensure Automatic1111 WebUI is installed at: ${sdManager.getStableDiffusionPath() || 'C:\\Users\\richa\\stable-diffusion-webui'}`);
+      }
+    }
+    
     if (!this.isReady) {
       await this.initialize();
     }
