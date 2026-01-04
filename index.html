@@ -1119,6 +1119,7 @@
                     <a href="#" class="toc-item" data-section="vpn">TOR VPN</a>
                     <a href="#" class="toc-item" data-section="hardening">Hardening</a>
                     <a href="#" class="toc-item" data-section="requirements">System Requirements</a>
+                    <a href="#" class="toc-item" data-section="license">License</a>
                     <a href="#" class="toc-item" data-section="contact">Contact</a>
                 </div>
                 <div class="tech-docs-content">
@@ -1831,6 +1832,152 @@
                             <li><strong>Blockchain:</strong> Internet connection required for blockchain features (optional)</li>
                             <li><strong>Graphics:</strong> Hardware acceleration recommended for better performance</li>
                         </ul>
+                    </div>
+
+                    <!-- License Section -->
+                    <div class="tech-docs-section" id="section-license">
+                        <h3>Omega OS Pro Licensing</h3>
+                        <p>The Omega OS Pro licensing system enables users to unlock premium features (Omega Productivity apps and AI) through blockchain-based licensing. All licensing is managed on-chain via the Omega Network blockchain, ensuring transparency, decentralization, and verifiable license ownership.</p>
+                        
+                        <h4>Overview</h4>
+                        <p>Omega OS Pro offers two flexible payment models to access premium features:</p>
+                        <ol>
+                            <li><strong>Staking Model:</strong> Stake tokens for time-limited licenses (30 days, renewable)</li>
+                            <li><strong>Purchase Model:</strong> One-time payment for lifetime access</li>
+                        </ol>
+                        <p>Both models are managed through smart contracts on the Omega Network blockchain, providing complete transparency and ensuring licenses cannot be revoked or tampered with.</p>
+
+                        <h4>License Types</h4>
+                        
+                        <h5>Staked License</h5>
+                        <p>Ideal for users who want temporary access or prefer a lower upfront cost:</p>
+                        <ul>
+                            <li><strong>Cost:</strong> 1,000 OMEGA tokens (configurable by contract owner)</li>
+                            <li><strong>Duration:</strong> 30 days from activation (configurable)</li>
+                            <li><strong>Token Status:</strong> Tokens are locked in the smart contract during the license period</li>
+                            <li><strong>Renewal:</strong> Stake again before expiry to extend the license (extends from current time)</li>
+                            <li><strong>Withdrawal:</strong> Tokens can be withdrawn after the license expires</li>
+                            <li><strong>Use Case:</strong> Users testing premium features, temporary access needs, or those who prefer lower upfront costs</li>
+                        </ul>
+
+                        <h5>Purchased License</h5>
+                        <p>Perfect for users who want permanent access with a one-time payment:</p>
+                        <ul>
+                            <li><strong>Cost:</strong> 10,000 OMEGA tokens (configurable by contract owner)</li>
+                            <li><strong>Duration:</strong> Lifetime (never expires)</li>
+                            <li><strong>Token Status:</strong> Tokens are permanently transferred to the contract</li>
+                            <li><strong>Renewal:</strong> Not required—license is active forever</li>
+                            <li><strong>Withdrawal:</strong> Not applicable (one-time payment)</li>
+                            <li><strong>Use Case:</strong> Users who want permanent access and prefer a one-time payment over recurring costs</li>
+                        </ul>
+
+                        <h4>License Lifecycle</h4>
+                        
+                        <h5>Staking License Flow</h5>
+                        <ol>
+                            <li>User opens the Omega Identity app and views license status</li>
+                            <li>User clicks "Stake for License" button</li>
+                            <li>Confirmation dialog displays the staking amount (1,000 OMEGA)</li>
+                            <li>User approves the transaction in their wallet</li>
+                            <li>Smart contract locks tokens and sets expiry (current time + 30 days)</li>
+                            <li>License is active for 30 days with full access to premium features</li>
+                            <li>User can renew by staking again before expiry (extends from current time)</li>
+                            <li>After expiry, user can withdraw tokens or stake again for a new license</li>
+                        </ol>
+
+                        <h5>Purchase License Flow</h5>
+                        <ol>
+                            <li>User opens the Omega Identity app and views license status</li>
+                            <li>User clicks "Purchase Lifetime License" button</li>
+                            <li>Confirmation dialog displays the purchase amount (10,000 OMEGA)</li>
+                            <li>User approves the transaction in their wallet</li>
+                            <li>Smart contract permanently transfers tokens</li>
+                            <li>License is active forever with no expiry date</li>
+                            <li>No renewal needed—permanent access to premium features</li>
+                        </ol>
+
+                        <h5>Withdrawal Flow (Staking Only)</h5>
+                        <ol>
+                            <li>User's staking license expires</li>
+                            <li>"Withdraw Stake" button appears in license details</li>
+                            <li>User clicks button and confirms the withdrawal</li>
+                            <li>Smart contract returns locked tokens to user's wallet</li>
+                            <li>License status changes to "Not Licensed"</li>
+                        </ol>
+
+                        <h4>Premium Features</h4>
+                        <p>An active Omega OS Pro license unlocks access to:</p>
+                        <ul>
+                            <li><strong>Omega Productivity Apps:</strong> Full access to Omega Word, Omega Sheets, Omega Slides, and other productivity applications</li>
+                            <li><strong>AI Features:</strong> Complete access to AI-powered features including AI chat assistant, writing assistance, code generation, and AI-powered productivity tools</li>
+                            <li><strong>Advanced Features:</strong> Premium functionality across all Omega OS applications</li>
+                        </ul>
+
+                        <h4>Technical Implementation</h4>
+                        <p>The licensing system is built on blockchain technology for maximum security and transparency:</p>
+                        <ul>
+                            <li><strong>Smart Contract:</strong> All license operations are managed by the OmegaLicensing smart contract on Omega Network</li>
+                            <li><strong>On-Chain Verification:</strong> License status is verified on-chain and cannot be bypassed or tampered with</li>
+                            <li><strong>Omega Identity Integration:</strong> Licenses are linked to your Omega ID, ensuring cross-device access</li>
+                            <li><strong>Wallet Integration:</strong> All transactions are handled through your Omega Wallet or compatible wallet</li>
+                            <li><strong>Automatic Status Checks:</strong> Omega OS automatically verifies license status when accessing premium features</li>
+                        </ul>
+
+                        <h4>Pricing Configuration</h4>
+                        <p>Pricing parameters are configurable by the contract owner (deployer):</p>
+                        <ul>
+                            <li><strong>Staking Amount:</strong> Default 1,000 OMEGA tokens (can be adjusted)</li>
+                            <li><strong>Purchase Amount:</strong> Default 10,000 OMEGA tokens (can be adjusted)</li>
+                            <li><strong>Staking Period:</strong> Default 30 days (can be adjusted)</li>
+                        </ul>
+                        <p>All pricing is transparent and visible on-chain. Users can check current pricing through the Omega Identity app before making a decision.</p>
+
+                        <h4>Security & Transparency</h4>
+                        <p>The licensing system includes multiple security measures:</p>
+                        <ul>
+                            <li><strong>On-Chain Verification:</strong> License validity is checked on-chain and cannot be bypassed</li>
+                            <li><strong>Token Locking:</strong> Staked tokens are securely held in the smart contract during the license period</li>
+                            <li><strong>Withdrawal Protection:</strong> Users cannot withdraw tokens while a license is active</li>
+                            <li><strong>Purchase Protection:</strong> Users with active staking licenses must withdraw before purchasing a lifetime license</li>
+                            <li><strong>Owner Controls:</strong> Only the contract deployer can adjust pricing (transparent and verifiable)</li>
+                            <li><strong>No Revocation:</strong> Once issued, licenses cannot be revoked or tampered with</li>
+                        </ul>
+
+                        <h4>Network & Gas Requirements</h4>
+                        <ul>
+                            <li><strong>Network:</strong> Omega Network blockchain</li>
+                            <li><strong>Currency:</strong> OMEGA tokens</li>
+                            <li><strong>Gas Requirements:</strong>
+                                <ul>
+                                    <li>Staking transaction: ~100,000-200,000 gas</li>
+                                    <li>Purchase transaction: ~100,000-200,000 gas</li>
+                                    <li>Withdrawal transaction: ~80,000-150,000 gas</li>
+                                    <li>Read operations: No gas required (view functions)</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <h4>Integration with Omega OS</h4>
+                        <p>The licensing system seamlessly integrates with Omega OS components:</p>
+                        <ul>
+                            <li><strong>Omega Identity:</strong> Uses your Omega ID to link licenses to your account across all devices</li>
+                            <li><strong>Omega Wallet:</strong> Handles all token transactions securely</li>
+                            <li><strong>Productivity Apps:</strong> Automatically check license status before allowing access to premium features</li>
+                            <li><strong>AI Features:</strong> Require active license for AI functionality across all applications</li>
+                            <li><strong>Cross-Device Access:</strong> License status is synced across all your devices through Omega Identity</li>
+                        </ul>
+
+                        <h4>Managing Your License</h4>
+                        <p>All license management is done through the Omega Identity app:</p>
+                        <ul>
+                            <li><strong>View License Status:</strong> Check if you have an active license and view details</li>
+                            <li><strong>Stake for License:</strong> Initiate staking transaction for 30-day access</li>
+                            <li><strong>Purchase Lifetime License:</strong> Make one-time payment for permanent access</li>
+                            <li><strong>Renew License:</strong> Stake again before expiry to extend your license</li>
+                            <li><strong>Withdraw Stake:</strong> Withdraw locked tokens after license expires</li>
+                            <li><strong>View Pricing:</strong> Check current staking and purchase amounts</li>
+                        </ul>
+                        <p>The interface provides clear information about your license status, expiry dates, and available actions, making it easy to manage your Omega OS Pro subscription.</p>
                     </div>
 
                     <!-- Contact Section -->
