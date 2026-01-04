@@ -131,7 +131,8 @@
       "artifactName": "${productName} Setup ${version}.${ext}",
       "shortcutName": "${productName}",
       "menuCategory": false,
-      "warningsAsErrors": false
+      "warningsAsErrors": false,
+      "include": null
     },
     "publish": {
       "provider": "github",
