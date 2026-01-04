@@ -124,6 +124,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "runAfterFinish": false,
@@ -131,12 +132,13 @@
       "artifactName": "${productName} Setup ${version}.${ext}",
       "shortcutName": "${productName}",
       "menuCategory": false,
-      "warningsAsErrors": false
+      "warningsAsErrors": false,
+      "deleteAppDataOnUninstall": false
     },
     "publish": {
       "provider": "github",
       "owner": "OmegaNetwork-source",
-      "repo": "Omega_OS"
+      "repo": "OmegaOS_Website"
     }
   }
 }
