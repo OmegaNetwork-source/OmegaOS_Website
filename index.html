@@ -1117,6 +1117,7 @@
                     <a href="#" class="toc-item" data-section="blockchain">Blockchain Integration</a>
                     <a href="#" class="toc-item" data-section="ai">AI Integration</a>
                     <a href="#" class="toc-item" data-section="vpn">TOR VPN</a>
+                    <a href="#" class="toc-item" data-section="hardening">Hardening</a>
                     <a href="#" class="toc-item" data-section="requirements">System Requirements</a>
                     <a href="#" class="toc-item" data-section="contact">Contact</a>
                 </div>
@@ -1599,6 +1600,183 @@
                             <li>Configure connection preferences</li>
                             <li>Monitor connection status and bandwidth</li>
                             <li>View connection logs (if enabled)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Hardening Section -->
+                    <div class="tech-docs-section" id="section-hardening">
+                        <h3>Hardening & Security Enhancements</h3>
+                        <p>Omega OS implements comprehensive security hardening measures that go beyond standard browser protections, providing Tor Browser-level security when Tor mode is enabled.</p>
+                        
+                        <h4>Network Hardening</h4>
+                        <p>When Tor mode is enabled, Omega OS provides complete network isolation:</p>
+                        <ul>
+                            <li><strong>Complete Traffic Routing:</strong> All browser and application traffic is routed through the Tor network</li>
+                            <li><strong>Node.js HTTP Routing:</strong> All backend HTTP/HTTPS requests respect Tor settings and route through SOCKS5 proxy</li>
+                            <li><strong>WebRTC Disabled:</strong> Prevents IP address leaks through WebRTC connections</li>
+                            <li><strong>DNS Leak Prevention:</strong> DNS queries are routed through Tor, preventing DNS leaks</li>
+                            <li><strong>Background Networking Disabled:</strong> Prevents background connections that could bypass Tor</li>
+                            <li><strong>Localhost Protection:</strong> Local services (like local AI) continue to work normally while maintaining Tor routing for external traffic</li>
+                        </ul>
+
+                        <h4>Fingerprinting Protection</h4>
+                        <p>Omega OS implements multiple layers of fingerprinting protection:</p>
+                        <ul>
+                            <li><strong>Navigator API Spoofing:</strong> Hardware information normalized to prevent device fingerprinting</li>
+                            <li><strong>Canvas Fingerprinting Protection:</strong> Adds noise to canvas rendering to prevent stable fingerprints</li>
+                            <li><strong>Audio Context Protection:</strong> Prevents audio-based fingerprinting through noise injection</li>
+                            <li><strong>Font Enumeration Protection:</strong> Limits font detection to prevent font-based fingerprinting</li>
+                            <li><strong>User-Agent Standardization:</strong> Consistent user agent across all sessions without exposing version information</li>
+                        </ul>
+
+                        <h4>Chromium Hardening</h4>
+                        <p>Additional Chromium security flags and protections:</p>
+                        <ul>
+                            <li><strong>Remote Font Blocking:</strong> Prevents remote font loading that could be used for tracking</li>
+                            <li><strong>Canvas Data Extraction Blocked:</strong> Prevents canvas data from being extracted for fingerprinting</li>
+                            <li><strong>Spell Checking Disabled:</strong> Prevents dictionary downloads that could reveal language/location</li>
+                            <li><strong>Safe Browsing Disabled:</strong> Prevents telemetry and metrics collection</li>
+                            <li><strong>Protocol Blocking:</strong> FTP and other insecure protocols are blocked</li>
+                            <li><strong>Restricted File Access:</strong> File protocol access restricted to local application files only</li>
+                        </ul>
+
+                        <h4>Comparison: Omega OS vs Brave Tor Mode</h4>
+                        <p>Omega OS provides several advantages over Brave's Tor mode:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Omega OS</th>
+                                    <th>Brave Tor Mode</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Tor Integration</strong></td>
+                                    <td>Bundled Tor daemon, no external installation</td>
+                                    <td>Requires separate Tor installation</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Application-Level Routing</strong></td>
+                                    <td>All applications route through Tor, including Node.js backend</td>
+                                    <td>Browser-only Tor routing</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fingerprinting Protection</strong></td>
+                                    <td>Multi-layer protection (canvas, audio, fonts, navigator)</td>
+                                    <td>Basic fingerprinting protection</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Local AI Integration</strong></td>
+                                    <td>Local AI services work while maintaining Tor for external traffic</td>
+                                    <td>N/A (no local AI)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Complete Isolation</strong></td>
+                                    <td>Isolated desktop environment with full system sandboxing</td>
+                                    <td>Browser-only isolation</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>WebRTC Protection</strong></td>
+                                    <td>Completely disabled to prevent IP leaks</td>
+                                    <td>May have WebRTC enabled in some configurations</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DNS Leak Prevention</strong></td>
+                                    <td>All DNS queries routed through Tor</td>
+                                    <td>Standard Tor DNS routing</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Background Networking</strong></td>
+                                    <td>Disabled to prevent bypassing Tor</td>
+                                    <td>May allow background connections</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Comparison: Omega OS vs Other Tor Projects</h4>
+                        <p>How Omega OS compares to dedicated Tor browser projects:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Omega OS</th>
+                                    <th>Tor Browser</th>
+                                    <th>Other Tor Projects</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Scope</strong></td>
+                                    <td>Complete operating system environment</td>
+                                    <td>Browser-only application</td>
+                                    <td>Typically browser or single-purpose tools</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Bundled Tor</strong></td>
+                                    <td>Yes, included with installation</td>
+                                    <td>Yes, included</td>
+                                    <td>Varies by project</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Application Integration</strong></td>
+                                    <td>All apps (browser, word processor, wallet, etc.) use Tor</td>
+                                    <td>Browser only</td>
+                                    <td>Limited to specific applications</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Local Services</strong></td>
+                                    <td>Local AI and services work while maintaining Tor routing</td>
+                                    <td>N/A</td>
+                                    <td>Typically not supported</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fingerprinting Protection</strong></td>
+                                    <td>Comprehensive multi-layer protection</td>
+                                    <td>Strong fingerprinting protection</td>
+                                    <td>Varies, often basic</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Isolation</strong></td>
+                                    <td>Complete system-level isolation from host OS</td>
+                                    <td>Browser process isolation</td>
+                                    <td>Application-level isolation</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Productivity Tools</strong></td>
+                                    <td>Full suite (word processor, spreadsheet, etc.) with Tor</td>
+                                    <td>Browser only</td>
+                                    <td>Not typically included</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Blockchain Integration</strong></td>
+                                    <td>Wallet and blockchain features with Tor routing</td>
+                                    <td>N/A</td>
+                                    <td>Not typically included</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Key Advantages</h4>
+                        <p>Omega OS provides unique advantages for privacy-focused users:</p>
+                        <ul>
+                            <li><strong>Complete Environment:</strong> Not just a browser, but a full operating system environment with all applications routing through Tor</li>
+                            <li><strong>No External Dependencies:</strong> Tor is bundled and managed automatically—no need to install or configure Tor separately</li>
+                            <li><strong>Application-Level Privacy:</strong> All applications, including productivity tools and wallets, benefit from Tor routing</li>
+                            <li><strong>Enhanced Fingerprinting Protection:</strong> Multiple layers of protection beyond standard browser hardening</li>
+                            <li><strong>Local Services Support:</strong> Local AI and services continue to work while maintaining Tor routing for external traffic</li>
+                            <li><strong>Complete Isolation:</strong> Isolated from host operating system, providing additional security layer</li>
+                            <li><strong>Integrated Privacy:</strong> Privacy features built into every component, not just the browser</li>
+                        </ul>
+
+                        <h4>Security Philosophy</h4>
+                        <p>Omega OS follows a defense-in-depth approach to security:</p>
+                        <ul>
+                            <li><strong>Multiple Layers:</strong> Network routing, fingerprinting protection, and application isolation work together</li>
+                            <li><strong>Fail-Safe Design:</strong> When Tor is enabled, all traffic routes through Tor by default with no bypass mechanisms</li>
+                            <li><strong>Privacy by Default:</strong> Hardening features are enabled by default when Tor mode is active</li>
+                            <li><strong>No Telemetry:</strong> No data collection or metrics reporting, even for security features</li>
+                            <li><strong>Open Architecture:</strong> Security features are transparent and verifiable</li>
                         </ul>
                     </div>
 
