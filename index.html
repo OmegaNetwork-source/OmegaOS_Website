@@ -620,6 +620,325 @@
                 right: 10px;
             }
         }
+
+        /* Tech Docs Modal */
+        .tech-docs-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            overflow: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tech-docs-modal.active {
+            display: flex;
+        }
+
+        .tech-docs-container {
+            width: 100%;
+            max-width: 1400px;
+            height: 90vh;
+            margin: 5vh auto;
+            background: var(--bg);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .tech-docs-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-surface);
+        }
+
+        .tech-docs-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .tech-docs-close {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 24px;
+            font-weight: 300;
+        }
+
+        .tech-docs-close:hover {
+            background: var(--bg-elevated);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .tech-docs-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .tech-docs-sidebar {
+            width: 280px;
+            border-right: 1px solid var(--border);
+            background: var(--bg-elevated);
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+
+        .tech-docs-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 3rem;
+        }
+
+        .toc-item {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .toc-item:hover {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-primary);
+        }
+
+        .toc-item.active {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
+            border-left-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tech-docs-section {
+            display: none;
+        }
+
+        .tech-docs-section.active {
+            display: block;
+        }
+
+        .tech-docs-section h3 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            padding-top: 1rem;
+        }
+
+        .tech-docs-section h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .app-item {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            background: var(--bg-surface);
+            transition: all 0.2s ease;
+        }
+
+        .app-item:hover {
+            border-color: rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .app-item h5 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .app-item p {
+            margin-bottom: 0.75rem;
+            font-size: 0.9375rem;
+        }
+
+        .app-item ul {
+            margin-top: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .apps-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        .tech-docs-section h5 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .tech-docs-section p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+            font-size: 0.9375rem;
+        }
+
+        .tech-docs-section ul,
+        .tech-docs-section ol {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+            font-size: 0.9375rem;
+        }
+
+        .tech-docs-section li {
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-docs-section code {
+            background: var(--bg-elevated);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .tech-docs-section pre {
+            background: var(--bg-elevated);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .tech-docs-section pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: 0.875rem;
+        }
+
+        .tech-docs-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.9375rem;
+        }
+
+        .tech-docs-section th,
+        .tech-docs-section td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tech-docs-section th {
+            background: var(--bg-elevated);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tech-docs-section td {
+            color: var(--text-secondary);
+        }
+
+        .tech-docs-section strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .tech-docs-body {
+                flex-direction: column;
+            }
+
+            .tech-docs-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 200px;
+                overflow-x: auto;
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .toc-item {
+                padding: 0.5rem 1rem;
+                white-space: nowrap;
+            }
+
+            .tech-docs-content {
+                padding: 1.5rem 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tech-docs-container {
+                height: 100vh;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .tech-docs-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .tech-docs-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .tech-docs-content {
+                padding: 1.5rem;
+            }
+
+            .tech-docs-section h3 {
+                font-size: 1.5rem;
+            }
+
+            .tech-docs-section h4 {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -637,7 +956,7 @@
             <li><a href="#features">Features</a></li>
             <li><a href="#os-preview">OS Preview</a></li>
             <li><a href="#privacy">Privacy</a></li>
-            <li><a href="#download">Download</a></li>
+            <li><a href="#" id="techDocsLink">Tech Docs</a></li>
         </ul>
     </nav>
 
@@ -780,6 +1099,572 @@
         <p>Community Driven • Privacy First</p>
     </footer>
 
+    <!-- Tech Docs Modal -->
+    <div class="tech-docs-modal" id="techDocsModal">
+        <div class="tech-docs-container">
+            <div class="tech-docs-header">
+                <h2>Omega OS Technical Documentation</h2>
+                <button class="tech-docs-close" id="techDocsClose">&times;</button>
+            </div>
+            <div class="tech-docs-body">
+                <div class="tech-docs-sidebar">
+                    <a href="#" class="toc-item active" data-section="intro">Intro to Omega OS</a>
+                    <a href="#" class="toc-item" data-section="how-it-works">How It Works</a>
+                    <a href="#" class="toc-item" data-section="privacy">Privacy</a>
+                    <a href="#" class="toc-item" data-section="safety">Safety & Security</a>
+                    <a href="#" class="toc-item" data-section="apps">Applications</a>
+                    <a href="#" class="toc-item" data-section="architecture">Architecture</a>
+                    <a href="#" class="toc-item" data-section="blockchain">Blockchain Integration</a>
+                    <a href="#" class="toc-item" data-section="ai">AI Integration</a>
+                    <a href="#" class="toc-item" data-section="vpn">TOR VPN</a>
+                    <a href="#" class="toc-item" data-section="requirements">System Requirements</a>
+                    <a href="#" class="toc-item" data-section="contact">Contact</a>
+                </div>
+                <div class="tech-docs-content">
+                    <!-- Intro Section -->
+                    <div class="tech-docs-section active" id="section-intro">
+                        <h3>Introduction to Omega OS</h3>
+                        <p>Omega OS is a privacy-first operating system built on Electron, designed as an isolated desktop environment with comprehensive security features, built-in applications, and blockchain integration. It operates independently from your host system, providing a secure, sandboxed workspace for all your computing needs.</p>
+                        
+                        <h4>Core Philosophy</h4>
+                        <p>Omega OS is built with privacy as its foundation. Every component, from the architecture to individual applications, is designed to ensure your data remains under your control. No telemetry, no tracking, no data collection—just a secure operating system that respects your autonomy.</p>
+                        
+                        <h4>Key Characteristics</h4>
+                        <ul>
+                            <li><strong>Privacy-First Design:</strong> All features prioritize user privacy and data protection</li>
+                            <li><strong>Local Processing:</strong> AI and sensitive operations run entirely on-device</li>
+                            <li><strong>Isolated Environment:</strong> Complete sandboxing from the host operating system</li>
+                            <li><strong>Blockchain Integration:</strong> Optional blockchain features for identity and document sync</li>
+                            <li><strong>Open Architecture:</strong> Built on open-source technologies (Electron, Node.js)</li>
+                        </ul>
+
+                        <h4>Version Information</h4>
+                        <p>Current Version: <strong>1.0.0</strong></p>
+                        <p>Framework: <strong>Electron 28.0</strong></p>
+                        <p>License: <strong>MIT</strong></p>
+                    </div>
+
+                    <!-- How It Works Section -->
+                    <div class="tech-docs-section" id="section-how-it-works">
+                        <h3>How It Works</h3>
+                        <p>Omega OS operates as an application layer on top of your existing operating system, creating an isolated desktop environment that functions like a complete OS within your host system.</p>
+                        
+                        <h4>System Architecture</h4>
+                        <p>Omega OS uses Electron's multi-process architecture:</p>
+                        <ul>
+                            <li><strong>Main Process:</strong> Controls application lifecycle, manages windows, and handles system-level operations</li>
+                            <li><strong>Renderer Processes:</strong> Each application runs in its own isolated renderer process with strict sandboxing</li>
+                            <li><strong>Context Isolation:</strong> All renderer processes run with context isolation enabled, preventing direct Node.js access</li>
+                            <li><strong>IPC Communication:</strong> Secure communication between processes via context bridge API</li>
+                        </ul>
+
+                        <h4>Isolation Model</h4>
+                        <p>The system implements multiple layers of isolation:</p>
+                        <ol>
+                            <li><strong>Process Isolation:</strong> Each application runs in a separate process with limited permissions</li>
+                            <li><strong>File System Isolation:</strong> All data stored in isolated directory (<code>~/.omega-os/isolated-env/</code>)</li>
+                            <li><strong>Network Isolation:</strong> Optional TOR VPN routing for network traffic</li>
+                            <li><strong>Memory Isolation:</strong> Renderer processes cannot access main process memory</li>
+                        </ol>
+
+                        <h4>Data Storage</h4>
+                        <p>All user data is stored in an isolated directory structure:</p>
+                        <pre><code>~/.omega-os/isolated-env/
+├── apps/
+│   ├── browser/
+│   ├── word/
+│   ├── sheets/
+│   └── wallet/
+├── settings/
+└── identity/</code></pre>
+                        <p>This ensures complete separation from your host system's file system, preventing data leakage and unauthorized access.</p>
+                    </div>
+
+                    <!-- Privacy Section -->
+                    <div class="tech-docs-section" id="section-privacy">
+                        <h3>Privacy Features</h3>
+                        <p>Privacy is not an optional feature in Omega OS—it's built into every component of the system.</p>
+                        
+                        <h4>No Data Collection</h4>
+                        <ul>
+                            <li><strong>Zero Telemetry:</strong> No usage statistics, crash reports, or analytics are collected</li>
+                            <li><strong>No Tracking:</strong> No user tracking, fingerprinting, or behavioral analysis</li>
+                            <li><strong>No Cloud Services:</strong> All operations run locally on your device</li>
+                            <li><strong>No External Connections:</strong> Optional features require explicit user consent</li>
+                        </ul>
+
+                        <h4>Local AI Processing</h4>
+                        <p>All AI features run entirely on your device using bundled models:</p>
+                        <ul>
+                            <li>AI models bundled with the application (Transformers.js)</li>
+                            <li>No data sent to external AI services</li>
+                            <li>Works completely offline</li>
+                            <li>Conversations and data remain on your device</li>
+                        </ul>
+
+                        <h4>TOR VPN Integration</h4>
+                        <p>Built-in TOR VPN provides network-level privacy:</p>
+                        <ul>
+                            <li>Routes all traffic through the Tor network</li>
+                            <li>Bundled Tor daemon (no external dependencies)</li>
+                            <li>Automatic connection management</li>
+                            <li>IP address masking and location spoofing</li>
+                        </ul>
+
+                        <h4>Blockchain Privacy</h4>
+                        <p>When using blockchain features, privacy is maintained:</p>
+                        <ul>
+                            <li>Only document hashes stored on-chain (not content)</li>
+                            <li>Identity system uses privacy-preserving device fingerprints</li>
+                            <li>Optional features—you control what gets stored</li>
+                            <li>No personal information stored on blockchain</li>
+                        </ul>
+                    </div>
+
+                    <!-- Safety & Security Section -->
+                    <div class="tech-docs-section" id="section-safety">
+                        <h3>Safety & Security</h3>
+                        <p>Omega OS implements multiple security layers to protect your data and system.</p>
+                        
+                        <h4>Sandboxing</h4>
+                        <p>Strict sandbox mode is enabled for all renderer processes:</p>
+                        <ul>
+                            <li><strong>No Node Integration:</strong> Renderer processes cannot access Node.js APIs directly</li>
+                            <li><strong>Context Isolation:</strong> JavaScript context is isolated from the main process</li>
+                            <li><strong>Process Isolation:</strong> Each application runs in its own process with limited permissions</li>
+                            <li><strong>File System Restrictions:</strong> Access limited to isolated data directory</li>
+                        </ul>
+
+                        <h4>Encryption</h4>
+                        <ul>
+                            <li><strong>Wallet Key Encryption:</strong> Cryptocurrency wallet keys are encrypted at rest</li>
+                            <li><strong>Secure Storage:</strong> Sensitive data stored using encrypted storage mechanisms</li>
+                            <li><strong>Document Hashing:</strong> Document integrity verified using SHA-256 hashing</li>
+                        </ul>
+
+                        <h4>Secure Communication</h4>
+                        <ul>
+                            <li><strong>Context Bridge:</strong> All IPC communication goes through secure context bridge</li>
+                            <li><strong>No Direct Node Access:</strong> Renderer processes cannot directly access system APIs</li>
+                            <li><strong>Controlled API Exposure:</strong> Only necessary APIs exposed to renderer processes</li>
+                        </ul>
+
+                        <h4>Security Best Practices</h4>
+                        <ul>
+                            <li>Regular security audits of dependencies</li>
+                            <li>Minimal attack surface (limited external dependencies)</li>
+                            <li>Secure default configurations</li>
+                            <li>Isolated execution environment</li>
+                        </ul>
+                    </div>
+
+                    <!-- Applications Section -->
+                    <div class="tech-docs-section" id="section-apps">
+                        <h3>Built-in Applications</h3>
+                        <p>Omega OS includes a comprehensive suite of productivity and utility applications.</p>
+                        
+                        <div class="apps-grid">
+                            <div class="app-item">
+                                <h5>Omega Browser</h5>
+                                <p>A privacy-focused web browser with full web capabilities:</p>
+                                <ul>
+                                    <li>Full web browsing with tab management</li>
+                                    <li>Privacy-focused search (DuckDuckGo default)</li>
+                                    <li>History, bookmarks, and download management</li>
+                                    <li>Dark/light theme support</li>
+                                    <li>Built-in AI chat assistant</li>
+                                    <li>Extension support (MetaMask, Phantom, etc.)</li>
+                                    <li>Ad-blocking and tracker prevention</li>
+                                </ul>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Omega Word</h5>
+                                <p>Full-featured word processor:</p>
+                                <ul>
+                                    <li>Rich text editing with formatting options</li>
+                                    <li>Font selection and styling</li>
+                                    <li>Text alignment (left, center, right, justify)</li>
+                                    <li>Bullet and numbered lists</li>
+                                    <li>Document save/load in isolated environment</li>
+                                    <li>AI-powered writing assistance</li>
+                                </ul>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Omega Sheets</h5>
+                                <p>Spreadsheet application with formula support:</p>
+                                <ul>
+                                    <li>100x26 cell grid</li>
+                                    <li>Formula engine with cell references</li>
+                                    <li>Functions: SUM, AVERAGE, and more</li>
+                                    <li>Text formatting and styling</li>
+                                    <li>Save/load spreadsheets</li>
+                                </ul>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Omega Wallet</h5>
+                                <p>Multi-chain cryptocurrency wallet:</p>
+                                <ul>
+                                    <li>EVM and Omega Network blockchain support</li>
+                                    <li>Solana blockchain support</li>
+                                    <li>Create/import wallet functionality</li>
+                                    <li>Send/receive tokens</li>
+                                    <li>Cold storage capabilities</li>
+                                    <li>Secure key storage and encryption</li>
+                                    <li>MetaMask and Phantom extension integration</li>
+                                </ul>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Omega Create</h5>
+                                <p>AI-powered code generation tool:</p>
+                                <ul>
+                                    <li>Generate code using local AI models</li>
+                                    <li>Support for multiple languages (HTML, Python, Solidity)</li>
+                                    <li>Code completion and suggestions</li>
+                                    <li>Auto-fix incomplete code</li>
+                                    <li>Project template generation</li>
+                                    <li>Works completely offline</li>
+                                </ul>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Burn to Hell (B2H)</h5>
+                                <p>Complete data wipe utility:</p>
+                                <ul>
+                                    <li>Permanently delete ALL user data</li>
+                                    <li>Wipes browser history, cookies, and cache</li>
+                                    <li>Removes all files and documents</li>
+                                    <li>Clears wallet data and credentials</li>
+                                    <li>Double confirmation for safety</li>
+                                    <li>Application restart after completion</li>
+                                    <li><strong>Warning:</strong> This action cannot be undone</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 3rem;">Additional Tools</h4>
+                        <div class="apps-grid">
+                            <div class="app-item">
+                                <h5>File Manager</h5>
+                                <p>Browse and manage files in the isolated environment with encrypted storage support. Organize documents, create folders, and manage your file system securely within Omega OS.</p>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Password Manager</h5>
+                                <p>Secure password storage and management system. Store encrypted credentials, generate strong passwords, and manage access to your accounts with local encryption.</p>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Secure Vault</h5>
+                                <p>Encrypted data storage for sensitive information. Store files, documents, and data with strong encryption, accessible only with proper authentication.</p>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Privacy Monitor</h5>
+                                <p>Track system access and monitor privacy-related activities. View which applications are accessing files, network connections, and system resources in real-time.</p>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Firewall</h5>
+                                <p>Network traffic control and monitoring. Manage incoming and outgoing connections, block unauthorized access, and monitor network activity for enhanced security.</p>
+                            </div>
+
+                            <div class="app-item">
+                                <h5>Terminal</h5>
+                                <p>Command-line interface for developers and power users. Execute system commands, run scripts, and access advanced features through the terminal interface.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Architecture Section -->
+                    <div class="tech-docs-section" id="section-architecture">
+                        <h3>Technical Architecture</h3>
+                        <p>Omega OS is built on modern web technologies with security-first design principles.</p>
+                        
+                        <h4>Core Technologies</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Technology</th>
+                                    <th>Version</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Framework</td>
+                                    <td>Electron</td>
+                                    <td>28.0</td>
+                                </tr>
+                                <tr>
+                                    <td>JavaScript Runtime</td>
+                                    <td>Node.js</td>
+                                    <td>18.x</td>
+                                </tr>
+                                <tr>
+                                    <td>Rendering Engine</td>
+                                    <td>Chromium</td>
+                                    <td>Electron 28.0</td>
+                                </tr>
+                                <tr>
+                                    <td>AI Framework</td>
+                                    <td>Transformers.js</td>
+                                    <td>Latest</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Process Architecture</h4>
+                        <pre><code>Omega OS Application
+│
+├── Main Process (Node.js)
+│   ├── Window Management
+│   ├── Application Lifecycle
+│   ├── System Integration
+│   └── IPC Handler
+│
+└── Renderer Processes (Chromium)
+    ├── Desktop UI (isolated)
+    ├── Browser App (isolated)
+    ├── Word App (isolated)
+    ├── Sheets App (isolated)
+    ├── Wallet App (isolated)
+    └── Other Apps (isolated)</code></pre>
+
+                        <h4>Security Architecture</h4>
+                        <ul>
+                            <li><strong>Sandbox Mode:</strong> Enabled for all renderer processes</li>
+                            <li><strong>Context Isolation:</strong> JavaScript context isolated from Node.js</li>
+                            <li><strong>Node Integration:</strong> Disabled in renderer processes</li>
+                            <li><strong>Preload Scripts:</strong> Controlled API exposure via preload scripts</li>
+                            <li><strong>Content Security Policy:</strong> Strict CSP for all windows</li>
+                        </ul>
+
+                        <h4>Data Architecture</h4>
+                        <p>All application data is stored in an isolated directory structure, completely separate from the host system. This ensures:</p>
+                        <ul>
+                            <li>No interference with host system files</li>
+                            <li>Complete portability (data directory can be moved)</li>
+                            <li>Easy backup and restore</li>
+                            <li>Clear separation of concerns</li>
+                        </ul>
+                    </div>
+
+                    <!-- Blockchain Section -->
+                    <div class="tech-docs-section" id="section-blockchain">
+                        <h3>Blockchain Integration</h3>
+                        <p>Omega OS includes optional blockchain features for identity management and document synchronization, powered by Omega Network.</p>
+                        
+                        <h4>Omega Network</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Chain ID</td>
+                                    <td>1313161768</td>
+                                </tr>
+                                <tr>
+                                    <td>RPC URL</td>
+                                    <td>https://0x4e454228.rpc.aurora-c.network</td>
+                                </tr>
+                                <tr>
+                                    <td>Explorer</td>
+                                    <td>https://explorer.omeganetwork.co</td>
+                                </tr>
+                                <tr>
+                                    <td>Currency</td>
+                                    <td>OMEGA tokens</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>Omega Identity System</h4>
+                        <p>The identity system provides a blockchain-based unique identifier for your Omega OS installation:</p>
+                        <ul>
+                            <li><strong>Unique Identity:</strong> Each wallet address gets a unique Omega ID</li>
+                            <li><strong>Cross-Device:</strong> Same wallet = same identity across all devices</li>
+                            <li><strong>Privacy-Preserving:</strong> Uses device fingerprint hashes (no personal data)</li>
+                            <li><strong>Blockchain-Stored:</strong> Permanent, verifiable, decentralized</li>
+                            <li><strong>User-Controlled:</strong> You decide when to create and use it</li>
+                        </ul>
+
+                        <h4>Document Sync (Optional)</h4>
+                        <p>Document synchronization uses blockchain for verification and cross-device access:</p>
+                        <ul>
+                            <li><strong>Hash-Based:</strong> Only document hashes stored on-chain (not content)</li>
+                            <li><strong>Cross-Device Access:</strong> View documents synced from other devices</li>
+                            <li><strong>Integrity Verification:</strong> Verify documents haven't been tampered with</li>
+                            <li><strong>Optional Feature:</strong> You choose which documents to sync</li>
+                        </ul>
+
+                        <h4>Smart Contracts</h4>
+                        <p>Omega OS uses two main smart contracts:</p>
+                        <ol>
+                            <li><strong>OmegaIdentityRegistry:</strong> Stores user identities on-chain</li>
+                            <li><strong>OmegaDocumentSync:</strong> Handles document hash synchronization</li>
+                        </ol>
+
+                        <h4>Token Requirements</h4>
+                        <ul>
+                            <li><strong>Identity Registration:</strong> One-time gas fee (~0.001-0.01 OMEGA tokens)</li>
+                            <li><strong>Document Sync:</strong> Gas fee per document (~0.001-0.01 OMEGA tokens)</li>
+                            <li><strong>All Features Optional:</strong> Omega OS works without blockchain features</li>
+                        </ul>
+                    </div>
+
+                    <!-- AI Integration Section -->
+                    <div class="tech-docs-section" id="section-ai">
+                        <h3>AI Integration</h3>
+                        <p>Omega OS includes comprehensive AI capabilities that run entirely on your device, ensuring complete privacy.</p>
+                        
+                        <h4>Local AI Processing</h4>
+                        <p>All AI features use bundled models that run locally:</p>
+                        <ul>
+                            <li><strong>Framework:</strong> Transformers.js for browser-based AI inference</li>
+                            <li><strong>Models:</strong> Bundled with the application (no external downloads required)</li>
+                            <li><strong>Offline Capable:</strong> Works completely offline</li>
+                            <li><strong>No Data Transmission:</strong> No data sent to external servers</li>
+                        </ul>
+
+                        <h4>AI Features</h4>
+                        <ul>
+                            <li><strong>Desktop AI Assistant:</strong> System-wide AI assistant for help and productivity</li>
+                            <li><strong>Browser AI Chat:</strong> Built-in AI chat assistant in the browser</li>
+                            <li><strong>Writing Assistance:</strong> AI-powered writing help in Omega Word</li>
+                            <li><strong>Code Generation:</strong> AI code generation and assistance tools</li>
+                        </ul>
+
+                        <h4>Privacy Guarantees</h4>
+                        <ul>
+                            <li>All conversations remain on your device</li>
+                            <li>No training data collected</li>
+                            <li>No usage analytics</li>
+                            <li>No external API calls</li>
+                            <li>Complete user control over AI features</li>
+                        </ul>
+
+                        <h4>Performance</h4>
+                        <p>AI processing is optimized for local execution:</p>
+                        <ul>
+                            <li>Efficient model inference using WebAssembly</li>
+                            <li>GPU acceleration where available</li>
+                            <li>Background processing to maintain UI responsiveness</li>
+                            <li>Model quantization for reduced memory usage</li>
+                        </ul>
+                    </div>
+
+                    <!-- TOR VPN Section -->
+                    <div class="tech-docs-section" id="section-vpn">
+                        <h3>TOR VPN Integration</h3>
+                        <p>Omega OS includes built-in TOR VPN integration for network-level privacy and anonymity.</p>
+                        
+                        <h4>TOR Implementation</h4>
+                        <ul>
+                            <li><strong>Bundled Tor Daemon:</strong> Tor binary included with the application</li>
+                            <li><strong>Automatic Management:</strong> Tor process managed automatically</li>
+                            <li><strong>No External Installation:</strong> Works out of the box</li>
+                            <li><strong>Automatic Updates:</strong> Tor daemon updated with application updates</li>
+                        </ul>
+
+                        <h4>Features</h4>
+                        <ul>
+                            <li><strong>Traffic Routing:</strong> All network traffic routed through Tor network</li>
+                            <li><strong>IP Masking:</strong> Your real IP address is hidden</li>
+                            <li><strong>Location Spoofing:</strong> Appear to be in different locations</li>
+                            <li><strong>Automatic Connection:</strong> Connects automatically on startup (optional)</li>
+                            <li><strong>Connection Status:</strong> Visual indicators for connection status</li>
+                        </ul>
+
+                        <h4>Privacy Benefits</h4>
+                        <ul>
+                            <li>Anonymize your network traffic</li>
+                            <li>Protect against network surveillance</li>
+                            <li>Access .onion sites and services</li>
+                            <li>Bypass geographic restrictions</li>
+                            <li>Prevent ISP tracking</li>
+                        </ul>
+
+                        <h4>Configuration</h4>
+                        <p>TOR VPN can be configured through the system settings:</p>
+                        <ul>
+                            <li>Enable/disable automatic connection</li>
+                            <li>Configure connection preferences</li>
+                            <li>Monitor connection status and bandwidth</li>
+                            <li>View connection logs (if enabled)</li>
+                        </ul>
+                    </div>
+
+                    <!-- System Requirements Section -->
+                    <div class="tech-docs-section" id="section-requirements">
+                        <h3>System Requirements</h3>
+                        <p>Minimum and recommended system requirements for running Omega OS.</p>
+                        
+                        <h4>Windows</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Minimum</th>
+                                    <th>Recommended</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>OS Version</td>
+                                    <td>Windows 10 (64-bit)</td>
+                                    <td>Windows 11 (64-bit)</td>
+                                </tr>
+                                <tr>
+                                    <td>RAM</td>
+                                    <td>4 GB</td>
+                                    <td>8 GB or more</td>
+                                </tr>
+                                <tr>
+                                    <td>Storage</td>
+                                    <td>500 MB</td>
+                                    <td>2 GB</td>
+                                </tr>
+                                <tr>
+                                    <td>Processor</td>
+                                    <td>64-bit processor</td>
+                                    <td>Multi-core processor</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h4>macOS</h4>
+                        <p><strong>Coming Soon</strong></p>
+
+                        <h4>Linux</h4>
+                        <p><strong>Coming Soon</strong></p>
+
+                        <h4>Additional Considerations</h4>
+                        <ul>
+                            <li><strong>AI Features:</strong> Additional RAM recommended for AI processing (2-4 GB)</li>
+                            <li><strong>TOR VPN:</strong> Additional bandwidth required for routing through Tor network</li>
+                            <li><strong>Blockchain:</strong> Internet connection required for blockchain features (optional)</li>
+                            <li><strong>Graphics:</strong> Hardware acceleration recommended for better performance</li>
+                        </ul>
+                    </div>
+
+                    <!-- Contact Section -->
+                    <div class="tech-docs-section" id="section-contact">
+                        <h3>Contact</h3>
+                        <p>If you have questions about Omega OS, are interested in integration opportunities, need technical support, want to provide feedback, or are looking to collaborate on development, please reach out to <strong>@RichardCEOOfficial</strong> on Telegram. We welcome inquiries from developers, businesses, and users who want to learn more about our privacy-first operating system, explore partnership opportunities, report issues, suggest improvements, or discuss how Omega OS can be customized for specific use cases. Whether you're a developer looking to build on top of Omega OS, an organization interested in enterprise deployment, or a user with questions about features and functionality, we're here to help and would love to hear from you.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Logo fallback - show text if image fails to load
         window.addEventListener('DOMContentLoaded', function() {
@@ -908,6 +1793,76 @@
                     showImage(currentImageIndex - 1);
                 } else if (e.key === 'ArrowRight' && currentImageIndex < images.length - 1) {
                     showImage(currentImageIndex + 1);
+                }
+            });
+
+            // Tech Docs Modal Functionality
+            const techDocsModal = document.getElementById('techDocsModal');
+            const techDocsLink = document.getElementById('techDocsLink');
+            const techDocsClose = document.getElementById('techDocsClose');
+            const tocItems = document.querySelectorAll('.toc-item');
+            const techDocsSections = document.querySelectorAll('.tech-docs-section');
+
+            // Open modal
+            if (techDocsLink) {
+                techDocsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    techDocsModal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            // Close modal
+            function closeTechDocsModal() {
+                techDocsModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            if (techDocsClose) {
+                techDocsClose.addEventListener('click', closeTechDocsModal);
+            }
+
+            // Close on background click
+            techDocsModal.addEventListener('click', function(e) {
+                if (e.target === techDocsModal) {
+                    closeTechDocsModal();
+                }
+            });
+
+            // Table of Contents navigation
+            tocItems.forEach(function(item) {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionId = this.getAttribute('data-section');
+                    
+                    // Update active states
+                    tocItems.forEach(function(i) {
+                        i.classList.remove('active');
+                    });
+                    this.classList.add('active');
+
+                    // Show selected section
+                    techDocsSections.forEach(function(section) {
+                        section.classList.remove('active');
+                    });
+                    const targetSection = document.getElementById('section-' + sectionId);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                        targetSection.scrollTop = 0;
+                    }
+
+                    // Scroll content to top
+                    const contentArea = document.querySelector('.tech-docs-content');
+                    if (contentArea) {
+                        contentArea.scrollTop = 0;
+                    }
+                });
+            });
+
+            // Close modal on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && techDocsModal.classList.contains('active')) {
+                    closeTechDocsModal();
                 }
             });
 
