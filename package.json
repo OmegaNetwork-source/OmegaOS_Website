@@ -124,16 +124,14 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "allowElevation": true,
+      "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "runAfterFinish": false,
-      "include": "build/installer.nsh",
       "artifactName": "${productName} Setup ${version}.${ext}",
       "shortcutName": "${productName}",
       "menuCategory": false,
-      "warningsAsErrors": false,
-      "deleteAppDataOnUninstall": false
+      "warningsAsErrors": false
     },
     "publish": {
       "provider": "github",
