@@ -448,7 +448,11 @@ body {
 }
 
 .editor-container {
-    background: white;
+    background-color: white;
+    /* Add visual page break line exactly at 11in intervals */
+    background-image: linear-gradient(to bottom, transparent calc(11in - 1px), #d0d0d0 calc(11in - 1px), #d0d0d0 11in);
+    background-size: 100% 11in;
+    background-repeat: repeat-y;
     width: 8.5in;
     min-height: 11in;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -642,23 +646,46 @@ body {
     cursor: not-allowed;
 }
 
-.editor {
-    min-height: 100%;
+/* Pages Container */
+.pages-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+/* Individual Page */
+.page {
+    background: white;
+    width: 8.5in;
+    height: 11in;
+    padding: 1in;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     outline: none;
     font-size: 12pt;
-    line-height: 2; /* Double spacing for APA format */
+    line-height: 2;
     color: #333;
+    overflow: hidden;
+    position: relative;
+    box-sizing: border-box;
 }
 
-.editor p {
+[data-theme="dark"] .page {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.page p {
     margin: 0;
     margin-bottom: 0;
-    text-indent: 0.5in; /* First line indentation for APA paragraphs */
-    line-height: 2; /* Double spacing */
+    text-indent: 0.5in;
+    line-height: 2;
 }
 
-.editor p:first-of-type {
-    text-indent: 0; /* First paragraph doesn't indent */
+.page p:first-of-type {
+    text-indent: 0;
 }
 
 .editor h1 {
@@ -863,4 +890,3 @@ body {
 [data-theme="dark"] .ai-welcome-message .subtitle {
     color: #808080;
 }
-

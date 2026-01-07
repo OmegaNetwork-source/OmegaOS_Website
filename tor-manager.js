@@ -28,16 +28,16 @@ class TorManager {
     // electron-builder puts build/ folder in resources/ directory
     const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
     const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
-    
+
     if (fs.existsSync(bundledTorPath)) {
       console.log('[Tor] Using bundled Tor from:', bundledTorPath);
       return bundledTorPath;
     }
-    
+
     // Fallback to user data directory
     const userDataPath = app.getPath('userData');
     const torDir = path.join(userDataPath, 'tor');
-    
+
     if (this.platform === 'win32') {
       return path.join(torDir, 'tor.exe');
     } else if (this.platform === 'darwin') {
@@ -63,14 +63,14 @@ class TorManager {
       console.log('[Tor] Found bundled Tor at:', bundledTorPath);
       return true;
     }
-    
+
     // Check user data directory
     const torPath = this.getTorPath();
     if (fs.existsSync(torPath)) {
       console.log('[Tor] Found Tor at:', torPath);
       return true;
     }
-    
+
     return false;
   }
 
@@ -84,7 +84,7 @@ class TorManager {
     // Check if bundled Tor exists (should be in build/tor/tor.exe)
     const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
     const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
-    
+
     if (fs.existsSync(bundledTorPath)) {
       console.log('[Tor] Using bundled Tor');
       // Copy to user data directory for easier access
@@ -135,11 +135,11 @@ class TorManager {
   async extractTorWindows(zipPath, extractPath) {
     const AdmZip = require('adm-zip');
     const zip = new AdmZip(zipPath);
-    
+
     // Extract to temp directory first
     const tempDir = path.join(extractPath, 'temp');
     zip.extractAllTo(tempDir, true);
-    
+
     // Find tor.exe in the extracted files
     const findTorExe = (dir) => {
       const files = fs.readdirSync(dir);
@@ -161,10 +161,10 @@ class TorManager {
       // Move tor.exe to tor directory
       const targetPath = path.join(extractPath, 'tor.exe');
       fs.copyFileSync(torExePath, targetPath);
-      
+
       // Clean up temp directory
       fs.rmSync(tempDir, { recursive: true, force: true });
-      
+
       console.log('[Tor] Tor extracted successfully');
     } else {
       throw new Error('tor.exe not found in downloaded archive');
@@ -176,7 +176,7 @@ class TorManager {
     // For macOS/Linux, we'll try to use system Tor if available
     // Otherwise, we can download the static binary
     console.log('[Tor] Checking for system Tor installation...');
-    
+
     try {
       const { stdout } = await execPromise('which tor');
       if (stdout && stdout.trim()) {
@@ -198,7 +198,7 @@ class TorManager {
       console.log('[Tor]   sudo apt-get install tor  (Debian/Ubuntu)');
       console.log('[Tor]   sudo yum install tor       (RHEL/CentOS)');
     }
-    
+
     return false;
   }
 
@@ -211,7 +211,7 @@ class TorManager {
     // Check if Tor is installed
     if (!(await this.isTorInstalled())) {
       console.log('[Tor] Tor not found, checking for system installation...');
-      
+
       if (this.platform === 'win32') {
         try {
           await this.downloadTorWindows(); // This now checks for system installations
@@ -229,7 +229,7 @@ class TorManager {
 
     this.torPath = this.getTorPath();
     this.torDataDir = this.getTorDataDir();
-    
+
     // Create data directory
     if (!fs.existsSync(this.torDataDir)) {
       fs.mkdirSync(this.torDataDir, { recursive: true });
@@ -256,17 +256,17 @@ class TorManager {
     const portInUse = await this.checkPortInUse(this.torPort);
     if (portInUse) {
       console.log('[Tor] Port 9050 is already in use. Checking if it\'s a leftover process...');
-      
+
       // Try to verify if Tor is actually responding
       const isActuallyRunning = await this.verifyTorRunning();
-      
+
       if (!isActuallyRunning) {
         console.log('[Tor] Port 9050 is in use but Tor is not responding. Killing orphaned processes...');
         await this.killAllTorProcesses();
-        
+
         // Wait a bit for port to be released
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         // Check again
         const stillInUse = await this.checkPortInUse(this.torPort);
         if (stillInUse) {
@@ -286,13 +286,14 @@ class TorManager {
     const torrc = `SocksPort ${this.torPort}
 ControlPort ${this.controlPort}
 DataDirectory ${this.torDataDir}
+CookieAuthentication 0
 `;
 
     fs.writeFileSync(torrcPath, torrc, 'utf8');
 
     // Start Tor process
     console.log('[Tor] Starting Tor daemon...');
-    
+
     const args = [
       '-f', torrcPath
     ];
@@ -337,7 +338,7 @@ DataDirectory ${this.torDataDir}
     while (!this.isRunning && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       attempts++;
-      
+
       // Check if process is still running
       if (!this.torProcess || this.torProcess.killed) {
         throw new Error('Tor process failed to start');
@@ -357,7 +358,7 @@ DataDirectory ${this.torDataDir}
 
     if (this.torProcess) {
       this.torProcess.kill('SIGTERM');
-      
+
       // Wait for process to exit (max 3 seconds)
       let attempts = 0;
       while (this.torProcess && attempts < 3) {
@@ -472,13 +473,166 @@ DataDirectory ${this.torDataDir}
   }
 
   // Get Tor status
+  // Get Tor status
   getStatus() {
     return {
-      isRunning: this.isRunning,
-      torPath: this.torPath,
-      torPort: this.torPort,
-      controlPort: this.controlPort
+      running: this.isRunning,
+      pid: this.torProcess ? this.torProcess.pid : null,
+      port: this.torPort,
+      controlPort: this.controlPort,
+      onionAddress: null // TODO: Store persistent address if needed
     };
+  }
+
+  /**
+   * Interact with Tor Control Port
+   * @param {string} command - Command to send
+   * @returns {Promise<string>} - Response from Tor
+   */
+  async sendControlCommand(command) {
+    const net = require('net');
+    return new Promise((resolve, reject) => {
+      const socket = new net.Socket();
+      let response = '';
+      let authenticated = false;
+
+      socket.connect(this.controlPort, '127.0.0.1', () => {
+        // Must authenticate first (even with empty password for CookieAuthentication 0)
+        socket.write('AUTHENTICATE ""\r\n');
+      });
+
+      socket.on('data', (data) => {
+        const raw = data.toString();
+
+        if (!authenticated) {
+          // Check auth response
+          if (raw.includes('250 OK')) {
+            authenticated = true;
+            // Now send the actual command
+            socket.write(command + '\r\n');
+          } else {
+            reject(new Error(`Authentication failed: ${raw}`));
+            socket.destroy();
+          }
+          return;
+        }
+
+        response += raw;
+        // Check for completion (250 OK or error code)
+        // Note: ADD_ONION returns "250-ServiceID=..." then "250 OK"
+        if (response.includes('250 OK') || (response.match(/^\d{3}/) && !response.startsWith('250-'))) {
+          socket.end();
+        }
+      });
+
+      socket.on('end', () => {
+        resolve(response);
+      });
+
+      socket.on('error', (err) => {
+        reject(err);
+      });
+
+      // Safety timeout
+      setTimeout(() => {
+        if (!socket.destroyed) {
+          socket.destroy();
+          if (!response) reject(new Error('Control port timeout'));
+        }
+      }, 5000);
+    });
+  }
+
+  /**
+   * Setup a Hidden Service
+   * @param {number} localPort - Local port to forward to (e.g. 7777)
+   * @param {number} targetPort - External onion port (default 80)
+   * @returns {Promise<string>} - The Onion address (without .onion extension)
+   */
+  async setupHiddenService(localPort, targetPort = 80) {
+    if (!this.isRunning) {
+      throw new Error('Tor is not running');
+    }
+
+    try {
+      console.log(`[Tor] Creating Hidden Service forwarding ${targetPort} -> ${localPort}...`);
+
+      // ADD_ONION NEW:BEST Port=TargetPort,127.0.0.1:LocalPort
+      // NEW:BEST generates a new v3 key
+      // Flags=DiscardPK keeps the key in memory only (transient) - good for "Burner" style
+      // For persistence, we'd want to save the key. For now, let's use ephemeral.
+      // To make it persistent, we should use 'Detached' or provide the key.
+      // Let's use ephemeral for now as per "Whisper" (like sessions), 
+      // OR we can make it persistent by creating a directory.
+      // Let's go with ephemeral for true "Whisper" privacy initially.
+
+      const cmd = `ADD_ONION NEW:BEST Port=${targetPort},127.0.0.1:${localPort}`;
+      const response = await this.sendControlCommand(cmd);
+
+      if (response.includes('250-ServiceID=')) {
+        const match = response.match(/ServiceID=([a-z2-7]+)/);
+        if (match && match[1]) {
+          const onionAddress = match[1];
+          console.log(`[Tor] Hidden Service created: ${onionAddress}.onion`);
+          return onionAddress + '.onion';
+        }
+      }
+
+      throw new Error(`Failed to create Hidden Service. Response: ${response}`);
+    } catch (error) {
+      console.error('[Tor] Hidden Service setup failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get current Tor circuits
+   * @returns {Promise<Array>} - Array of circuit objects
+   */
+  async getCircuits() {
+    if (!this.isRunning) return [];
+    try {
+      const response = await this.sendControlCommand('GETINFO circuit-status');
+      // Parse response
+      // Format: 250-circuit-status=...
+      // ID STATUS PATH...
+      const lines = response.split('\r\n');
+      const circuits = [];
+
+      for (const line of lines) {
+        if (line.startsWith('250-circuit-status=') || line === '250 OK') continue;
+
+        // Example: 10 BUILT $F123...~Guard,$A456...~Middle,$B789...~Exit BUILD_FLAGS=...
+        const parts = line.split(' ');
+        if (parts.length < 3) continue;
+
+        const id = parts[0];
+        const status = parts[1];
+        const pathStr = parts[2]; // Comma separated nodes
+
+        if (status === 'BUILT') {
+          const nodes = pathStr.split(',').map(n => {
+            // Extract name/fingerprint
+            // $Fingerprint~Name
+            const nodeParts = n.split('~');
+            return {
+              fingerprint: nodeParts[0].replace('$', ''),
+              name: nodeParts[1] || 'Unknown'
+            };
+          });
+
+          circuits.push({
+            id,
+            nodes,
+            purpose: 'GENERAL' // Simplified
+          });
+        }
+      }
+      return circuits;
+    } catch (e) {
+      console.error('Failed to get circuits:', e);
+      return [];
+    }
   }
 }
 

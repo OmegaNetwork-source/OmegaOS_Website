@@ -13,9 +13,27 @@ try {
   torManager = require('./tor-manager');
 } catch (e) {
   console.warn('[Main] Tor manager not available:', e.message);
+  console.warn('[Main] Tor manager not available:', e.message);
 }
 
-// Analytics (optional - can be disabled)
+// Whisper Service (P2P Messenger)
+let whisperService;
+try {
+  whisperService = require('./whisper-service');
+
+  // Forward message deletion events to renderer
+  whisperService.onMessageDeleted = (messageId) => {
+    // Find Whisper window
+    const whisperAppData = Array.from(appWindows.values()).find(w => w.type === 'whisper');
+    if (whisperAppData && whisperAppData.window && !whisperAppData.window.isDestroyed()) {
+      whisperAppData.window.webContents.send('whisper-message-deleted', messageId);
+    }
+  };
+} catch (e) {
+  console.warn('[Main] Whisper service not available:', e.message);
+}
+
+// Analyitcs (optional - can be disabled)
 let analytics;
 try {
   analytics = require('./analytics');
@@ -141,7 +159,7 @@ function getIconPath() {
   // In packaged app, icon is embedded in executable, but we can still reference it
   // electron-builder puts build/ folder in resources/ directory (outside app.asar)
   const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : __dirname);
-  
+
   // Try multiple possible locations
   const possiblePaths = [
     path.join(resourcesPath, 'build', 'icon.ico'),
@@ -149,13 +167,13 @@ function getIconPath() {
     path.join(resourcesPath, 'icon.ico'),
     path.join(__dirname, 'icon.ico'),
   ];
-  
+
   for (const iconPath of possiblePaths) {
     if (fs.existsSync(iconPath)) {
       return iconPath;
     }
   }
-  
+
   // Fallback: return the most likely path (electron-builder embeds it in exe, but this is for window icon)
   return path.join(resourcesPath, 'build', 'icon.ico');
 }
@@ -194,7 +212,7 @@ function createDesktopWindow() {
       desktopWindow.webContents.openDevTools();
     }
   });
-  
+
   // Handle errors
   desktopWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error('Failed to load:', errorDescription, validatedURL);
@@ -210,7 +228,7 @@ function createDesktopWindow() {
 
 function createAppWindow(appType, options = {}) {
   let appFile, width, height, loadUrl = null;
-  
+
   if (appType === 'browser') {
     appFile = 'browser.html';
     width = options.width || 1200;
@@ -289,13 +307,25 @@ function createAppWindow(appType, options = {}) {
     appFile = 'ai-dev.html';
     width = options.width || 1200;
     height = options.height || 800;
+  } else if (appType === 'whisper') {
+    appFile = 'whisper.html';
+    width = options.width || 1100; // Wide enough for sidebar
+    height = options.height || 700;
+  } else if (appType === 'bazaar') {
+    appFile = 'bazaar.html';
+    width = options.width || 1000;
+    height = options.height || 700;
+  } else if (appType === 'netrunner') {
+    appFile = 'netrunner.html';
+    width = options.width || 800;
+    height = options.height || 600;
   } else {
     return null;
   }
 
   // Special configuration for wallet (offline/cold storage)
   const isWallet = appType === 'wallet';
-  
+
   const appWindow = new BrowserWindow({
     width: width,
     height: height,
@@ -333,24 +363,24 @@ function createAppWindow(appType, options = {}) {
       paintWhenInitiallyHidden: true
     })
   });
-  
+
   const windowId = Date.now();
-  
+
   // Wallet starts in cold storage mode (offline)
   // Network access can be enabled via IPC when user toggles hot wallet mode
   if (isWallet) {
     const walletSession = appWindow.webContents.session;
-    
+
     // Store network state in window data
-    appWindows.set(windowId, { 
-      window: appWindow, 
-      type: appType, 
+    appWindows.set(windowId, {
+      window: appWindow,
+      type: appType,
       id: windowId,
       snapped: false,
       snapPosition: null,
       walletNetworkEnabled: false // Start with network disabled (cold storage)
     });
-    
+
     // Block all HTTP/HTTPS requests by default
     walletSession.webRequest.onBeforeRequest((details, callback) => {
       // Allow only file:// protocol for local files
@@ -367,14 +397,14 @@ function createAppWindow(appType, options = {}) {
         }
       }
     }, { urls: ['http://*/*', 'https://*/*', 'ws://*/*', 'wss://*/*'] });
-    
+
     // Disable webview tag completely (always)
     walletSession.setPermissionRequestHandler(() => false);
     walletSession.setPermissionCheckHandler(() => false);
   } else {
-    appWindows.set(windowId, { 
-      window: appWindow, 
-      type: appType, 
+    appWindows.set(windowId, {
+      window: appWindow,
+      type: appType,
       id: windowId,
       snapped: false,
       snapPosition: null
@@ -419,7 +449,7 @@ function createAppWindow(appType, options = {}) {
             // Set thumbnail clip immediately after load
             appWindow.setThumbnailClip({ x: 0, y: 0, width: bounds.width, height: bounds.height });
             // Force a repaint
-            appWindow.webContents.executeJavaScript('void(document.body.offsetHeight);').catch(() => {});
+            appWindow.webContents.executeJavaScript('void(document.body.offsetHeight);').catch(() => { });
           }
         }, 200);
       });
@@ -433,7 +463,7 @@ function createAppWindow(appType, options = {}) {
   // Window Snapping - Track window movement and snap to edges
   let snapTimeout = null;
   const SNAP_THRESHOLD = 30; // pixels from edge to trigger snap
-  
+
   appWindow.on('will-move', (event, newBounds) => {
     const appData = appWindows.get(windowId);
     if (appData && appData.snapped) {
@@ -446,19 +476,19 @@ function createAppWindow(appType, options = {}) {
   // Check for snapping during window movement
   appWindow.on('move', () => {
     if (appWindow.isMaximized()) return;
-    
+
     const bounds = appWindow.getBounds();
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
-    
+
     const appData = appWindows.get(windowId);
     if (!appData) return;
-    
+
     // Only apply snap if we're not currently snapped (to avoid conflicts during dragging)
     if (appData.snapped) return;
-    
+
     let snapPosition = null;
-    
+
     // Check if near left edge
     if (bounds.x <= SNAP_THRESHOLD && bounds.x >= -10) {
       snapPosition = 'left';
@@ -467,64 +497,64 @@ function createAppWindow(appType, options = {}) {
     else if (bounds.x + bounds.width >= screenWidth - SNAP_THRESHOLD && bounds.x + bounds.width <= screenWidth + 10) {
       snapPosition = 'right';
     }
-    
+
     // Apply snap immediately when near edge
     if (snapPosition) {
       // Clear any pending timeout
       if (snapTimeout) {
         clearTimeout(snapTimeout);
       }
-      
+
       // Apply snap after a very short delay to allow dragging to continue smoothly
       snapTimeout = setTimeout(() => {
         const currentBounds = appWindow.getBounds();
         const currentAppData = appWindows.get(windowId);
         if (!currentAppData || currentAppData.snapped || appWindow.isMaximized()) return;
-        
+
         // Double-check we're still near the edge
         const stillNearLeft = currentBounds.x <= SNAP_THRESHOLD && currentBounds.x >= -10;
-        const stillNearRight = currentBounds.x + currentBounds.width >= screenWidth - SNAP_THRESHOLD && 
-                               currentBounds.x + currentBounds.width <= screenWidth + 10;
-        
+        const stillNearRight = currentBounds.x + currentBounds.width >= screenWidth - SNAP_THRESHOLD &&
+          currentBounds.x + currentBounds.width <= screenWidth + 10;
+
         let finalSnapPosition = null;
         if (stillNearLeft) {
           finalSnapPosition = 'left';
         } else if (stillNearRight) {
           finalSnapPosition = 'right';
         }
-        
+
         if (finalSnapPosition) {
           currentAppData.snapped = true;
           currentAppData.snapPosition = finalSnapPosition;
-          
+
           let newBounds = {};
-          switch(finalSnapPosition) {
+          switch (finalSnapPosition) {
             case 'left':
-              newBounds = { 
-                x: 0, 
-                y: 0, 
-                width: Math.floor(screenWidth / 2), 
-                height: Math.floor(screenHeight) 
+              newBounds = {
+                x: 0,
+                y: 0,
+                width: Math.floor(screenWidth / 2),
+                height: Math.floor(screenHeight)
               };
               break;
             case 'right':
-              newBounds = { 
-                x: Math.floor(screenWidth / 2), 
-                y: 0, 
-                width: Math.floor(screenWidth / 2), 
-                height: Math.floor(screenHeight) 
+              newBounds = {
+                x: Math.floor(screenWidth / 2),
+                y: 0,
+                width: Math.floor(screenWidth / 2),
+                height: Math.floor(screenHeight)
               };
               break;
           }
-          
+
           // Validate bounds before setting - ensure all values are valid integers
-          if (newBounds.x !== undefined && newBounds.y !== undefined && 
-              newBounds.width > 0 && newBounds.height > 0 &&
-              !isNaN(newBounds.x) && !isNaN(newBounds.y) &&
-              !isNaN(newBounds.width) && !isNaN(newBounds.height) &&
-              isFinite(newBounds.x) && isFinite(newBounds.y) &&
-              isFinite(newBounds.width) && isFinite(newBounds.height) &&
-              screenWidth > 0 && screenHeight > 0) {
+          if (newBounds.x !== undefined && newBounds.y !== undefined &&
+            newBounds.width > 0 && newBounds.height > 0 &&
+            !isNaN(newBounds.x) && !isNaN(newBounds.y) &&
+            !isNaN(newBounds.width) && !isNaN(newBounds.height) &&
+            isFinite(newBounds.x) && isFinite(newBounds.y) &&
+            isFinite(newBounds.width) && isFinite(newBounds.height) &&
+            screenWidth > 0 && screenHeight > 0) {
             try {
               // Ensure all values are integers
               const validatedBounds = {
@@ -660,17 +690,17 @@ function setupIPCHandlers() {
         }
         appData.window.setOpacity(1);
         appData.window.focus();
-        
+
         // FORCE WINDOW TO BE FULLY RENDERED BEFORE MINIMIZE
         // This is the most reliable way to prevent black thumbnails
         const ensureRenderedAndMinimize = () => {
           if (!appData.window || appData.window.isDestroyed()) return;
-          
+
           // Step 1: Ensure window is visible and focused
           appData.window.show();
           appData.window.setOpacity(1);
           appData.window.focus();
-          
+
           // Step 2: Force multiple paint cycles (5 frames)
           appData.window.webContents.executeJavaScript(`
             new Promise((resolve) => {
@@ -696,11 +726,11 @@ function setupIPCHandlers() {
             return appData.window.webContents.capturePage();
           }).then((image) => {
             if (!appData.window || appData.window.isDestroyed()) return;
-            
+
             // Step 4: Set thumbnail clip
             const size = image.getSize();
             appData.window.setThumbnailClip({ x: 0, y: 0, width: size.width, height: size.height });
-            
+
             // Step 5: Wait LONGER for Windows DWM to process thumbnail
             setTimeout(() => {
               if (appData.window && !appData.window.isDestroyed()) {
@@ -716,7 +746,7 @@ function setupIPCHandlers() {
             }, 400);
           });
         };
-        
+
         // Start the process
         ensureRenderedAndMinimize();
       } else {
@@ -740,62 +770,62 @@ function setupIPCHandlers() {
       const screenSize = appData.window.getBounds();
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
-      
+
       let newBounds = {};
-      
-      switch(snapPosition) {
+
+      switch (snapPosition) {
         case 'left':
-          newBounds = { 
-            x: 0, 
-            y: 0, 
-            width: Math.floor(screenWidth / 2), 
-            height: Math.floor(screenHeight) 
+          newBounds = {
+            x: 0,
+            y: 0,
+            width: Math.floor(screenWidth / 2),
+            height: Math.floor(screenHeight)
           };
           break;
         case 'right':
-          newBounds = { 
-            x: Math.floor(screenWidth / 2), 
-            y: 0, 
-            width: Math.floor(screenWidth / 2), 
-            height: Math.floor(screenHeight) 
+          newBounds = {
+            x: Math.floor(screenWidth / 2),
+            y: 0,
+            width: Math.floor(screenWidth / 2),
+            height: Math.floor(screenHeight)
           };
           break;
         case 'top':
-          newBounds = { 
-            x: 0, 
-            y: 0, 
-            width: Math.floor(screenWidth), 
-            height: Math.floor(screenHeight / 2) 
+          newBounds = {
+            x: 0,
+            y: 0,
+            width: Math.floor(screenWidth),
+            height: Math.floor(screenHeight / 2)
           };
           break;
         case 'bottom':
-          newBounds = { 
-            x: 0, 
-            y: Math.floor(screenHeight / 2), 
-            width: Math.floor(screenWidth), 
-            height: Math.floor(screenHeight / 2) 
+          newBounds = {
+            x: 0,
+            y: Math.floor(screenHeight / 2),
+            width: Math.floor(screenWidth),
+            height: Math.floor(screenHeight / 2)
           };
           break;
         case 'full':
-          newBounds = { 
-            x: 0, 
-            y: 0, 
-            width: Math.floor(screenWidth), 
-            height: Math.floor(screenHeight) 
+          newBounds = {
+            x: 0,
+            y: 0,
+            width: Math.floor(screenWidth),
+            height: Math.floor(screenHeight)
           };
           break;
         case 'unsnap':
           // Restore to previous size (store this when snapping)
           return;
       }
-      
+
       // Validate bounds before setting
-      if (newBounds.x !== undefined && newBounds.y !== undefined && 
-          newBounds.width > 0 && newBounds.height > 0 &&
-          !isNaN(newBounds.x) && !isNaN(newBounds.y) &&
-          !isNaN(newBounds.width) && !isNaN(newBounds.height) &&
-          isFinite(newBounds.x) && isFinite(newBounds.y) &&
-          isFinite(newBounds.width) && isFinite(newBounds.height)) {
+      if (newBounds.x !== undefined && newBounds.y !== undefined &&
+        newBounds.width > 0 && newBounds.height > 0 &&
+        !isNaN(newBounds.x) && !isNaN(newBounds.y) &&
+        !isNaN(newBounds.width) && !isNaN(newBounds.height) &&
+        isFinite(newBounds.x) && isFinite(newBounds.y) &&
+        isFinite(newBounds.width) && isFinite(newBounds.height)) {
         try {
           appData.window.setBounds(newBounds);
           appData.snapped = snapPosition !== 'unsnap';
@@ -816,7 +846,7 @@ function setupIPCHandlers() {
 
   ipcMain.handle('desktop-switch', (event, desktopIndex) => {
     if (desktopIndex < 0) return { success: false, error: 'Invalid desktop index' };
-    
+
     // Hide windows from current desktop
     const currentWindows = desktopWindows.get(currentDesktopIndex) || [];
     currentWindows.forEach(windowId => {
@@ -825,13 +855,13 @@ function setupIPCHandlers() {
         appData.window.hide();
       }
     });
-    
+
     // Show windows for new desktop
     currentDesktopIndex = desktopIndex;
     if (!desktopWindows.has(desktopIndex)) {
       desktopWindows.set(desktopIndex, []);
     }
-    
+
     const newWindows = desktopWindows.get(desktopIndex) || [];
     newWindows.forEach(windowId => {
       const appData = appWindows.get(windowId);
@@ -839,7 +869,7 @@ function setupIPCHandlers() {
         appData.window.show();
       }
     });
-    
+
     return { success: true, desktopIndex: currentDesktopIndex };
   });
 
@@ -862,13 +892,13 @@ function setupIPCHandlers() {
         windows.splice(idx, 1);
       }
     });
-    
+
     // Add to new desktop
     if (!desktopWindows.has(desktopIndex)) {
       desktopWindows.set(desktopIndex, []);
     }
     desktopWindows.get(desktopIndex).push(windowId);
-    
+
     // Hide/show based on current desktop
     const appData = appWindows.get(windowId);
     if (appData && appData.window) {
@@ -890,7 +920,7 @@ function setupIPCHandlers() {
     }
     return null;
   });
-  
+
   // Auto-detect window ID for app window controls
   ipcMain.on('app-window-minimize', (event, windowId) => {
     let targetWindowId = windowId;
@@ -913,17 +943,17 @@ function setupIPCHandlers() {
         }
         appData.window.setOpacity(1);
         appData.window.focus();
-        
+
         // FORCE WINDOW TO BE FULLY RENDERED BEFORE MINIMIZE
         // This is the most reliable way to prevent black thumbnails
         const ensureRenderedAndMinimize = () => {
           if (!appData.window || appData.window.isDestroyed()) return;
-          
+
           // Step 1: Ensure window is visible and focused
           appData.window.show();
           appData.window.setOpacity(1);
           appData.window.focus();
-          
+
           // Step 2: Force multiple paint cycles (5 frames)
           appData.window.webContents.executeJavaScript(`
             new Promise((resolve) => {
@@ -949,11 +979,11 @@ function setupIPCHandlers() {
             return appData.window.webContents.capturePage();
           }).then((image) => {
             if (!appData.window || appData.window.isDestroyed()) return;
-            
+
             // Step 4: Set thumbnail clip
             const size = image.getSize();
             appData.window.setThumbnailClip({ x: 0, y: 0, width: size.width, height: size.height });
-            
+
             // Step 5: Wait LONGER for Windows DWM to process thumbnail
             setTimeout(() => {
               if (appData.window && !appData.window.isDestroyed()) {
@@ -969,7 +999,7 @@ function setupIPCHandlers() {
             }, 400);
           });
         };
-        
+
         // Start the process
         ensureRenderedAndMinimize();
       } else {
@@ -1022,7 +1052,7 @@ function setupIPCHandlers() {
       throw error;
     }
   });
-  
+
   ipcMain.handle('wallet-import-from-private-key', async (event, privateKeyBase58, password) => {
     try {
       const bs58 = require('bs58');
@@ -1158,7 +1188,7 @@ function setupIPCHandlers() {
   ipcMain.handle('omega-wallet-request', async (event, request) => {
     try {
       let response;
-      
+
       switch (request.action) {
         case 'connect':
           const publicKey = wallet.getPublicKey();
@@ -1168,7 +1198,7 @@ function setupIPCHandlers() {
             response = { publicKey: publicKey };
           }
           break;
-          
+
         case 'signTransaction':
           // request.data is base64 encoded serialized transaction
           // We need to deserialize, sign, and return base64
@@ -1180,7 +1210,7 @@ function setupIPCHandlers() {
             const serialized = signedTx.serialize();
             const base64 = Buffer.from(serialized).toString('base64');
             response = { data: base64 };
-            
+
             // Notify wallet window of app interaction
             notifyWalletAppInteraction('app_interaction', {
               type: 'signTransaction',
@@ -1192,7 +1222,7 @@ function setupIPCHandlers() {
             response = { error: error.message };
           }
           break;
-          
+
         case 'signMessage':
           // request.data is the message string
           try {
@@ -1202,7 +1232,7 @@ function setupIPCHandlers() {
             const signatureBytes = bs58.decode(signature);
             const base64 = Buffer.from(signatureBytes).toString('base64');
             response = { data: base64 };
-            
+
             // Notify wallet window of app interaction
             notifyWalletAppInteraction('app_interaction', {
               type: 'signMessage',
@@ -1214,11 +1244,11 @@ function setupIPCHandlers() {
             response = { error: error.message };
           }
           break;
-          
+
         default:
           response = { error: 'Unknown action' };
       }
-      
+
       return response;
     } catch (error) {
       return { error: error.message };
@@ -1228,7 +1258,7 @@ function setupIPCHandlers() {
   ipcMain.handle('omega-evm-request', async (event, request) => {
     try {
       let response;
-      
+
       switch (request.method) {
         case 'eth_requestAccounts':
         case 'eth_accounts':
@@ -1239,11 +1269,11 @@ function setupIPCHandlers() {
             response = { result: [evmAddress] };
           }
           break;
-          
+
         case 'eth_chainId':
           response = { result: '0x1' }; // Ethereum mainnet
           break;
-          
+
         case 'eth_getBalance':
           const address = request.params[0];
           const chainId = parseInt(request.params[1] || '0x1', 16);
@@ -1251,7 +1281,7 @@ function setupIPCHandlers() {
           const balanceWei = BigInt(Math.floor(parseFloat(balance) * 1e18)).toString(16);
           response = { result: '0x' + balanceWei };
           break;
-          
+
         case 'eth_sendTransaction':
           const tx = request.params[0];
           const valueHex = tx.value || '0x0';
@@ -1260,7 +1290,7 @@ function setupIPCHandlers() {
           const txChainId = parseInt(tx.chainId || '0x1', 16);
           const txHash = await wallet.sendEvmTransaction(tx.to, valueEth, tx.data || '0x', txChainId);
           response = { result: txHash };
-          
+
           // Notify wallet window of app interaction
           const chainName = txChainId === 1313161768 ? 'omega' : txChainId === 56 ? 'bsc' : 'evm';
           notifyWalletAppInteraction('app_interaction', {
@@ -1274,13 +1304,13 @@ function setupIPCHandlers() {
             symbol: chainName === 'omega' ? 'OMEGA' : chainName === 'bsc' ? 'BNB' : 'ETH'
           });
           break;
-          
+
         case 'eth_sign':
         case 'personal_sign':
           const message = request.params[0] || request.params[1];
           const signature = await wallet.signEvmMessage(message);
           response = { result: signature };
-          
+
           // Notify wallet window of app interaction
           notifyWalletAppInteraction('app_interaction', {
             type: 'signMessage',
@@ -1289,11 +1319,11 @@ function setupIPCHandlers() {
             source: request.source || 'External App'
           });
           break;
-          
+
         case 'eth_signTransaction':
           const signedTx = await wallet.signEvmTransaction(request.params[0]);
           response = { result: signedTx };
-          
+
           // Notify wallet window of app interaction
           notifyWalletAppInteraction('app_interaction', {
             type: 'signTransaction',
@@ -1302,11 +1332,11 @@ function setupIPCHandlers() {
             source: request.source || 'External App'
           });
           break;
-          
+
         default:
           response = { error: 'Method not supported: ' + request.method };
       }
-      
+
       return response;
     } catch (error) {
       return { error: error.message };
@@ -1329,7 +1359,7 @@ function setupIPCHandlers() {
       throw error;
     }
   });
-  
+
   ipcMain.handle('wallet-update-name', async (event, walletId, name) => {
     try {
       return wallet.updateWalletName(walletId, name);
@@ -1396,7 +1426,7 @@ function setupIPCHandlers() {
   } catch (e) {
     // Handler doesn't exist yet, that's fine
   }
-  
+
   ipcMain.handle('wallet-toggle-network', (event, enable) => {
     // Find the wallet window that's making this request
     for (const [windowId, appData] of appWindows.entries()) {
@@ -1416,12 +1446,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded. Please unlock wallet first.' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available.' };
       }
-      
+
       const result = await identityManager.createOrLoadIdentity(evmWallet);
       return { success: true, ...result };
     } catch (error) {
@@ -1450,12 +1480,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available' };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const result = await identityManager.syncDocumentHash(documentId, documentHash, metadata);
       return result;
@@ -1469,12 +1499,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, documents: [] };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, documents: [] };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const documents = await identityManager.getSyncedDocuments();
       return { success: true, documents: documents };
@@ -1488,7 +1518,7 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { hasLicense: false, licenseType: 'None', reason: 'Wallet not loaded' };
       }
-      
+
       await identityManager.initializeProvider(wallet.getEvmWallet());
       const result = await identityManager.checkLicense();
       return result;
@@ -1502,7 +1532,7 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return null;
       }
-      
+
       await identityManager.initializeProvider(wallet.getEvmWallet());
       const details = await identityManager.getLicenseDetails();
       return details;
@@ -1533,12 +1563,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available' };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const result = await identityManager.stakeForLicense();
       return result;
@@ -1552,12 +1582,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available' };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const result = await identityManager.purchaseLicense();
       return result;
@@ -1571,12 +1601,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available' };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const result = await identityManager.withdrawStake();
       return result;
@@ -1590,12 +1620,12 @@ function setupIPCHandlers() {
       if (!wallet.isLoaded()) {
         return { success: false, error: 'Wallet not loaded' };
       }
-      
+
       const evmWallet = wallet.getEvmWallet();
       if (!evmWallet) {
         return { success: false, error: 'EVM wallet not available' };
       }
-      
+
       await identityManager.initializeProvider(evmWallet);
       const result = await identityManager.authenticate(message);
       return result;
@@ -1624,9 +1654,9 @@ function setupIPCHandlers() {
   });
 
   // AI Service IPC Handlers
-  ipcMain.handle('ai-chat', async (event, message, history = []) => {
+  ipcMain.handle('ai-chat', async (event, message, history = [], options = {}) => {
     try {
-      const response = await aiService.chat(message, history);
+      const response = await aiService.chat(message, history, options);
       return { success: true, response };
     } catch (error) {
       console.error('[AI IPC] Chat error:', error);
@@ -1788,25 +1818,25 @@ function setupIPCHandlers() {
     try {
       const axios = require('axios');
       const ollamaUrl = 'http://127.0.0.1:11434';
-      
+
       // Ollama is localhost, so it should bypass proxy (handled by shouldBypassProxy)
       // But we'll explicitly not use proxy for localhost connections
       const proxyUrl = shouldBypassProxy(ollamaUrl) ? null : getCurrentProxyForNode();
       let axiosConfig = { timeout: 600000 }; // 10 minute timeout
-      
+
       // Only configure proxy if not localhost and proxy is available
       if (proxyUrl && !shouldBypassProxy(ollamaUrl)) {
         const { SocksProxyAgent } = require('socks-proxy-agent');
         axiosConfig.httpAgent = new SocksProxyAgent(proxyUrl);
         axiosConfig.httpsAgent = new SocksProxyAgent(proxyUrl);
       }
-      
+
       // Start pull request
       await axios.post(`${ollamaUrl}/api/pull`, {
         name: modelName,
         stream: false
       }, axiosConfig);
-      
+
       return { success: true };
     } catch (error) {
       console.error('[AI] Pull model error:', error);
@@ -1820,34 +1850,34 @@ function setupIPCHandlers() {
       const https = require('https');
       const http = require('http');
       const { URL } = require('url');
-      
+
       const urlObj = new URL(url);
       const proxyUrl = getCurrentProxyForNode();
       const agent = createHttpAgent(url, proxyUrl);
-      
+
       const client = urlObj.protocol === 'https:' ? https : http;
       const options = {
         ...urlObj,
         agent: agent
       };
-      
+
       return new Promise((resolve) => {
         const request = client.get(options, (response) => {
           let data = '';
-          
+
           response.on('data', (chunk) => {
             data += chunk;
           });
-          
+
           response.on('end', () => {
             resolve({ success: true, html: data });
           });
         });
-        
+
         request.on('error', (error) => {
           resolve({ success: false, error: error.message });
         });
-        
+
         request.setTimeout(10000, () => {
           request.destroy();
           resolve({ success: false, error: 'Request timeout' });
@@ -1871,12 +1901,12 @@ function setupIPCHandlers() {
         // Restrict to isolated documents directory
         properties: ['createDirectory']
       });
-      
+
       // Validate that the save path is within isolated environment
       if (result.filePath && !result.filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File operations are restricted to the isolated environment');
       }
-      
+
       return result;
     } catch (error) {
       throw error;
@@ -1894,7 +1924,7 @@ function setupIPCHandlers() {
         ],
         properties: ['openFile']
       });
-      
+
       // Validate that all selected files are within isolated environment
       if (result.filePaths) {
         for (const filePath of result.filePaths) {
@@ -1903,7 +1933,7 @@ function setupIPCHandlers() {
           }
         }
       }
-      
+
       return result;
     } catch (error) {
       throw error;
@@ -1919,12 +1949,12 @@ function setupIPCHandlers() {
       if (!allowedExtensions.includes(ext)) {
         throw new Error('Only image files are allowed');
       }
-      
+
       // Check if file exists
       if (!fs.existsSync(filePath)) {
         throw new Error('File not found');
       }
-      
+
       // Read file
       if (encoding === 'base64') {
         const buffer = fs.readFileSync(filePath);
@@ -1943,11 +1973,11 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Notify privacy monitor
       const appName = getAppNameFromWindow(event.sender);
       notifyPrivacyMonitor('read', filePath, appName);
-      
+
       if (encoding === 'base64') {
         // Return as base64 for binary files
         const buffer = fs.readFileSync(filePath);
@@ -1967,13 +1997,13 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Ensure directory exists
       const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       if (encoding === 'base64') {
         // Write binary file from base64
         const buffer = Buffer.from(content, 'base64');
@@ -1982,11 +2012,11 @@ function setupIPCHandlers() {
         // Write as text (UTF-8)
         fs.writeFileSync(filePath, content, 'utf-8');
       }
-      
+
       // Notify privacy monitor after successful write
       const appName = getAppNameFromWindow(event.sender);
       notifyPrivacyMonitor('write', filePath, appName);
-      
+
       return true;
     } catch (error) {
       throw error;
@@ -2000,18 +2030,18 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Ensure directory exists
       const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       // Validate input
       if (!htmlContent || typeof htmlContent !== 'string') {
         throw new Error('Invalid HTML content provided');
       }
-      
+
       // Polyfill browser APIs if needed (some libraries might expect them)
       if (typeof File === 'undefined') {
         global.File = class File {
@@ -2024,19 +2054,19 @@ function setupIPCHandlers() {
           }
         };
       }
-      
+
       const { Document, Packer, Paragraph, TextRun, HeadingLevel } = require('docx');
-      
+
       // Parse HTML and convert to docx format
       const cheerio = require('cheerio');
       const $ = cheerio.load(htmlContent || '<body></body>');
-      
+
       const children = [];
       const processed = new Set();
-      
+
       // Process block-level elements only (to avoid duplicates)
       const blockElements = $('h1, h2, h3, h4, h5, h6, p, div, li');
-      
+
       blockElements.each((i, elem) => {
         // Skip if this element is inside another block element we've already processed
         let parent = $(elem).parent()[0];
@@ -2048,15 +2078,15 @@ function setupIPCHandlers() {
           }
           parent = $(parent).parent()[0];
         }
-        
+
         if (skip) return;
         processed.add(elem);
-        
+
         const tag = elem.tagName?.toLowerCase();
         const text = $(elem).text().trim();
-        
+
         if (!text) return;
-        
+
         // Handle headings
         if (tag === 'h1') {
           children.push(new Paragraph({
@@ -2104,15 +2134,15 @@ function setupIPCHandlers() {
               }
             }
           });
-          
+
           if (runs.length === 0) {
             runs.push(new TextRun(text));
           }
-          
+
           children.push(new Paragraph({ children: runs }));
         }
       });
-      
+
       // If no children, add the plain text
       if (children.length === 0) {
         const plainText = $('body').text() || htmlContent.replace(/<[^>]*>/g, '').trim();
@@ -2120,21 +2150,21 @@ function setupIPCHandlers() {
           children.push(new Paragraph({ text: plainText }));
         }
       }
-      
+
       const doc = new Document({
         sections: [{
           children: children
         }]
       });
-      
+
       // Generate and save
       const buffer = await Packer.toBuffer(doc);
       fs.writeFileSync(filePath, buffer);
-      
+
       // Notify privacy monitor
       const appName = getAppNameFromWindow(event.sender);
       notifyPrivacyMonitor('write', filePath, appName);
-      
+
       return { success: true };
     } catch (error) {
       console.error('DOCX conversion error:', error);
@@ -2154,13 +2184,13 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Ensure directory exists first
       const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       // Polyfill browser APIs for Node.js
       if (typeof File === 'undefined') {
         global.File = class File {
@@ -2173,7 +2203,7 @@ function setupIPCHandlers() {
           }
         };
       }
-      
+
       if (typeof Blob === 'undefined') {
         global.Blob = class Blob {
           constructor(parts = [], options = {}) {
@@ -2183,33 +2213,33 @@ function setupIPCHandlers() {
           }
         };
       }
-      
+
       // Use dynamic require to avoid issues
       const PptxGenJS = require('pptxgenjs');
-      
+
       // Create presentation with Node.js compatibility
       const pptx = new PptxGenJS();
-      
+
       // Process each slide
       if (Array.isArray(slidesData) && slidesData.length > 0) {
         slidesData.forEach((slideData, index) => {
           const slide = pptx.addSlide();
-          
+
           // Use default white background
           slide.background = { color: 'FFFFFF' };
-          
+
           // Parse slide content
           const cheerio = require('cheerio');
           const $ = cheerio.load(slideData.content || '');
-          
+
           // Extract all text content
           const allText = $('body').text() || $('*').text() || '';
           const textLines = allText.split('\n').filter(line => line.trim().length > 0);
-          
+
           // Extract text boxes and content more carefully
           const textBoxes = $('.slide-textbox');
           let yPos = 0.5;
-          
+
           if (textBoxes.length > 0) {
             textBoxes.each((i, elem) => {
               const text = $(elem).text().trim();
@@ -2245,7 +2275,7 @@ function setupIPCHandlers() {
               }
             });
           }
-          
+
           // If still no content, add placeholder
           if (textBoxes.length === 0 && textLines.length === 0) {
             slide.addText(`Slide ${index + 1}`, {
@@ -2270,7 +2300,7 @@ function setupIPCHandlers() {
           align: 'center'
         });
       }
-      
+
       // Save the presentation
       // For Node.js, we need to handle the file writing differently
       // Try using writeFile which should work in Node.js
@@ -2287,11 +2317,11 @@ function setupIPCHandlers() {
           throw writeError;
         }
       }
-      
+
       // Notify privacy monitor
       const appName = getAppNameFromWindow(event.sender);
       notifyPrivacyMonitor('write', filePath, appName);
-      
+
       return { success: true };
     } catch (error) {
       console.error('PPTX conversion error:', error);
@@ -2308,53 +2338,53 @@ function setupIPCHandlers() {
   ipcMain.handle('convert-to-xlsx', async (event, spreadsheetData, filePath) => {
     try {
       const XLSX = require('xlsx');
-      
+
       // Validate path
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Convert spreadsheet data to worksheet format
       const worksheet = {};
       const maxRow = 100;
       const maxCol = 26;
       const colNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      
+
       // Create range
       const range = { s: { c: 0, r: 0 }, e: { c: maxCol - 1, r: maxRow - 1 } };
-      
+
       // Process data
       for (let row = 1; row <= maxRow; row++) {
         for (let col = 0; col < maxCol; col++) {
           const addr = colNames[col] + row;
           const value = spreadsheetData[addr];
-          
+
           if (value !== undefined && value !== null && value !== '') {
             const cellAddress = XLSX.utils.encode_cell({ c: col, r: row - 1 });
             worksheet[cellAddress] = { v: value, t: typeof value === 'number' ? 'n' : 's' };
           }
         }
       }
-      
+
       worksheet['!ref'] = XLSX.utils.encode_range(range);
-      
+
       // Create workbook
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-      
+
       // Ensure directory exists
       const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       // Write file
       XLSX.writeFile(workbook, filePath);
-      
+
       // Notify privacy monitor
       const appName = getAppNameFromWindow(event.sender);
       notifyPrivacyMonitor('write', filePath, appName);
-      
+
       return { success: true };
     } catch (error) {
       console.error('XLSX conversion error:', error);
@@ -2368,17 +2398,17 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Convert spreadsheet data to CSV
       const maxRow = 100;
       const maxCol = 26;
       const colNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       const rows = [];
-      
+
       // Find the actual data range
       let maxDataRow = 0;
       let maxDataCol = 0;
-      
+
       for (let row = 1; row <= maxRow; row++) {
         for (let col = 0; col < maxCol; col++) {
           const addr = colNames[col] + row;
@@ -2389,7 +2419,7 @@ function setupIPCHandlers() {
           }
         }
       }
-      
+
       // Generate CSV rows
       for (let row = 1; row <= maxDataRow; row++) {
         const csvRow = [];
@@ -2402,15 +2432,15 @@ function setupIPCHandlers() {
         }
         rows.push(csvRow.join(','));
       }
-      
+
       const csvContent = rows.join('\n');
-      
+
       // Ensure directory exists
       const dir = path.dirname(filePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      
+
       // Write file
       fs.writeFileSync(filePath, csvContent, 'utf-8');
       return { success: true };
@@ -2529,7 +2559,7 @@ function setupIPCHandlers() {
           proxyRules: torProxy
         });
         torModeEnabled = true;
-        
+
         // TOR HARDENING: Set Chromium proxy and DNS rules to prevent leaks
         // Note: commandLine switches must be set before app.whenReady(),
         // but we can update session proxy which affects new connections
@@ -2657,10 +2687,10 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       const fileName = path.basename(filePath);
       const trashPath = path.join(ISOLATED_TRASH_PATH, fileName);
-      
+
       // If file already exists in trash, add timestamp
       let finalTrashPath = trashPath;
       if (fs.existsSync(trashPath)) {
@@ -2668,17 +2698,17 @@ function setupIPCHandlers() {
         const base = path.basename(fileName, ext);
         finalTrashPath = path.join(ISOLATED_TRASH_PATH, `${base}_${Date.now()}${ext}`);
       }
-      
+
       // Move file to trash
       fs.renameSync(filePath, finalTrashPath);
-      
+
       // Save metadata
       const metadata = {
         originalPath: filePath,
         deletedDate: Date.now()
       };
       fs.writeFileSync(finalTrashPath + '.trashmeta', JSON.stringify(metadata));
-      
+
       return true;
     } catch (error) {
       throw error;
@@ -2691,19 +2721,19 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       if (!newName || !newName.trim()) {
         throw new Error('Invalid file name');
       }
-      
+
       const dir = path.dirname(filePath);
       const newPath = path.join(dir, newName.trim());
-      
+
       // Check if new name already exists
       if (fs.existsSync(newPath)) {
         throw new Error('A file with this name already exists');
       }
-      
+
       fs.renameSync(filePath, newPath);
       return true;
     } catch (error) {
@@ -2717,13 +2747,13 @@ function setupIPCHandlers() {
       if (!sourcePath.startsWith(ISOLATED_DATA_PATH) || !destPath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       // Ensure destination directory exists
       const destDir = path.dirname(destPath);
       if (!fs.existsSync(destDir)) {
         fs.mkdirSync(destDir, { recursive: true });
       }
-      
+
       // Copy file
       fs.copyFileSync(sourcePath, destPath);
       return true;
@@ -2738,11 +2768,11 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       if (!fs.existsSync(filePath)) {
         throw new Error('File does not exist');
       }
-      
+
       const stats = fs.statSync(filePath);
       return {
         name: path.basename(filePath),
@@ -2766,11 +2796,11 @@ function setupIPCHandlers() {
       if (!filePath.startsWith(ISOLATED_DATA_PATH)) {
         throw new Error('File access is restricted to the isolated environment');
       }
-      
+
       const fileName = path.basename(filePath);
       const trashPath = path.join(ISOLATED_TRASH_PATH, fileName);
       const metadataPath = trashPath + '.trashmeta';
-      
+
       // If file already exists in trash, add timestamp
       let finalTrashPath = trashPath;
       if (fs.existsSync(trashPath)) {
@@ -2778,17 +2808,17 @@ function setupIPCHandlers() {
         const base = path.basename(fileName, ext);
         finalTrashPath = path.join(ISOLATED_TRASH_PATH, `${base}_${Date.now()}${ext}`);
       }
-      
+
       // Move file to trash
       fs.renameSync(filePath, finalTrashPath);
-      
+
       // Save metadata
       const metadata = {
         originalPath: filePath,
         deletedDate: Date.now()
       };
       fs.writeFileSync(finalTrashPath + '.trashmeta', JSON.stringify(metadata));
-      
+
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -2800,15 +2830,15 @@ function setupIPCHandlers() {
       if (!trashPath.startsWith(ISOLATED_TRASH_PATH)) {
         throw new Error('Invalid trash path');
       }
-      
+
       const metadataPath = trashPath + '.trashmeta';
       let originalPath = trashPath;
-      
+
       if (fs.existsSync(metadataPath)) {
         const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
         originalPath = metadata.originalPath;
       }
-      
+
       // Restore file
       if (fs.existsSync(originalPath)) {
         // Original path exists, add timestamp
@@ -2817,12 +2847,12 @@ function setupIPCHandlers() {
         const dir = path.dirname(originalPath);
         originalPath = path.join(dir, `${base}_restored_${Date.now()}${ext}`);
       }
-      
+
       fs.renameSync(trashPath, originalPath);
       if (fs.existsSync(metadataPath)) {
         fs.unlinkSync(metadataPath);
       }
-      
+
       return { success: true, restoredPath: originalPath };
     } catch (error) {
       return { success: false, error: error.message };
@@ -2985,7 +3015,7 @@ function setupIPCHandlers() {
   function startVpnKillSwitchMonitoring() {
     if (vpnKillSwitchMonitoring) return;
     vpnKillSwitchMonitoring = true;
-    
+
     // Monitor VPN status every 2 seconds
     const monitorInterval = setInterval(() => {
       if (!vpnKillSwitchEnabled) {
@@ -3047,9 +3077,9 @@ function setupIPCHandlers() {
     'Denmark-Copenhagen': process.env.VPN_PROXY_DK || TOR_PROXY,
     'Finland-Helsinki': process.env.VPN_PROXY_FI || TOR_PROXY
   };
-  
+
   console.log('[VPN] VPN locations configured to use Tor proxy (bundled Tor will start automatically)');
-  
+
   // Default VPN location for auto-connect on startup
   // Set this to auto-connect to a specific location on first startup
   const DEFAULT_VPN_LOCATION = process.env.VPN_DEFAULT_LOCATION || 'United States-New York';
@@ -3059,7 +3089,7 @@ function setupIPCHandlers() {
     if (!currentVpnProxy || !currentVpnProxy.includes('127.0.0.1:9050')) {
       return true; // Not using Tor, skip check
     }
-    
+
     // Use bundled Tor manager if available
     if (torManager) {
       try {
@@ -3076,7 +3106,7 @@ function setupIPCHandlers() {
         // Fall back to checking if external Tor is running
       }
     }
-    
+
     // Check if external Tor is running
     try {
       const http = require('http');
@@ -3128,19 +3158,131 @@ function setupIPCHandlers() {
           });
         }
         currentVpnProxy = null;
-        return { 
-          success: false, 
+        return {
+          success: false,
           message: 'No proxy server configured for this location',
-          isFakeLocation: true 
+          isFakeLocation: true
         };
       }
 
-      // Set the proxy for this location
+      // Check if using Tor and verify it's running BEFORE setting proxy
+      const isTor = proxyServer && proxyServer.includes('127.0.0.1:9050');
+      const proxyType = isTor ? 'Tor' : 'VPN';
+
+      if (isTor) {
+        console.log('[VPN] Tor proxy detected, checking if Tor is running...');
+        // Check if Tor is running BEFORE setting proxy to avoid blocking internet
+        let torRunning = false;
+        if (torManager) {
+          try {
+            torRunning = await torManager.isTorRunning();
+            if (!torRunning) {
+              // Try to start bundled Tor
+              console.log('[VPN] Tor not running, attempting to start bundled Tor...');
+              try {
+                await torManager.start();
+                // Wait for Tor to bootstrap (can take 30-60 seconds on first launch)
+                // First launch: Tor needs to download directory info, establish circuits, etc.
+                // Subsequent launches: Usually faster (10-20 seconds)
+                console.log('[VPN] Waiting for Tor to bootstrap (this may take up to 60 seconds on first launch)...');
+                let attempts = 0;
+                const maxAttempts = 60; // Wait up to 60 seconds (first launch can be slow)
+                while (attempts < maxAttempts) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  torRunning = await torManager.isTorRunning();
+                  if (torRunning) {
+                    // Also verify Tor is actually responding (not just process running)
+                    try {
+                      const http = require('http');
+                      const isResponding = await new Promise((resolve) => {
+                        const req = http.get('http://127.0.0.1:9050', { timeout: 2000 }, () => {
+                          resolve(true);
+                        });
+                        req.on('error', () => resolve(false));
+                        req.on('timeout', () => {
+                          req.destroy();
+                          resolve(false);
+                        });
+                      });
+                      if (isResponding) {
+                        console.log('[VPN] Tor is ready and responding');
+                        break;
+                      }
+                    } catch (e) {
+                      // Continue waiting
+                    }
+                  }
+                  attempts++;
+                  if (attempts % 10 === 0) {
+                    console.log(`[VPN] Still waiting for Tor to bootstrap... (${attempts}s / ${maxAttempts}s)`);
+                  }
+                }
+                if (!torRunning) {
+                  console.warn('[VPN] Tor did not start within timeout period. Internet access will continue without VPN.');
+                }
+              } catch (startError) {
+                console.warn('[VPN] Failed to start bundled Tor:', startError.message);
+              }
+            }
+          } catch (error) {
+            console.warn('[VPN] Error checking Tor status:', error.message);
+          }
+        }
+
+        // Also check external Tor as fallback
+        if (!torRunning) {
+          try {
+            const http = require('http');
+            torRunning = await new Promise((resolve) => {
+              const req = http.get('http://127.0.0.1:9050', { timeout: 2000 }, () => {
+                resolve(true);
+              });
+              req.on('error', () => resolve(false));
+              req.on('timeout', () => {
+                req.destroy();
+                resolve(false);
+              });
+            });
+          } catch (e) {
+            torRunning = false;
+          }
+        }
+
+        if (!torRunning) {
+          console.error('[VPN] Tor is not running and could not be started. Clearing proxy to allow normal internet access.');
+          // Clear proxy to allow normal internet access
+          session.defaultSession.setProxy({
+            proxyRules: ''
+          });
+          currentVpnProxy = null;
+          // Clear proxy from all windows
+          const allWindows = BrowserWindow.getAllWindows();
+          for (const win of allWindows) {
+            if (win && !win.isDestroyed()) {
+              const winSession = win.webContents.session;
+              if (winSession && winSession !== session.defaultSession) {
+                winSession.setProxy({
+                  proxyRules: ''
+                });
+              }
+            }
+          }
+          return {
+            success: false,
+            error: 'Tor is not running. Please start Tor Browser or install bundled Tor.',
+            message: 'VPN connection failed - using normal internet access'
+          };
+        } else {
+          console.log('[VPN] Tor is running and ready');
+        }
+      }
+
+      // Set the proxy for this location (only if Tor is running or not using Tor)
       session.defaultSession.setProxy({
         proxyRules: proxyServer
       });
       currentVpnProxy = proxyServer;
-      
+
       // Apply proxy to all existing webview sessions (they use different partitions)
       // Get all BrowserWindows and their webContents
       const allWindows = BrowserWindow.getAllWindows();
@@ -3154,7 +3296,7 @@ function setupIPCHandlers() {
           }
         }
       }
-      
+
       // Also apply to all webview partitions (webviews use partition: 'persist:webview')
       try {
         // Webviews typically use partition 'persist:webview' or similar
@@ -3174,27 +3316,7 @@ function setupIPCHandlers() {
       } catch (e) {
         // Ignore errors
       }
-      
-      // Check if using Tor and if it's running (after setting proxy)
-      const isTor = proxyServer && proxyServer.includes('127.0.0.1:9050');
-      const proxyType = isTor ? 'Tor' : 'VPN';
-      if (isTor) {
-        console.log('[VPN] Tor proxy detected, checking if Tor is running...');
-        const torRunning = await checkTorRunning();
-        if (!torRunning) {
-          console.warn('[VPN] Tor proxy configured but Tor is not running');
-          console.warn('[VPN] Bundled Tor should start automatically - check console for errors');
-          return { 
-            success: true, 
-            message: `Connected to ${city}, ${country} via Tor`,
-            proxyServer,
-            warning: 'Tor may not be running. Bundled Tor should start automatically.'
-          };
-        } else {
-          console.log('[VPN] Tor is running and ready');
-        }
-      }
-      
+
       console.log(`[VPN] VPN proxy set for ${locationKey}: ${proxyServer} (${proxyType})`);
       return { success: true, message: `Connected to ${city}, ${country} via ${proxyType}`, proxyServer };
     } catch (error) {
@@ -3308,8 +3430,8 @@ function setupIPCHandlers() {
     ipcMain.handle('tor-status', async () => {
       try {
         const isRunning = await torManager.isTorRunning();
-        return { 
-          success: true, 
+        return {
+          success: true,
           isRunning,
           status: torManager.getStatus()
         };
@@ -3337,16 +3459,16 @@ function setupIPCHandlers() {
       console.warn('Invalid firewall event data:', data);
       return;
     }
-    
+
     // Skip internal URLs
-    if (data.url.startsWith('about:') || data.url.startsWith('chrome-extension://') || 
-        data.url.startsWith('chrome://') || data.url.startsWith('file://') || 
-        data.url.startsWith('data:')) {
+    if (data.url.startsWith('about:') || data.url.startsWith('chrome-extension://') ||
+      data.url.startsWith('chrome://') || data.url.startsWith('file://') ||
+      data.url.startsWith('data:')) {
       return;
     }
-    
+
     console.log('[FIREWALL IPC] Received firewall-network-event from renderer:', data.url);
-    
+
     // Normalize the data format
     const eventData = {
       type: data.type || 'request',
@@ -3355,25 +3477,25 @@ function setupIPCHandlers() {
       timestamp: data.timestamp || Date.now(),
       blocked: false
     };
-    
+
     // Check if duplicate (same URL within 1 second)
     const recent = firewallNetworkEvents.slice(-20);
     if (recent.some(e => e.url === eventData.url && Math.abs(e.timestamp - eventData.timestamp) < 1000)) {
       console.log('[FIREWALL IPC] Skipping duplicate event:', eventData.url);
       return;
     }
-    
+
     firewallNetworkEvents.push(eventData);
     if (firewallNetworkEvents.length > 1000) {
       firewallNetworkEvents = firewallNetworkEvents.slice(-1000);
     }
-    
+
     // Notify all firewall windows
     console.log('[FIREWALL IPC] Notifying firewall listeners, count:', firewallListeners.size, 'for URL:', eventData.url);
     if (firewallListeners.size > 0) {
       let sentCount = 0;
       const deadListeners = [];
-      
+
       firewallListeners.forEach(listener => {
         try {
           // Check if webContents is still valid
@@ -3382,7 +3504,7 @@ function setupIPCHandlers() {
             deadListeners.push(listener);
             return;
           }
-          
+
           listener.webContents.send('firewall-network-event', eventData);
           sentCount++;
           console.log('[FIREWALL IPC] Sent event to firewall window:', eventData.url, 'listener ID:', listener.webContents.id);
@@ -3391,10 +3513,10 @@ function setupIPCHandlers() {
           deadListeners.push(listener);
         }
       });
-      
+
       // Clean up dead listeners
       deadListeners.forEach(listener => firewallListeners.delete(listener));
-      
+
       console.log('[FIREWALL IPC] Successfully sent to', sentCount, 'listener(s)');
     } else {
       console.warn('[FIREWALL IPC] No firewall listeners registered! Make sure firewall window is open.');
@@ -3433,15 +3555,15 @@ function setupIPCHandlers() {
   // Register firewall window for event notifications
   ipcMain.on('firewall-register', (event) => {
     console.log('[FIREWALL REGISTER] Received registration request from webContents ID:', event.sender.id);
-    
+
     const window = BrowserWindow.fromWebContents(event.sender);
     if (!window) {
       console.error('[FIREWALL REGISTER] Failed to get BrowserWindow from webContents');
       return;
     }
-    
+
     console.log('[FIREWALL REGISTER] BrowserWindow found, window ID:', window.id);
-    
+
     // Remove old listener if it exists (in case window reloaded)
     firewallListeners.forEach(listener => {
       if (listener.webContents.id === event.sender.id) {
@@ -3449,15 +3571,15 @@ function setupIPCHandlers() {
         firewallListeners.delete(listener);
       }
     });
-    
+
     const listener = { window, webContents: event.sender };
     firewallListeners.add(listener);
-    
+
     console.log('[FIREWALL REGISTER] ✓ Firewall window registered successfully!');
     console.log('[FIREWALL REGISTER] Total listeners:', firewallListeners.size);
     console.log('[FIREWALL REGISTER] WebContents ID:', event.sender.id);
     console.log('[FIREWALL REGISTER] Window ID:', window.id);
-    
+
     // Send recent events to newly opened firewall
     const recentEvents = firewallNetworkEvents.slice(-100);
     console.log('[FIREWALL REGISTER] Sending', recentEvents.length, 'recent events to firewall');
@@ -3471,7 +3593,7 @@ function setupIPCHandlers() {
       }
     });
     console.log('[FIREWALL REGISTER] Sent', sentCount, 'events to firewall window');
-    
+
     // Send current rules
     try {
       event.sender.send('firewall-sync-rules', firewallRules);
@@ -3480,7 +3602,7 @@ function setupIPCHandlers() {
     } catch (e) {
       console.error('[FIREWALL REGISTER] Failed to send rules/enabled:', e.message);
     }
-    
+
     console.log('[FIREWALL REGISTER] ✓ Registration complete!');
   });
 
@@ -3496,20 +3618,20 @@ function setupIPCHandlers() {
   // Register privacy monitor window for file access event notifications
   ipcMain.on('privacy-monitor-register', (event) => {
     console.log('[PRIVACY MONITOR] Registering privacy monitor window, webContents ID:', event.sender.id);
-    
+
     // Remove any existing listener with same webContents ID
     privacyMonitorListeners.forEach(listener => {
       if (listener.webContents.id === event.sender.id) {
         privacyMonitorListeners.delete(listener);
       }
     });
-    
+
     // Add new listener
     privacyMonitorListeners.add({
       webContents: event.sender,
       windowId: event.sender.id
     });
-    
+
     console.log('[PRIVACY MONITOR] Privacy monitor registered. Total listeners:', privacyMonitorListeners.size);
   });
 
@@ -3527,14 +3649,14 @@ function setupIPCHandlers() {
   ipcMain.handle('burn-to-hell', async (event) => {
     try {
       console.log('[B2H] Starting complete data wipe...');
-      
+
       // 1. Clear all browser storage (cookies, cache, localStorage, sessionStorage)
       const defaultSession = session.defaultSession;
       await defaultSession.clearStorageData({
         storages: ['cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
       });
       console.log('[B2H] Cleared all browser storage');
-      
+
       // 2. Clear all webview sessions
       appWindows.forEach((appData) => {
         if (appData.window && appData.window.webContents) {
@@ -3544,7 +3666,7 @@ function setupIPCHandlers() {
         }
       });
       console.log('[B2H] Cleared all webview sessions');
-      
+
       // 3. Delete all files in isolated environment
       const deleteRecursive = (dirPath) => {
         if (!fs.existsSync(dirPath)) return;
@@ -3569,7 +3691,7 @@ function setupIPCHandlers() {
           console.warn(`[B2H] Error reading directory ${dirPath}:`, e.message);
         }
       };
-      
+
       // Delete all subdirectories and files in isolated-env (but keep the directory itself)
       if (fs.existsSync(ISOLATED_DATA_PATH)) {
         try {
@@ -3590,7 +3712,7 @@ function setupIPCHandlers() {
           console.warn('[B2H] Error accessing isolated environment:', e.message);
         }
       }
-      
+
       // 4. Reset wallet (clear browser wallet data)
       try {
         const browserWalletPath = path.join(ISOLATED_DATA_PATH, 'browser-wallet');
@@ -3603,7 +3725,7 @@ function setupIPCHandlers() {
       } catch (e) {
         console.warn('[B2H] Error clearing wallet:', e.message);
       }
-      
+
       // 5. Reset identity manager
       try {
         identityManager = new OmegaIdentityManager();
@@ -3611,7 +3733,7 @@ function setupIPCHandlers() {
       } catch (e) {
         console.warn('[B2H] Error clearing identity:', e.message);
       }
-      
+
       // 6. Reset integrations manager
       try {
         if (integrationsManager) {
@@ -3625,7 +3747,7 @@ function setupIPCHandlers() {
       } catch (e) {
         console.warn('[B2H] Error clearing integrations:', e.message);
       }
-      
+
       // 7. Clear Electron app data (except isolated-env which we already cleared)
       const userDataPath = app.getPath('userData');
       const otherDataPaths = [
@@ -3637,7 +3759,7 @@ function setupIPCHandlers() {
         path.join(userDataPath, 'IndexedDB'),
         path.join(userDataPath, 'Service Worker'),
       ];
-      
+
       otherDataPaths.forEach((dataPath) => {
         if (fs.existsSync(dataPath)) {
           try {
@@ -3648,19 +3770,103 @@ function setupIPCHandlers() {
           }
         }
       });
-      
+
       console.log('[B2H] Complete data wipe finished');
-      
+
       // Restart the app after a short delay
       setTimeout(() => {
         app.relaunch();
         app.exit(0);
       }, 1000);
-      
+
       return { success: true, message: 'All data wiped. Application will restart...' };
     } catch (error) {
       console.error('[B2H] Error during data wipe:', error);
       throw error;
+    }
+  });
+
+  // Whisper Messenger Handlers
+  ipcMain.handle('whisper-get-info', async () => {
+    if (!whisperService) return { initialized: false, error: 'Service not available' };
+
+    // Debug logging
+    // console.log('[Whisper IPC] get-info called. Address:', whisperService.onionAddress);
+
+    return {
+      initialized: true,
+      onionAddress: whisperService.onionAddress,
+      localPort: whisperService.localPort,
+      hiddenServiceDir: whisperService.hiddenServiceDir,
+      error: whisperService.initError
+    };
+  });
+
+  ipcMain.handle('whisper-get-messages', async (event, contactId) => {
+    if (!whisperService) return [];
+    return whisperService.getMessages(contactId);
+  });
+
+  ipcMain.handle('whisper-send-message', async (event, address, content) => {
+    if (!whisperService) return { success: false, error: 'Service not available' };
+    try {
+      if (!whisperService.onionAddress) {
+        // Try to initialize if not ready (e.g. Tor wasn't ready before)
+        await whisperService.initialize();
+      }
+      return await whisperService.sendMessage(address, content);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('whisper-get-contacts', async () => {
+    if (!whisperService) return [];
+    return whisperService.getContacts();
+  });
+
+  ipcMain.handle('whisper-add-contact', async (event, address, name) => {
+    if (!whisperService) return false;
+    return whisperService.addContact(address, name);
+  });
+
+  ipcMain.handle('whisper-edit-contact', async (event, address, newName) => {
+    if (!whisperService) return false;
+    return whisperService.editContact(address, newName);
+  });
+
+  // Tor Handlers
+  ipcMain.handle('tor-get-circuits', async () => {
+    const torManager = require('./tor-manager');
+    return torManager.getCircuits();
+  });
+
+  // Bazaar Handlers
+  ipcMain.handle('install-app', async (event, appId) => {
+    console.log('Installing app:', appId);
+    // In a real app, we'd download files here.
+    // For now, we just tell the desktop window to show the icon.
+    const desktopWindow = BrowserWindow.getAllWindows().find(w => w.getTitle() === 'Omega OS - Isolated Environment');
+    if (desktopWindow) {
+      desktopWindow.webContents.send('app-installed', appId);
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle('whisper-delete-contact', async (event, address) => {
+    if (!whisperService) return false;
+    return whisperService.deleteContact(address);
+  });
+
+  ipcMain.handle('whisper-retry-init', async () => {
+    if (!whisperService) return { success: false, error: 'Service not available' };
+    try {
+      if (whisperService.onionAddress) return { success: true, address: whisperService.onionAddress };
+
+      const address = await whisperService.initialize();
+      return { success: true, address };
+    } catch (e) {
+      return { success: false, error: e.message };
     }
   });
 }
@@ -3686,13 +3892,15 @@ function getAppNameFromWindow(sender) {
         'filemanager': 'File Manager',
         'browser': 'Omega Browser',
         'terminal': 'Terminal',
+        'netrunner': 'Netrunner Tor Visualizer',
         'calculator': 'Calculator',
         'wallet': 'Omega Wallet',
         'identity': 'Omega Identity',
         'ai-dev': 'Omega Create',
         'encrypt': 'Encrypt',
         'firewall': 'Firewall',
-        'privacy-monitor': 'Privacy Monitor'
+        'privacy-monitor': 'Privacy Monitor',
+        'whisper': 'Whisper Messenger'
       };
       return appNames[appType] || appType;
     }
@@ -3723,17 +3931,17 @@ function notifyWalletAppInteraction(type, data) {
 // Helper function to notify privacy monitor of file access
 function notifyPrivacyMonitor(type, filePath, appName) {
   if (privacyMonitorListeners.size === 0) return;
-  
+
   // Extract just the filename from the path
   const fileName = path.basename(filePath);
-  
+
   const eventData = {
     type: type, // 'read' or 'write'
     file: fileName,
     app: appName,
     timestamp: Date.now()
   };
-  
+
   privacyMonitorListeners.forEach(listener => {
     try {
       if (!listener.webContents.isDestroyed()) {
@@ -3759,27 +3967,27 @@ function shouldBypassProxy(url) {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname.toLowerCase();
     // Bypass proxy for localhost/127.0.0.1/local IPs
-    return hostname === 'localhost' || 
-           hostname === '127.0.0.1' || 
-           hostname === '::1' ||
-           hostname.startsWith('192.168.') ||
-           hostname.startsWith('10.') ||
-           hostname.startsWith('172.16.') ||
-           hostname.startsWith('172.17.') ||
-           hostname.startsWith('172.18.') ||
-           hostname.startsWith('172.19.') ||
-           hostname.startsWith('172.20.') ||
-           hostname.startsWith('172.21.') ||
-           hostname.startsWith('172.22.') ||
-           hostname.startsWith('172.23.') ||
-           hostname.startsWith('172.24.') ||
-           hostname.startsWith('172.25.') ||
-           hostname.startsWith('172.26.') ||
-           hostname.startsWith('172.27.') ||
-           hostname.startsWith('172.28.') ||
-           hostname.startsWith('172.29.') ||
-           hostname.startsWith('172.30.') ||
-           hostname.startsWith('172.31.');
+    return hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.16.') ||
+      hostname.startsWith('172.17.') ||
+      hostname.startsWith('172.18.') ||
+      hostname.startsWith('172.19.') ||
+      hostname.startsWith('172.20.') ||
+      hostname.startsWith('172.21.') ||
+      hostname.startsWith('172.22.') ||
+      hostname.startsWith('172.23.') ||
+      hostname.startsWith('172.24.') ||
+      hostname.startsWith('172.25.') ||
+      hostname.startsWith('172.26.') ||
+      hostname.startsWith('172.27.') ||
+      hostname.startsWith('172.28.') ||
+      hostname.startsWith('172.29.') ||
+      hostname.startsWith('172.30.') ||
+      hostname.startsWith('172.31.');
   } catch (e) {
     return false;
   }
@@ -3808,12 +4016,12 @@ function createHttpAgent(url, proxyUrl) {
   const https = require('https');
   const http = require('http');
   const { SocksProxyAgent } = require('socks-proxy-agent');
-  
+
   // Bypass proxy for localhost
   if (shouldBypassProxy(url)) {
     return url.startsWith('https:') ? new https.Agent() : new http.Agent();
   }
-  
+
   // Use proxy if available
   if (proxyUrl) {
     try {
@@ -3823,7 +4031,7 @@ function createHttpAgent(url, proxyUrl) {
       return url.startsWith('https:') ? new https.Agent() : new http.Agent();
     }
   }
-  
+
   // No proxy, use direct connection
   return url.startsWith('https:') ? new https.Agent() : new http.Agent();
 }
@@ -3831,12 +4039,12 @@ function createHttpAgent(url, proxyUrl) {
 // Helper function to log webview requests
 function logWebviewRequest(url, method) {
   console.log('logWebviewRequest called:', url);
-  
-  if (!url || url.startsWith('chrome-extension://') || 
-      url.startsWith('chrome://') || 
-      url.startsWith('devtools://') ||
-      url.startsWith('file://') ||
-      url.startsWith('about:')) {
+
+  if (!url || url.startsWith('chrome-extension://') ||
+    url.startsWith('chrome://') ||
+    url.startsWith('devtools://') ||
+    url.startsWith('file://') ||
+    url.startsWith('about:')) {
     console.log('Skipping internal URL:', url);
     return;
   }
@@ -3847,11 +4055,11 @@ function logWebviewRequest(url, method) {
     console.log('Skipping duplicate URL:', url);
     return;
   }
-  
+
   console.log('Logging webview request:', url);
 
   let shouldBlock = false;
-  
+
   if (firewallEnabled) {
     try {
       const urlObj = new URL(url);
@@ -3916,37 +4124,37 @@ function logWebviewRequest(url, method) {
 // Shared webRequest handler
 function handleWebRequest(details, callback, reqSession) {
   const url = details.url;
-  
+
   console.log('handleWebRequest called:', url);
-  
+
   // Skip internal URLs
-  if (url.startsWith('chrome-extension://') || 
-      url.startsWith('chrome://') || 
-      url.startsWith('devtools://') ||
-      url.startsWith('file://') ||
-      url.startsWith('about:') ||
-      url.startsWith('data:')) {
+  if (url.startsWith('chrome-extension://') ||
+    url.startsWith('chrome://') ||
+    url.startsWith('devtools://') ||
+    url.startsWith('file://') ||
+    url.startsWith('about:') ||
+    url.startsWith('data:')) {
     callback({});
     return;
   }
-  
+
   // Allow CoinGecko API requests (crypto price widget)
   if (url.includes('api.coingecko.com')) {
     callback({});
     return;
   }
-  
+
   console.log('[WEBREQUEST] Processing webRequest for:', url);
-  
+
   // Check Ad Blocker
   let shouldBlock = false;
-  
+
   if (adBlockerEnabled) {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.toLowerCase();
       const pathname = urlObj.pathname.toLowerCase();
-      
+
       // Check against ad/tracker domains
       for (const domain of AD_TRACKER_DOMAINS) {
         if (hostname.includes(domain) || pathname.includes(domain)) {
@@ -4008,7 +4216,7 @@ function handleWebRequest(details, callback, reqSession) {
     if (firewallNetworkEvents.length > 1000) {
       firewallNetworkEvents = firewallNetworkEvents.slice(-1000);
     }
-    
+
     console.log('[WEBREQUEST] Added event, total events:', firewallNetworkEvents.length);
   } else {
     console.log('[WEBREQUEST] Skipping duplicate event:', url);
@@ -4045,27 +4253,27 @@ function setupFirewallInterceptor() {
   // Intercept ALL network requests at default session level
   // Use wildcard to catch all URLs
   const filter = { urls: ['*://*/*'] };
-  
+
   console.log('Setting up firewall interceptor...');
-  
+
   session.defaultSession.webRequest.onBeforeRequest(filter, (details, callback) => {
     handleWebRequest(details, callback, session.defaultSession);
   });
-  
+
   interceptedSessions.add(session.defaultSession);
   console.log('Default session interceptor set up');
-  
+
   // Monitor all webContents (for webviews) - set up dynamically
   // This catches webview network requests as they're created
   app.on('web-contents-created', (event, contents) => {
     // Get the session for this webContents (webviews have their own partitions)
     const webviewSession = contents.session;
-    
+
     // TOR HARDENING: Set consistent User-Agent for webviews (standardized for fingerprinting protection)
     const standardUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     if (webviewSession) {
       webviewSession.setUserAgent(standardUserAgent);
-      
+
       // Apply VPN proxy settings to webview sessions (they don't inherit from defaultSession)
       if (currentVpnProxy) {
         webviewSession.setProxy({
@@ -4076,30 +4284,30 @@ function setupFirewallInterceptor() {
     }
     // Also set on the webContents directly
     contents.setUserAgent(standardUserAgent);
-    
+
     // Set up webRequest interceptor for this session if not already done
     if (webviewSession && !interceptedSessions.has(webviewSession)) {
       interceptedSessions.add(webviewSession);
-      
+
       const filter = { urls: ['*://*/*'] };
       webviewSession.webRequest.onBeforeRequest(filter, (details, callback) => {
         handleWebRequest(details, callback, webviewSession);
       });
-      
+
       console.log('Intercepted webview session:', webviewSession.getPartition ? webviewSession.getPartition() : 'default');
     }
-    
+
     // Also monitor navigation events as backup
     contents.on('did-navigate', (event, url) => {
       logWebviewRequest(url, 'GET');
     });
-    
+
     contents.on('did-navigate-in-page', (event, url, isMainFrame) => {
       if (isMainFrame) {
         logWebviewRequest(url, 'GET');
       }
     });
-    
+
     // Monitor failed requests too
     contents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
       console.log('did-fail-load event:', validatedURL);
@@ -4107,7 +4315,7 @@ function setupFirewallInterceptor() {
         logWebviewRequest(validatedURL, 'GET');
       }
     });
-    
+
     // Monitor when page starts loading - captures all resource requests
     contents.on('did-start-loading', () => {
       const url = contents.getURL();
@@ -4117,7 +4325,7 @@ function setupFirewallInterceptor() {
       }
     });
   });
-  
+
   console.log('web-contents-created listener registered');
 }
 
@@ -4131,7 +4339,7 @@ app.whenReady().then(async () => {
       console.warn('[Main] Analytics tracking failed:', e.message);
     }
   }
-  
+
   // Initialize and start Tor automatically (if available)
   if (torManager) {
     console.log('[Tor] Checking for Tor installation...');
@@ -4140,7 +4348,7 @@ app.whenReady().then(async () => {
       console.log('[Tor] Cleaning up any leftover Tor processes...');
       await torManager.killAllTorProcesses();
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cleanup
-      
+
       await torManager.initialize();
       console.log('[Tor] Starting Tor daemon automatically...');
       await torManager.start();
@@ -4153,17 +4361,32 @@ app.whenReady().then(async () => {
   } else {
     console.log('[Tor] Tor manager not available (optional feature)');
   }
+
+  // Initialize Whisper Service (P2P Messenger) - requires Tor
+  if (whisperService) {
+    // Wait a moment for Tor to be fully ready if it was just started
+    setTimeout(async () => {
+      try {
+        console.log('[Whisper] Initializing Whisper P2P Messenger service...');
+        await whisperService.initialize();
+        console.log('[Whisper] Service initialized successfully');
+      } catch (e) {
+        console.warn('[Whisper] Failed to initialize service:', e.message);
+      }
+    }, 5000); // Wait 5s for Tor to stabilize
+  }
+
   // Start bundled Ollama for AI features (ignore system installation)
   try {
     const { ElectronOllama } = require('electron-ollama');
     const { exec } = require('child_process');
     const util = require('util');
     const execPromise = util.promisify(exec);
-    
+
     // First, try to stop any existing Ollama service that might be using port 11434
     try {
       console.log('[Ollama] Stopping any existing Ollama services...');
-      
+
       // Method 1: Try to stop and disable Ollama service
       try {
         // Stop the service
@@ -4175,7 +4398,7 @@ app.whenReady().then(async () => {
       } catch (e) {
         // Service might not exist or not be a service - that's okay
       }
-      
+
       // Method 2: Kill ALL Ollama processes (including "ollama app.exe")
       for (let i = 0; i < 3; i++) {
         try {
@@ -4186,7 +4409,7 @@ app.whenReady().then(async () => {
           // Process might not be running
         }
       }
-      
+
       // Method 3: Find and kill process using port 11434 (multiple attempts)
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
@@ -4224,10 +4447,10 @@ app.whenReady().then(async () => {
           break;
         }
       }
-      
+
       // Final check - wait longer for port to be fully released
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Verify port is free - if not, keep trying
       let portFree = false;
       for (let checkAttempt = 0; checkAttempt < 5; checkAttempt++) {
@@ -4248,7 +4471,7 @@ app.whenReady().then(async () => {
                   try {
                     await execPromise(`taskkill /F /PID ${pid} 2>nul`);
                     console.log(`[Ollama] Killed remaining process ${pid}`);
-                  } catch (e) {}
+                  } catch (e) { }
                 }
               }
             }
@@ -4260,21 +4483,21 @@ app.whenReady().then(async () => {
           break;
         }
       }
-      
+
       if (!portFree) {
         console.warn('[Ollama] WARNING: Port 11434 is still in use after cleanup - bundled Ollama may fail to start');
       }
-      
+
       console.log('[Ollama] Cleaned up existing Ollama instances');
     } catch (e) {
       // Ignore errors
       console.log('[Ollama] Cleanup attempted');
     }
-    
+
     // Final wait and verification before starting
     console.log('[Ollama] Waiting for port to be fully released...');
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
+
     // One more check - if port is still in use, try killing again
     try {
       const { stdout } = await execPromise('netstat -ano | findstr :11434');
@@ -4289,7 +4512,7 @@ app.whenReady().then(async () => {
               try {
                 await execPromise(`taskkill /F /PID ${pid} 2>nul`);
                 console.log(`[Ollama] Final kill of process ${pid}`);
-              } catch (e) {}
+              } catch (e) { }
             }
           }
         }
@@ -4298,14 +4521,14 @@ app.whenReady().then(async () => {
     } catch (e) {
       // Port check failed, assume it's free
     }
-    
+
     const ollama = new ElectronOllama({
       basePath: app.getPath('userData'),
     });
-    
+
     // Check if bundled Ollama is already running
     const isRunning = await ollama.isRunning();
-    
+
     if (isRunning) {
       console.log('[Ollama] Bundled Ollama is already running');
     } else {
@@ -4331,7 +4554,7 @@ app.whenReady().then(async () => {
             console.error('[Ollama] Serve error:', err.message);
           }
         });
-        
+
         // Wait a bit for Ollama to start, then check if it's running
         console.log('[Ollama] Waiting for Ollama to initialize...');
         for (let i = 0; i < 10; i++) {
@@ -4347,7 +4570,7 @@ app.whenReady().then(async () => {
             // Keep waiting
           }
         }
-        
+
         if (!serveStarted) {
           // Final check using HTTP request - wait a bit longer since GPU detection takes time
           console.log('[Ollama] Verifying Ollama is responding...');
@@ -4386,14 +4609,14 @@ app.whenReady().then(async () => {
     console.error('[Ollama] Error initializing bundled Ollama:', error);
     // Continue anyway - AI features will show error messages
   }
-  
-  
+
+
   // TOR HARDENING: Set consistent User-Agent (standardized for fingerprinting protection)
   // Use a consistent, common User-Agent that doesn't expose Electron version or unique details
   const standardUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
   session.defaultSession.setUserAgent(standardUserAgent);
   console.log('[Tor Hardening] User agent standardized for fingerprinting protection');
-  
+
   // TOR HARDENING: Block dangerous protocols via webRequest
   // FTP and other non-HTTP protocols are blocked by Chromium security by default
   // chrome:// and devtools:// are blocked by Chromium's security model
@@ -4402,42 +4625,42 @@ app.whenReady().then(async () => {
     console.warn('[Tor Hardening] Blocked FTP protocol request:', details.url);
     callback({ cancel: true });
   });
-  
+
   // Configure proxy/VPN if specified
   if (PROXY_SERVER) {
     session.defaultSession.setProxy({
       proxyRules: PROXY_SERVER
     });
     console.log('VPN/Proxy configured:', PROXY_SERVER);
-    
+
     // Handle Chromium cache errors gracefully when using VPN/Proxy
     // These errors are common with proxy/VPN but don't affect functionality
     const originalConsoleError = console.error;
-    console.error = function(...args) {
+    console.error = function (...args) {
       const message = args.join(' ');
       // Filter out common Chromium cache errors that occur with VPN/proxy
       // These are harmless cache corruption issues that Chromium handles automatically
-      if (message.includes('backend_impl.cc') || 
-          message.includes('entry_impl.cc') ||
-          message.includes('Critical error found') ||
-          (message.includes('No file for') && message.length < 100)) {
+      if (message.includes('backend_impl.cc') ||
+        message.includes('entry_impl.cc') ||
+        message.includes('Critical error found') ||
+        (message.includes('No file for') && message.length < 100)) {
         // Suppress these specific cache errors - they're handled by Chromium
         // Only suppress if it's a short message (to avoid hiding real errors)
         return;
       }
       originalConsoleError.apply(console, args);
     };
-    
+
   }
-  
+
   // Extensions disabled - using Omega Wallet as native provider instead
   // MetaMask/Phantom extensions removed due to Electron limitations
   // Omega Wallet will inject as window.ethereum and window.solana
   console.log('Using Omega Wallet as native wallet provider (extensions disabled)');
-  
+
   // Setup firewall network request interceptor
   setupFirewallInterceptor();
-  
+
   createDesktopWindow();
 
   app.on('activate', () => {
@@ -4464,7 +4687,7 @@ app.on('window-all-closed', async () => {
         console.warn('[Main] Tor stop failed:', e.message);
         // Try to kill processes anyway
         if (torManager.killAllTorProcesses) {
-          await torManager.killAllTorProcesses().catch(() => {});
+          await torManager.killAllTorProcesses().catch(() => { });
         }
       }
     }
@@ -4476,7 +4699,7 @@ app.on('window-all-closed', async () => {
 app.on('before-quit', async (event) => {
   // Prevent default quit to allow cleanup
   event.preventDefault();
-  
+
   if (analytics) {
     try {
       await analytics.trackClose();
@@ -4484,7 +4707,7 @@ app.on('before-quit', async (event) => {
       console.warn('[Main] Analytics close tracking failed:', e.message);
     }
   }
-  
+
   // Aggressively stop and kill all Tor processes
   if (torManager) {
     try {
@@ -4498,11 +4721,11 @@ app.on('before-quit', async (event) => {
       console.warn('[Main] Tor stop failed:', e.message);
       // Try to kill processes anyway
       if (torManager.killAllTorProcesses) {
-        await torManager.killAllTorProcesses().catch(() => {});
+        await torManager.killAllTorProcesses().catch(() => { });
       }
     }
   }
-  
+
   // Now actually quit
   app.exit(0);
 });

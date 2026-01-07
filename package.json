@@ -60,6 +60,22 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "extraResources": [
+      {
+        "from": "build/tor",
+        "to": "build/tor",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/models",
+        "to": "build/models",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "files": [
       "**/*",
       "!**/node_modules/@types/**/*",
@@ -73,8 +89,7 @@
       "!**/docs/**/*",
       "!**/examples/**/*",
       "extensions/**/*",
-      "build/models/**/*",
-      "build/tor/tor.exe",
+      "extensions/**/*",
       "build/icon.ico",
       "build/icon.png",
       "!dist/**/*",

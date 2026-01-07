@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netrunner // Global Surveillance</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --accent-primary: #00ff99;
+            --accent-secondary: #00ccff;
+            --alert-color: #ff0055;
+            --grid-color: rgba(0, 255, 153, 0.1);
+            --text-color: #e0e0e0;
+            --hud-bg: rgba(10, 15, 10, 0.85);
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRT/Scanline Effect */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 0, 0, 0.15),
+                    rgba(0, 0, 0, 0.15) 1px,
+                    transparent 1px,
+                    transparent 2px);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: linear-gradient(90deg, rgba(0, 20, 10, 0.9), rgba(0, 0, 0, 0.8));
+            border-bottom: 1px solid var(--accent-primary);
+            -webkit-app-region: drag;
+            z-index: 50;
+        }
+
+        .brand {
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 0 5px var(--accent-primary);
+        }
+
+        .window-controls {
+            -webkit-app-region: no-drag;
+            display: flex;
+            gap: 5px;
+        }
+
+        .win-btn {
+            background: transparent;
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .win-btn:hover {
+            background: var(--accent-primary);
+            color: black;
+        }
+
+        /* Main Viewport */
+        #viewport {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #mapCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0a1010 0%, #000000 100%);
+        }
+
+        /* HUD Overlays */
+        .hud-panel {
+            position: absolute;
+            background: var(--hud-bg);
+            border: 1px solid var(--accent-primary);
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 153, 0.1);
+            backdrop-filter: blur(4px);
+        }
+
+        .hud-title {
+            font-size: 12px;
+            color: var(--accent-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(0, 204, 255, 0.3);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Node Inspector (Left) */
+        #inspector {
+            top: 20px;
+            left: 20px;
+            width: 280px;
+            font-size: 12px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-family: var(--font-mono);
+        }
+
+        .data-label {
+            color: #888;
+        }
+
+        .data-val {
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        .data-val.secure {
+            color: var(--accent-primary);
+        }
+
+        .data-val.warn {
+            color: #ffcc00;
+        }
+
+        .data-val.danger {
+            color: var(--alert-color);
+        }
+
+        /* Network Graph (Bottom Right) */
+        #network-monitor {
+            bottom: 30px;
+            right: 20px;
+            width: 320px;
+            height: 180px;
+            /* Increased height to fit text */
+            display: flex;
+            flex-direction: column;
+        }
+
+        #trafficCanvas {
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            margin-top: auto;
+            /* Push to bottom of flex container if needed, or just flow */
+        }
+
+        /* Connection Log (Bottom Left) */
+        #system-log {
+            bottom: 30px;
+            /* Align with right box */
+            left: 20px;
+            width: 400px;
+            height: 180px;
+            /* Match height */
+            overflow: hidden;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            border-left: 2px solid transparent;
+            padding-left: 5px;
+        }
+
+        .log-entry.info {
+            border-color: var(--accent-secondary);
+        }
+
+        .log-entry.success {
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+
+        .log-entry.warn {
+            border-color: #ffcc00;
+        }
+
+        /* Top Status Bar */
+        #top-status {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--hud-bg);
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            border: 1px solid var(--accent-primary);
+            border-top: none;
+            padding: 8px 30px;
+            display: flex;
+            gap: 30px;
+            font-size: 12px;
+            z-index: 40;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .status-val {
+            color: var(--accent-primary);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-lbl {
+            color: #666;
+            font-size: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title-bar">
+        <div class="brand">
+            NETRUNNER // v2.0
+        </div>
+        <div class="window-controls">
+            <button class="win-btn" id="refreshBtn">↻</button>
+            <button class="win-btn" id="minBtn">−</button>
+            <button class="win-btn" id="closeBtn">×</button>
+        </div>
+    </div>
+
+    <div id="viewport">
+        <canvas id="mapCanvas"></canvas>
+
+        <!-- Top Status -->
+        <div id="top-status">
+            <div class="status-item">
+                <span class="status-val" id="ip-status">MASKED</span>
+                <span class="status-lbl">IDENTITY</span>
+            </div>
+            <div class="status-item">
+                <span class="status-val" id="uptime">00:00:00</span>
+                <span class="status-lbl">SESSION TIME</span>
+            </div>
+            <div class="status-item">
+                <span class="status-val" id="nodes-active">3 / 3</span>
+                <span class="status-lbl">NODES ACTIVE</span>
+            </div>
+        </div>
+
+        <!-- Node Inspector -->
+        <div id="inspector" class="hud-panel">
+            <div class="hud-title">
+                <span>NODE INTERCEPTOR</span>
+                <span style="font-size:10px">● LIVE</span>
+            </div>
+            <div id="node-details">
+                <div style="text-align:center; padding: 20px; color: #666;">
+                    Select a node from the map<br>to inspect traffic.
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Monitor -->
+        <div id="network-monitor" class="hud-panel">
+            <div class="hud-title">TRAFFIC ANALYSIS</div>
+            <canvas id="trafficCanvas"></canvas>
+            <div style="display:flex; justify-content:space-between; font-size:10px; margin-top:5px; color:#888;">
+                <span>UP: <span style="color:var(--accent-primary)">24 KB/s</span></span>
+                <span>DOWN: <span style="color:var(--accent-secondary)">102 KB/s</span></span>
+            </div>
+        </div>
+
+        <!-- System Log -->
+        <div id="system-log" class="hud-panel" style="display: flex; flex-direction: column-reverse;">
+            <!-- Logs injected here -->
+        </div>
+
+    </div>
+
+    <script src="netrunner.js"></script>
+</body>
+
+</html>

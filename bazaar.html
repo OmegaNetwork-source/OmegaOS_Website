@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bazaar</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #1a1a1a;
+            --accent: #ff0055;
+            /* Cyberpunk Pink */
+            --accent-glow: rgba(255, 0, 85, 0.4);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        /* Global Input Fix */
+        input,
+        textarea {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            pointer-events: auto !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 32px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            border-bottom: 1px solid #333;
+            -webkit-app-region: drag;
+        }
+
+        .title-drag-area {
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .window-title {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            -webkit-app-region: no-drag;
+        }
+
+        .control-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn.close:hover {
+            background: #e81123;
+            color: white;
+        }
+
+        /* Main Content */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin: 0;
+            font-weight: 800;
+            background: linear-gradient(90deg, #ff0055, #ffcc00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* App Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Scrollbar */
+        .app-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .app-grid::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .app-grid::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .app-grid::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* App Card */
+        .app-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 0, 85, 0.1);
+            border-color: var(--accent);
+        }
+
+        .app-icon-area {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-right: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .app-details {
+            flex: 1;
+        }
+
+        .app-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 4px 0;
+        }
+
+        .app-category {
+            font-size: 12px;
+            color: var(--accent);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .app-desc {
+            font-size: 13px;
+            color: #bbb;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        .install-btn {
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .install-btn:hover {
+            background: #333;
+            border-color: white;
+        }
+
+        .install-btn.primary {
+            background: var(--accent);
+            border: 1px solid var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .install-btn.primary:hover {
+            background: #d90048;
+            box-shadow: 0 0 25px var(--accent-glow);
+        }
+
+        .install-btn.installed {
+            background: #111;
+            color: #555;
+            border-color: #222;
+            cursor: default;
+            box-shadow: none;
+        }
+
+        /* Coming Soon Badge */
+        .coming-soon {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: #ffd700;
+            color: black;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 5px 30px;
+            transform: rotate(45deg);
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <div class="title-drag-area">
+            <div class="window-title">
+                <span style="color: var(--accent);">✦</span> THE OMEGA STORE
+            </div>
+        </div>
+        <div class="window-controls">
+            <button class="control-btn" id="minBtn">−</button>
+            <button class="control-btn" id="maxBtn">□</button>
+            <button class="control-btn close" id="closeBtn">×</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="header">
+            <h1>The Omega Store</h1>
+            <p>Decentralized Application Marketplace</p>
+        </div>
+
+        <div class="app-grid" id="appGrid">
+            <!-- Apps will be injected here by JS -->
+        </div>
+    </div>
+
+    <script src="bazaar-app.js"></script>
+</body>
+
+</html>

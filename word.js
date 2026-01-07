@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.onWindowId((windowId) => {
             currentWindowId = windowId;
         });
-        
+
         // Listen for open file event
         window.electronAPI.onOpenFile((filePath) => {
             loadFile(filePath);
@@ -71,14 +71,14 @@ function setupThemeToggle() {
         console.warn('[WORD] Theme toggle button not found');
         return;
     }
-    
+
     // Set initial icon
     themeToggleBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
-    
+
     themeToggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', currentTheme);
         localStorage.setItem('word-theme', currentTheme);
@@ -91,20 +91,20 @@ function setupRibbon() {
     // Tab switching
     const ribbonTabs = document.querySelectorAll('.ribbon-tab');
     const ribbonContents = document.querySelectorAll('.ribbon-content');
-    
+
     ribbonTabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const targetTab = tab.dataset.tab;
-            
+
             // Update active tab
             ribbonTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
+
             // Show/hide content
             ribbonContents.forEach(content => {
                 content.classList.add('hidden');
             });
-            
+
             const targetContent = document.getElementById(`ribbon${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`);
             if (targetContent) {
                 targetContent.classList.remove('hidden');
@@ -117,7 +117,7 @@ function setupRibbon() {
     const ribbonCut = document.getElementById('ribbonCut');
     const ribbonCopy = document.getElementById('ribbonCopy');
     const ribbonFormatPainter = document.getElementById('ribbonFormatPainter');
-    
+
     if (ribbonPaste) {
         ribbonPaste.addEventListener('click', async () => {
             try {
@@ -129,19 +129,19 @@ function setupRibbon() {
             }
         });
     }
-    
+
     if (ribbonCut) {
         ribbonCut.addEventListener('click', () => {
             document.execCommand('cut', false, null);
         });
     }
-    
+
     if (ribbonCopy) {
         ribbonCopy.addEventListener('click', () => {
             document.execCommand('copy', false, null);
         });
     }
-    
+
     if (ribbonFormatPainter) {
         let formatPainterActive = false;
         let formatSource = null;
@@ -161,7 +161,7 @@ function setupRibbon() {
                 ribbonFormatPainter.style.color = '';
             }
         });
-        
+
         // Apply format on click in editor when format painter is active
         document.addEventListener('click', (e) => {
             if (formatPainterActive && formatSource && e.target.closest('#editor')) {
@@ -170,7 +170,7 @@ function setupRibbon() {
                     const sourceEl = formatSource.nodeType === 1 ? formatSource : formatSource.parentElement;
                     const targetEl = selection.getRangeAt(0).commonAncestorContainer;
                     const targetElement = targetEl.nodeType === 1 ? targetEl : targetEl.parentElement;
-                    
+
                     if (sourceEl && targetElement) {
                         const computed = window.getComputedStyle(sourceEl);
                         targetElement.style.fontWeight = computed.fontWeight;
@@ -187,51 +187,51 @@ function setupRibbon() {
             }
         }, true);
     }
-    
+
     // Font formatting
     const ribbonBold = document.getElementById('ribbonBold');
     const ribbonItalic = document.getElementById('ribbonItalic');
     const ribbonUnderline = document.getElementById('ribbonUnderline');
     const ribbonStrikethrough = document.getElementById('ribbonStrikethrough');
-    
+
     if (ribbonBold) {
         ribbonBold.addEventListener('click', () => {
             document.execCommand('bold', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonItalic) {
         ribbonItalic.addEventListener('click', () => {
             document.execCommand('italic', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonUnderline) {
         ribbonUnderline.addEventListener('click', () => {
             document.execCommand('underline', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonStrikethrough) {
         ribbonStrikethrough.addEventListener('click', () => {
             document.execCommand('strikeThrough', false, null);
             updateRibbonState();
         });
     }
-    
+
     // Font family and size
     const ribbonFontFamily = document.getElementById('ribbonFontFamily');
     const ribbonFontSize = document.getElementById('ribbonFontSize');
-    
+
     if (ribbonFontFamily) {
         ribbonFontFamily.addEventListener('change', (e) => {
             document.execCommand('fontName', false, e.target.value);
         });
     }
-    
+
     if (ribbonFontSize) {
         ribbonFontSize.addEventListener('change', (e) => {
             const selection = window.getSelection();
@@ -251,39 +251,39 @@ function setupRibbon() {
             }
         });
     }
-    
+
     // Font color
     const ribbonFontColor = document.getElementById('ribbonFontColor');
     const ribbonFontColorPicker = document.getElementById('ribbonFontColorPicker');
-    
+
     if (ribbonFontColor) {
         ribbonFontColor.addEventListener('click', () => {
             ribbonFontColorPicker.click();
         });
     }
-    
+
     if (ribbonFontColorPicker) {
         ribbonFontColorPicker.addEventListener('change', (e) => {
             document.execCommand('foreColor', false, e.target.value);
         });
     }
-    
+
     // Highlight color
     const ribbonHighlight = document.getElementById('ribbonHighlight');
     const ribbonHighlightPicker = document.getElementById('ribbonHighlightPicker');
-    
+
     if (ribbonHighlight) {
         ribbonHighlight.addEventListener('click', () => {
             ribbonHighlightPicker.click();
         });
     }
-    
+
     if (ribbonHighlightPicker) {
         ribbonHighlightPicker.addEventListener('change', (e) => {
             document.execCommand('backColor', false, e.target.value);
         });
     }
-    
+
     // Paragraph formatting
     const ribbonBullets = document.getElementById('ribbonBullets');
     const ribbonNumbering = document.getElementById('ribbonNumbering');
@@ -294,59 +294,59 @@ function setupRibbon() {
     const ribbonDecreaseIndent = document.getElementById('ribbonDecreaseIndent');
     const ribbonIncreaseIndent = document.getElementById('ribbonIncreaseIndent');
     const ribbonLineSpacing = document.getElementById('ribbonLineSpacing');
-    
+
     if (ribbonBullets) {
         ribbonBullets.addEventListener('click', () => {
             document.execCommand('insertUnorderedList', false, null);
         });
     }
-    
+
     if (ribbonNumbering) {
         ribbonNumbering.addEventListener('click', () => {
             document.execCommand('insertOrderedList', false, null);
         });
     }
-    
+
     if (ribbonAlignLeft) {
         ribbonAlignLeft.addEventListener('click', () => {
             document.execCommand('justifyLeft', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonAlignCenter) {
         ribbonAlignCenter.addEventListener('click', () => {
             document.execCommand('justifyCenter', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonAlignRight) {
         ribbonAlignRight.addEventListener('click', () => {
             document.execCommand('justifyRight', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonJustify) {
         ribbonJustify.addEventListener('click', () => {
             document.execCommand('justifyFull', false, null);
             updateRibbonState();
         });
     }
-    
+
     if (ribbonDecreaseIndent) {
         ribbonDecreaseIndent.addEventListener('click', () => {
             document.execCommand('outdent', false, null);
         });
     }
-    
+
     if (ribbonIncreaseIndent) {
         ribbonIncreaseIndent.addEventListener('click', () => {
             document.execCommand('indent', false, null);
         });
     }
-    
+
     if (ribbonLineSpacing) {
         ribbonLineSpacing.addEventListener('change', (e) => {
             const editor = document.getElementById('editor');
@@ -362,10 +362,10 @@ function setupRibbon() {
             }
         });
     }
-    
+
     // Styles
     const ribbonStyles = document.getElementById('ribbonStyles');
-    
+
     if (ribbonStyles) {
         ribbonStyles.addEventListener('change', (e) => {
             const value = e.target.value;
@@ -400,24 +400,24 @@ function setupRibbon() {
             }
         });
     }
-    
+
     // Editing buttons
     const ribbonFind = document.getElementById('ribbonFind');
     const ribbonReplace = document.getElementById('ribbonReplace');
     const ribbonSelect = document.getElementById('ribbonSelect');
-    
+
     if (ribbonFind) {
         ribbonFind.addEventListener('click', () => {
             showFindDialog();
         });
     }
-    
+
     if (ribbonReplace) {
         ribbonReplace.addEventListener('click', () => {
             showReplaceDialog();
         });
     }
-    
+
     if (ribbonSelect) {
         ribbonSelect.addEventListener('click', () => {
             const editor = document.getElementById('editor');
@@ -428,12 +428,11 @@ function setupRibbon() {
             selection.addRange(range);
         });
     }
-    
-    // Update ribbon state on selection change
-    const editor = document.getElementById('editor');
-    editor.addEventListener('selectionchange', updateRibbonState);
-    editor.addEventListener('keyup', updateRibbonState);
-    editor.addEventListener('mouseup', updateRibbonState);
+
+    // Update ribbon state on selection change - Listen globally since we have multiple pages
+    document.addEventListener('selectionchange', updateRibbonState);
+    document.addEventListener('keyup', updateRibbonState);
+    document.addEventListener('mouseup', updateRibbonState);
 }
 
 function updateRibbonState() {
@@ -442,26 +441,26 @@ function updateRibbonState() {
     const ribbonUnderline = document.getElementById('ribbonUnderline');
     const ribbonStrikethrough = document.getElementById('ribbonStrikethrough');
     const ribbonFontSize = document.getElementById('ribbonFontSize');
-    
+
     // Check formatting state
     if (ribbonBold) ribbonBold.style.backgroundColor = document.queryCommandState('bold') ? '#e5e5e5' : '';
     if (ribbonItalic) ribbonItalic.style.backgroundColor = document.queryCommandState('italic') ? '#e5e5e5' : '';
     if (ribbonUnderline) ribbonUnderline.style.backgroundColor = document.queryCommandState('underline') ? '#e5e5e5' : '';
     if (ribbonStrikethrough) ribbonStrikethrough.style.backgroundColor = document.queryCommandState('strikeThrough') ? '#e5e5e5' : '';
-    
+
     // Update font size selector based on selected text
     if (ribbonFontSize) {
         const selection = window.getSelection();
         if (selection.rangeCount > 0 && !selection.isCollapsed) {
             const range = selection.getRangeAt(0);
-            const editor = document.getElementById('editor');
             let element = range.commonAncestorContainer;
-            
+
             if (element.nodeType === Node.TEXT_NODE) {
                 element = element.parentElement;
             }
-            
-            while (element && element !== editor) {
+
+            // Traverse up until we hit a page or the container
+            while (element && !element.classList.contains('page') && element.id !== 'pages-container') {
                 const computedStyle = window.getComputedStyle(element);
                 const fontSize = computedStyle.fontSize;
                 if (fontSize && fontSize !== 'inherit' && fontSize !== 'initial') {
@@ -478,40 +477,170 @@ function updateRibbonState() {
     }
 }
 
+// Pagination Manager
+const PaginationManager = {
+    pagesContainer: null,
+
+    init() {
+        this.pagesContainer = document.getElementById('pages-container');
+        this.updateActivePage();
+
+        // Listen for input to handle overflow
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('page')) {
+                this.checkPageOverflow(e.target);
+                window.updateCounts();
+                hasUnsavedChanges = true;
+                updateWindowTitle();
+            }
+        });
+
+        // Handle pasting
+        document.addEventListener('paste', (e) => {
+            if (e.target.classList.contains('page')) {
+                // Let default paste happen, then check overflow
+                setTimeout(() => {
+                    this.checkPageOverflow(e.target);
+                    window.updateCounts();
+                    hasUnsavedChanges = true;
+                    updateWindowTitle();
+                }, 0);
+            }
+        });
+
+        // Handle backspace merging (basic)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && e.target.classList.contains('page')) {
+                const currentPage = e.target;
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0 && selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    // If at start of page and not first page
+                    if (range.startOffset === 0 && currentPage.id !== 'page-1') {
+                        // In a robust implementation, we would move cursor to prev page
+                    }
+                }
+            }
+        });
+    },
+
+    getActivePage() {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0 && selection.anchorNode) {
+            let node = selection.anchorNode;
+            let page = null;
+
+            // Handle element nodes
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                if (node.classList.contains('page')) {
+                    page = node;
+                } else {
+                    page = node.closest('.page');
+                }
+            }
+            // Handle text nodes
+            else if (node.nodeType === Node.TEXT_NODE) {
+                if (node.parentElement) {
+                    page = node.parentElement.closest('.page');
+                }
+            }
+
+            // If we found a page from selection, return it. 
+            // Only return if it's actually a page element.
+            if (page) {
+                return page;
+            }
+        }
+
+        // Fallback to last page or page 1
+        const pages = document.querySelectorAll('.page');
+        return pages.length > 0 ? pages[pages.length - 1] : document.getElementById('page-1');
+    },
+
+    getAllContent() {
+        const pages = document.querySelectorAll('.page');
+        let content = '';
+        pages.forEach((page) => {
+            content += page.innerHTML;
+        });
+        return content;
+    },
+
+    createNewPage() {
+        const pages = document.querySelectorAll('.page');
+        const newPageId = `page-${pages.length + 1}`;
+        const newPage = document.createElement('div');
+        newPage.className = 'page';
+        newPage.id = newPageId;
+        newPage.contentEditable = true;
+        newPage.spellcheck = true;
+        this.pagesContainer.appendChild(newPage);
+        return newPage;
+    },
+
+    checkPageOverflow(page) {
+        // Simple pixel check just in case 'in' behaves validly
+        if (page.scrollHeight > page.clientHeight) {
+            let nextPage = page.nextElementSibling;
+            if (!nextPage || !nextPage.classList.contains('page')) {
+                nextPage = this.createNewPage();
+            }
+
+            // Move overflow content
+            while (page.scrollHeight > page.clientHeight && page.lastChild) {
+                const lastNode = page.lastChild;
+                if (nextPage.firstChild) {
+                    nextPage.insertBefore(lastNode, nextPage.firstChild);
+                } else {
+                    nextPage.appendChild(lastNode);
+                }
+            }
+
+            // Recursively check next page
+            this.checkPageOverflow(nextPage);
+        }
+
+        // Remove empty pages at the very end
+        const pages = document.querySelectorAll('.page');
+        if (pages.length > 1) {
+            const lastPage = pages[pages.length - 1];
+            if ((!lastPage.textContent || lastPage.textContent.trim() === '') && !lastPage.hasChildNodes()) {
+                if (document.activeElement !== lastPage) {
+                    lastPage.remove();
+                }
+            }
+        }
+    },
+
+    updateActivePage() {
+        // Placeholder
+    }
+};
+
 function setupEditor() {
-    const editor = document.getElementById('editor');
-    
-    // Update word and character count (expose globally so AI can update it)
-    window.updateCounts = function() {
-        const text = editor.innerText || editor.textContent || '';
-        const words = text.trim() ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
-        const chars = text.length;
-        
+    PaginationManager.init();
+
+    // Update word and character count
+    window.updateCounts = function () {
+        const pages = document.querySelectorAll('.page');
+        let totalWords = 0;
+        let totalChars = 0;
+
+        pages.forEach(page => {
+            const text = page.innerText || page.textContent || '';
+            const words = text.trim() ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+            const chars = text.length;
+            totalWords += words;
+            totalChars += chars;
+        });
+
         const wordCountEl = document.getElementById('wordCount');
         const charCountEl = document.getElementById('charCount');
-        if (wordCountEl) wordCountEl.textContent = words;
-        if (charCountEl) charCountEl.textContent = chars;
+        if (wordCountEl) wordCountEl.textContent = totalWords;
+        if (charCountEl) charCountEl.textContent = totalChars;
     };
-    
+
     const updateCounts = window.updateCounts;
-    
-    editor.addEventListener('input', () => {
-        hasUnsavedChanges = true;
-        updateWindowTitle();
-        updateCounts();
-    });
-    
-    // Also update on paste
-    editor.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const text = e.clipboardData.getData('text/plain');
-        document.execCommand('insertText', false, text);
-        hasUnsavedChanges = true;
-        updateWindowTitle();
-        updateCounts();
-    });
-    
-    // Initial count
     updateCounts();
 }
 
@@ -528,35 +657,35 @@ function setupFileOperations() {
     const fileMenuSave = document.getElementById('fileMenuSave');
     const fileMenuSaveAs = document.getElementById('fileMenuSaveAs');
     const fileMenuPrint = document.getElementById('fileMenuPrint');
-    
+
     // Toggle file menu dropdown
     if (fileMenuBtn && fileMenuDropdown) {
         const fileMenuContainer = fileMenuBtn.closest('.file-menu-container');
-        
+
         // Remove existing close handler if it exists
         if (fileMenuCloseHandler) {
             document.removeEventListener('click', fileMenuCloseHandler);
         }
-        
+
         fileMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             fileMenuDropdown.classList.toggle('show');
         });
-        
+
         // Close menu when clicking outside - but NOT when clicking menu items
         fileMenuCloseHandler = (e) => {
             // Don't close if clicking on menu items or the button
-            const isClickOnMenuItem = e.target.closest('.file-menu-item') || 
-                                     e.target.closest('.file-menu-dropdown') ||
-                                     e.target === fileMenuBtn ||
-                                     fileMenuContainer?.contains(e.target);
-            
+            const isClickOnMenuItem = e.target.closest('.file-menu-item') ||
+                e.target.closest('.file-menu-dropdown') ||
+                e.target === fileMenuBtn ||
+                fileMenuContainer?.contains(e.target);
+
             if (!isClickOnMenuItem) {
                 fileMenuDropdown.classList.remove('show');
             }
         };
         document.addEventListener('click', fileMenuCloseHandler);
-        
+
         // File menu actions
         if (fileMenuNew) {
             fileMenuNew.addEventListener('click', async (e) => {
@@ -574,7 +703,7 @@ function setupFileOperations() {
                 updateWindowTitle();
             });
         }
-        
+
         if (fileMenuOpen) {
             fileMenuOpen.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -604,7 +733,7 @@ function setupFileOperations() {
                 }
             });
         }
-        
+
         if (fileMenuSave) {
             fileMenuSave.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -613,12 +742,12 @@ function setupFileOperations() {
                 await saveDocument();
             });
         }
-        
+
         // Remove existing Save As handler if it exists
         if (fileMenuSaveAsHandler && fileMenuSaveAs) {
             fileMenuSaveAs.removeEventListener('click', fileMenuSaveAsHandler);
         }
-        
+
         if (fileMenuSaveAs) {
             fileMenuSaveAsHandler = async (e) => {
                 e.preventDefault();
@@ -632,7 +761,7 @@ function setupFileOperations() {
         } else {
             console.warn('[WORD] Save As button not found!');
         }
-        
+
         if (fileMenuPrint) {
             fileMenuPrint.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -648,16 +777,16 @@ function setupFileOperations() {
         // Only handle shortcuts if not typing in input fields
         const activeElement = document.activeElement;
         const isInputActive = activeElement && (
-            activeElement.tagName === 'INPUT' || 
-            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'TEXTAREA' ||
             activeElement.id === 'aiChatInput'
         );
-        
+
         if (isInputActive && e.key !== 'f' && e.key !== 'z' && e.key !== 'y') {
             // Allow shortcuts in input fields for find/undo/redo
             return;
         }
-        
+
         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
             e.preventDefault();
             saveDocument();
@@ -719,15 +848,15 @@ function setupFileOperations() {
 }
 
 async function saveDocument() {
-    const content = document.getElementById('editor').innerHTML;
-    
+    const content = PaginationManager.getAllContent();
+
     if (window.electronAPI && window.electronAPI.saveFileDialog) {
         try {
             // Determine default filename and extension
             let defaultFileName = currentFileName || 'document';
             // Remove existing extension
             defaultFileName = defaultFileName.replace(/\.[^/.]+$/, '');
-            
+
             const result = await window.electronAPI.saveFileDialog({
                 defaultPath: defaultFileName + '.docx',
                 filters: [
@@ -740,7 +869,7 @@ async function saveDocument() {
             if (result && !result.canceled && result.filePath) {
                 let filePath = result.filePath;
                 let ext = filePath.toLowerCase().split('.').pop();
-                
+
                 // If no extension, default to docx if Word Documents filter was likely selected
                 // (This is a best guess - Electron doesn't tell us which filter was selected)
                 if (!ext || ext === filePath.toLowerCase()) {
@@ -748,7 +877,7 @@ async function saveDocument() {
                     filePath = filePath + '.docx';
                     ext = 'docx';
                 }
-                
+
                 // Check if user wants DOCX format
                 if (ext === 'docx' && window.electronAPI.convertToDocx) {
                     const convertResult = await window.electronAPI.convertToDocx(content, filePath);
@@ -793,8 +922,8 @@ async function saveDocument() {
 }
 
 async function saveDocumentAs() {
-    const content = document.getElementById('editor').innerHTML;
-    
+    const content = PaginationManager.getAllContent();
+
     if (window.electronAPI && window.electronAPI.saveFileDialog) {
         try {
             // Always show save dialog, even if file already exists
@@ -807,17 +936,17 @@ async function saveDocumentAs() {
                     { name: 'All Files', extensions: ['*'] }
                 ]
             });
-            
+
             if (result && !result.canceled && result.filePath) {
                 let filePath = result.filePath;
                 let ext = filePath.toLowerCase().split('.').pop();
-                
+
                 // If no extension, default to docx
                 if (!ext || ext === filePath.toLowerCase()) {
                     filePath = filePath + '.docx';
                     ext = 'docx';
                 }
-                
+
                 // Check if user wants DOCX format
                 if (ext === 'docx' && window.electronAPI.convertToDocx) {
                     const convertResult = await window.electronAPI.convertToDocx(content, filePath);
@@ -865,7 +994,18 @@ async function loadFile(filePath) {
     try {
         if (window.electronAPI && window.electronAPI.readFile) {
             const content = await window.electronAPI.readFile(filePath);
-            document.getElementById('editor').innerHTML = content;
+
+            // Clear existing pages
+            const container = document.getElementById('pages-container');
+            container.innerHTML = '';
+
+            // Create first page and load content
+            const firstPage = PaginationManager.createNewPage();
+            firstPage.innerHTML = content;
+
+            // Trigger pagination check
+            PaginationManager.checkPageOverflow(firstPage);
+
             currentFileName = filePath.split(/[\\/]/).pop();
             hasUnsavedChanges = false;
             updateWindowTitle();
@@ -944,22 +1084,25 @@ function setupAIFeatures() {
         const thinkingDiv = addAIMessage('assistant', 'Thinking...', true);
 
         try {
-            const editor = document.getElementById('editor');
-            const currentText = editor.innerText || editor.textContent || '';
+            // Use PaginationManager to get context
+            const activePage = PaginationManager.getActivePage();
+            const currentText = PaginationManager.getAllContent();
             const lowerMessage = message.toLowerCase();
 
             // Check if this is a formatting-only request (no text generation needed)
             // Only treat as formatting-only if there's existing text AND no generation keywords
             const formattingInstructions = detectFormattingInstructions(message);
-            const hasGenerationKeywords = lowerMessage.includes('write') || lowerMessage.includes('create') || 
-                                         lowerMessage.includes('generate') || lowerMessage.includes('need') ||
-                                         lowerMessage.includes('words') || lowerMessage.includes('about') ||
-                                         lowerMessage.includes('describe') || lowerMessage.includes('tell') ||
-                                         lowerMessage.includes('make') || lowerMessage.includes('give');
+
+            const generationKeywords = ['write', 'create', 'generate', 'paper', 'essay', 'article', 'paragraph',
+                'need', 'about', 'add', 'append', 'insert', 'more', 'expand', 'detail', 'plus',
+                'describe', 'tell', 'make', 'give'];
+
+            const hasGenerationKeywords = generationKeywords.some(keyword => lowerMessage.includes(keyword));
+
             const isFormattingOnly = formattingInstructions.hasFormatting && currentText && !hasGenerationKeywords &&
-                                   !lowerMessage.includes('improve') && !lowerMessage.includes('rewrite') && 
-                                   !lowerMessage.includes('expand');
-            
+                !lowerMessage.includes('improve') && !lowerMessage.includes('rewrite') &&
+                !lowerMessage.includes('expand');
+
             // If it's formatting-only, apply formatting directly and skip AI
             if (isFormattingOnly) {
                 const selection = window.getSelection();
@@ -968,16 +1111,21 @@ function setupAIFeatures() {
                     const range = selection.getRangeAt(0);
                     applyFormattingToSelection(range, formattingInstructions);
                 } else {
-                    // Format entire document - select all and apply formatting
+                    // Format entire document - select all and apply formatting.
+                    // Use activePage as a reasonable default target for "all" if no selection.
+                    // Or ideally select content of all pages? 
+                    // Let's rely on activePage for now to avoid complexity, or select activePage contents.
                     const range = document.createRange();
-                    range.selectNodeContents(editor);
+                    if (activePage) {
+                        range.selectNodeContents(activePage);
+                    }
                     const sel = window.getSelection();
                     sel.removeAllRanges();
                     sel.addRange(range);
                     applyFormattingToSelection(range, formattingInstructions);
                     sel.removeAllRanges();
                 }
-                
+
                 // Show success message
                 if (thinkingDiv && thinkingDiv.parentElement) {
                     thinkingDiv.remove();
@@ -988,19 +1136,16 @@ function setupAIFeatures() {
                 aiChatInput.focus();
                 return; // Exit early
             }
-            
+
             // Determine if this is a continuation request (cut off, incomplete, finish, continue)
             const isContinuation = lowerMessage.includes('cut off') || lowerMessage.includes('incomplete') ||
-                                  lowerMessage.includes('finish') || lowerMessage.includes('continue') ||
-                                  lowerMessage.includes('it was cut') || lowerMessage.includes('not finished') ||
-                                  lowerMessage.includes('was incomplete') || lowerMessage.includes('complete it');
-            
+                lowerMessage.includes('finish') || lowerMessage.includes('continue') ||
+                lowerMessage.includes('it was cut') || lowerMessage.includes('not finished') ||
+                lowerMessage.includes('was incomplete') || lowerMessage.includes('complete it');
+
             // Determine if this is a generation request (only if no existing content or explicit generation request)
-            const isGeneration = !currentText || lowerMessage.includes('write') || lowerMessage.includes('create') || 
-                                 lowerMessage.includes('generate') || lowerMessage.includes('paper') ||
-                                 lowerMessage.includes('essay') || lowerMessage.includes('article') ||
-                                 lowerMessage.includes('paragraph') || lowerMessage.includes('need') ||
-                                 lowerMessage.includes('about');
+            // Use the keywords defined above
+            const isGeneration = !currentText || hasGenerationKeywords;
 
             let result;
             if (isContinuation && currentText) {
@@ -1015,7 +1160,7 @@ Your task: Analyze the content above. If it appears incomplete or cut off, conti
 IMPORTANT: If the user requests formatting changes (bold, italic, underline, font size, color, alignment), include those instructions clearly in your response, but the formatting will be applied automatically.
 
 Continue from the existing content:`;
-                
+
                 if (window.electronAPI.aiChat) {
                     result = await window.electronAPI.aiChat(continuationPrompt, []);
                 } else {
@@ -1038,7 +1183,7 @@ Continue from the existing content:`;
                     if (lowerMessage.includes('expand')) taskType = 'expand';
                     if (lowerMessage.includes('summarize') || lowerMessage.includes('shorter')) taskType = 'summarize';
                     if (lowerMessage.includes('professional')) style = 'professional';
-                    
+
                     result = await window.electronAPI.aiImproveText(currentText, style, taskType);
                 } else {
                     // No text to improve, use chat API
@@ -1055,7 +1200,7 @@ Continue from the existing content:`;
                 if (response) {
                     // Clean up common AI prefixes and phrases that aren't part of the actual content
                     response = response.trim();
-                    
+
                     // Remove common AI introduction phrases (very aggressive pattern matching)
                     const prefixes = [
                         /^certainly!?\s*/i,
@@ -1071,14 +1216,14 @@ Continue from the existing content:`;
                         /^(i'?ll|i\s+can|i\s+will)\s+(write|create|generate|help\s+you)\s+/i,
                         /^(let\s+me|allow\s+me\s+to)\s+(write|create|generate|help)\s+/i
                     ];
-                    
+
                     // Also remove patterns that appear at the start of lines
                     const lineStartPatterns = [
                         /^title:\s*/im,
                         /^introduction:\s*/im,
                         /^here'?s\s+/im
                     ];
-                    
+
                     // Remove prefixes multiple times to catch nested phrases
                     let previousLength = response.length;
                     let iterations = 0;
@@ -1092,10 +1237,10 @@ Continue from the existing content:`;
                         }
                         iterations++;
                     } while (response.length !== previousLength && iterations < 10);
-                    
+
                     // Final cleanup: remove any remaining "Title:" at the very start
                     response = response.replace(/^title:\s*/i, '').trim();
-                    
+
                     // Remove the "Thinking..." message and show a brief success message instead
                     if (thinkingDiv && thinkingDiv.parentElement) {
                         thinkingDiv.remove();
@@ -1123,32 +1268,44 @@ Continue from the existing content:`;
                             return `<p>${trimmed}</p>`;
                         }).join('');
                     }
-                    
+
                     // Check if the message contains formatting instructions (re-detect since we need it for new content)
                     const formattingInstructionsForContent = detectFormattingInstructions(message);
-                    
+
                     let htmlContent = markdownToHtml(response.trim());
-                    
+
                     // Apply formatting directly to HTML before inserting
                     if (formattingInstructionsForContent.hasFormatting) {
                         htmlContent = applyFormattingToHTML(htmlContent, formattingInstructionsForContent, message);
                     }
-                    
+
                     // Insert the text into the editor based on request type
                     if (isContinuation) {
                         // For continuation requests, always append to existing content
-                        const currentContent = editor.innerHTML || '';
-                        editor.innerHTML += htmlContent;
+                        // Append to the last page or active page
+                        const targetPage = PaginationManager.getActivePage();
+                        targetPage.innerHTML += htmlContent;
+                        // IMPORTANT: Check overflow after appending
+                        PaginationManager.checkPageOverflow(targetPage);
+
                     } else if (isGeneration) {
                         // For generation requests, append to existing content or replace if empty
-                        const currentContent = editor.innerHTML || '';
-                        if (currentContent.trim()) {
-                            // Append as new content
-                            editor.innerHTML += htmlContent;
+                        // Check if we are "appending" vs "replacing" based on our isGeneration logic
+                        // If "add", "append", then append.
+                        // If file is empty, replace/insert.
+                        const targetPage = PaginationManager.getActivePage();
+                        const pageContent = targetPage.innerText.trim();
+
+                        // If page is empty (and it's first page), just set content
+                        if (!pageContent && targetPage.id === 'page-1') {
+                            targetPage.innerHTML = htmlContent;
                         } else {
-                            // Replace if document is empty
-                            editor.innerHTML = htmlContent;
+                            // Otherwise append
+                            targetPage.innerHTML += htmlContent;
                         }
+                        // Check overflow
+                        PaginationManager.checkPageOverflow(targetPage);
+
                     } else {
                         // For improvement requests, replace selected text or entire document
                         const selection = window.getSelection();
@@ -1166,17 +1323,45 @@ Continue from the existing content:`;
                             range.collapse(false);
                             selection.removeAllRanges();
                             selection.addRange(range);
+
+                            // Check overflow on the page containing the selection
+                            const containerPage = range.commonAncestorContainer.closest ?
+                                range.commonAncestorContainer.closest('.page') :
+                                range.commonAncestorContainer.parentElement.closest('.page');
+                            if (containerPage) {
+                                PaginationManager.checkPageOverflow(containerPage);
+                            }
+
                         } else {
-                            // Replace entire document
-                            editor.innerHTML = htmlContent;
+                            // No selection? 
+                            // SAFETY CHECK: Only replace entire document if explicit intent is detected.
+                            // Otherwise, treat as an append operation to be safe.
+                            const explicitReplace = lowerMessage.includes('rewrite document') ||
+                                lowerMessage.includes('replace all') ||
+                                lowerMessage.includes('replace document') ||
+                                lowerMessage.includes('entire document');
+
+                            if (explicitReplace) {
+                                // Replace entire document - Clear all pages and reset
+                                const pagesContainer = document.getElementById('pages-container');
+                                pagesContainer.innerHTML = '';
+                                const newPage = PaginationManager.createNewPage();
+                                newPage.innerHTML = htmlContent;
+                                PaginationManager.checkPageOverflow(newPage);
+                            } else {
+                                // Default to safe append if no selection and no explicit replace
+                                const targetPage = PaginationManager.getActivePage();
+                                targetPage.innerHTML += htmlContent;
+                                PaginationManager.checkPageOverflow(targetPage);
+                            }
                         }
                     }
-                    
+
                     // Update counts after inserting content
                     if (window.updateCounts) {
                         window.updateCounts();
                     }
-                    
+
                     hasUnsavedChanges = true;
                     updateWindowTitle();
                     // Update word count after inserting text
@@ -1225,7 +1410,7 @@ Continue from the existing content:`;
         }
         // Shift+Enter allows new line (default behavior, don't prevent)
     });
-    
+
     // Auto-resize textarea
     aiChatInput.addEventListener('input', () => {
         aiChatInput.style.height = 'auto';
@@ -1243,7 +1428,7 @@ function showFindDialog() {
     if (findDialog) {
         findDialog.remove();
     }
-    
+
     // Create find dialog
     findDialog = document.createElement('div');
     findDialog.id = 'findDialog';
@@ -1259,7 +1444,7 @@ function showFindDialog() {
         z-index: 10000;
         min-width: 300px;
     `;
-    
+
     findDialog.innerHTML = `
         <div style="display: flex; gap: 8px; align-items: center;">
             <input type="text" id="findInput" placeholder="Find..." 
@@ -1271,18 +1456,18 @@ function showFindDialog() {
         </div>
         <div id="findStatus" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
     `;
-    
+
     document.body.appendChild(findDialog);
-    
+
     const findInput = document.getElementById('findInput');
     const findNextBtn = document.getElementById('findNextBtn');
     const findPrevBtn = document.getElementById('findPrevBtn');
     const findCloseBtn = document.getElementById('findCloseBtn');
     const findStatus = document.getElementById('findStatus');
-    
+
     // Focus input
     setTimeout(() => findInput.focus(), 100);
-    
+
     // Find function
     function performFind(direction = 'next') {
         const searchTerm = findInput.value.trim();
@@ -1291,64 +1476,89 @@ function showFindDialog() {
             findMatches = [];
             return;
         }
-        
-        const editor = document.getElementById('editor');
-        const text = editor.innerText || editor.textContent || '';
-        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-        
+
+        const editorContent = PaginationManager.getAllContent();
+        // Remove HTML tags for text search, but keep track of indices? 
+        // Actually, simple text search on innerText of pages is better.
+        // Let's iterate over pages to find matches relative to the whole document? 
+        // Or just search page by page. Searching page by page is easier for navigation.
+
+        // Simplified approach: Search in active page or all pages? 
+        // Let's stick to the current simpler logic: get text from all pages joined?
+        // But indices would be tricky. 
+        // BETTER: Search purely in the text content of the DOM, traversing nodes.
+        // For this simpler implementation: iterate through all pages and search their text.
+
         findMatches = [];
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            findMatches.push(match.index);
-        }
-        
+        const pages = document.querySelectorAll('.page');
+        let globalOffset = 0;
+
+        pages.forEach((page, pageIndex) => {
+            const text = page.innerText || page.textContent || '';
+            const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                // Store match with page info
+                findMatches.push({
+                    pageIndex: pageIndex,
+                    index: match.index,
+                    pageId: page.id,
+                    length: searchTerm.length
+                });
+            }
+        });
+
+
+
         if (findMatches.length === 0) {
             findStatus.textContent = 'No matches found';
             return;
         }
-        
+
         if (direction === 'next') {
             findMatchIndex = (findMatchIndex + 1) % findMatches.length;
         } else {
             findMatchIndex = (findMatchIndex - 1 + findMatches.length) % findMatches.length;
         }
-        
+
         findStatus.textContent = `${findMatchIndex + 1} of ${findMatches.length}`;
-        
+
         // Highlight and scroll to match
-        const matchIndex = findMatches[findMatchIndex];
-        selectTextInEditor(matchIndex, searchTerm.length);
+        const match = findMatches[findMatchIndex];
+        selectTextInPage(match.pageId, match.index, match.length);
     }
-    
-    function selectTextInEditor(startIndex, length) {
-        const editor = document.getElementById('editor');
+
+    function selectTextInPage(pageId, startIndex, length) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+
         const range = document.createRange();
-        const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
-        
+        const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, null, false);
+
         let charIndex = 0;
         let startNode = null;
         let endNode = null;
         let startOffset = 0;
         let endOffset = 0;
-        
+
         while (walker.nextNode()) {
             const node = walker.currentNode;
             const nodeLength = node.textContent.length;
-            
+
             if (!startNode && charIndex + nodeLength >= startIndex) {
                 startNode = node;
                 startOffset = startIndex - charIndex;
             }
-            
+
             if (startNode && charIndex + nodeLength >= startIndex + length) {
                 endNode = node;
                 endOffset = (startIndex + length) - charIndex;
                 break;
             }
-            
+
             charIndex += nodeLength;
         }
-        
+
         if (startNode && endNode) {
             try {
                 range.setStart(startNode, startOffset);
@@ -1356,7 +1566,7 @@ function showFindDialog() {
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(range);
-                
+
                 // Scroll into view
                 range.getBoundingClientRect();
                 startNode.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1365,13 +1575,13 @@ function showFindDialog() {
             }
         }
     }
-    
+
     // Event listeners
     findInput.addEventListener('input', () => {
         findMatchIndex = -1;
         performFind('next');
     });
-    
+
     findInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -1380,11 +1590,11 @@ function showFindDialog() {
             closeFindDialog();
         }
     });
-    
+
     findNextBtn.addEventListener('click', () => performFind('next'));
     findPrevBtn.addEventListener('click', () => performFind('prev'));
     findCloseBtn.addEventListener('click', closeFindDialog);
-    
+
     function closeFindDialog() {
         if (findDialog) {
             findDialog.remove();
@@ -1406,13 +1616,13 @@ function showReplaceDialog() {
     if (replaceDialog) {
         replaceDialog.remove();
     }
-    
+
     // Also close find dialog if open
     if (findDialog) {
         findDialog.remove();
         findDialog = null;
     }
-    
+
     // Create replace dialog
     replaceDialog = document.createElement('div');
     replaceDialog.id = 'replaceDialog';
@@ -1428,7 +1638,7 @@ function showReplaceDialog() {
         z-index: 10000;
         min-width: 320px;
     `;
-    
+
     replaceDialog.innerHTML = `
         <div style="margin-bottom: 8px;">
             <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #666;">Find:</label>
@@ -1452,9 +1662,9 @@ function showReplaceDialog() {
         </div>
         <div id="replaceStatus" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
     `;
-    
+
     document.body.appendChild(replaceDialog);
-    
+
     const findInput = document.getElementById('replaceFindInput');
     const replaceInput = document.getElementById('replaceWithInput');
     const findNextBtn = document.getElementById('replaceFindNextBtn');
@@ -1462,10 +1672,59 @@ function showReplaceDialog() {
     const replaceAllBtn = document.getElementById('replaceReplaceAllBtn');
     const closeBtn = document.getElementById('replaceCloseBtn');
     const status = document.getElementById('replaceStatus');
-    
+
     // Focus input
     setTimeout(() => findInput.focus(), 100);
-    
+
+    // Helper for replacement selection
+    function selectTextInPage(pageId, startIndex, length) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+
+        const range = document.createRange();
+        const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT, null, false);
+
+        let charIndex = 0;
+        let startNode = null;
+        let endNode = null;
+        let startOffset = 0;
+        let endOffset = 0;
+
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            const nodeLength = node.textContent.length;
+
+            if (!startNode && charIndex + nodeLength >= startIndex) {
+                startNode = node;
+                startOffset = startIndex - charIndex;
+            }
+
+            if (startNode && charIndex + nodeLength >= startIndex + length) {
+                endNode = node;
+                endOffset = (startIndex + length) - charIndex;
+                break;
+            }
+
+            charIndex += nodeLength;
+        }
+
+        if (startNode && endNode) {
+            try {
+                range.setStart(startNode, startOffset);
+                range.setEnd(endNode, endOffset);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                // Scroll into view
+                range.getBoundingClientRect();
+                startNode.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (e) {
+                console.error('Error selecting text:', e);
+            }
+        }
+    }
+
     // Find function
     function performReplaceFind() {
         const searchTerm = findInput.value.trim();
@@ -1474,59 +1733,64 @@ function showReplaceDialog() {
             replaceMatches = [];
             return;
         }
-        
-        const editor = document.getElementById('editor');
-        const text = editor.innerText || editor.textContent || '';
-        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-        
+
         replaceMatches = [];
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            replaceMatches.push(match.index);
-        }
-        
+        const pages = document.querySelectorAll('.page');
+
+        pages.forEach((page, pageIndex) => {
+            const text = page.innerText || page.textContent || '';
+            const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                replaceMatches.push({
+                    pageIndex: pageIndex,
+                    index: match.index,
+                    pageId: page.id,
+                    length: searchTerm.length
+                });
+            }
+        });
+
         if (replaceMatches.length === 0) {
             status.textContent = 'No matches found';
             return;
         }
-        
+
         replaceMatchIndex = (replaceMatchIndex + 1) % replaceMatches.length;
         status.textContent = `${replaceMatchIndex + 1} of ${replaceMatches.length}`;
-        
+
         // Highlight and scroll to match
-        const matchIndex = replaceMatches[replaceMatchIndex];
-        selectTextInEditor(matchIndex, searchTerm.length);
+        const match = replaceMatches[replaceMatchIndex];
+        selectTextInPage(match.pageId, match.index, match.length);
     }
-    
+
     // Replace function
     function performReplace() {
         const searchTerm = findInput.value.trim();
         const replaceText = replaceInput.value;
-        
+
         if (!searchTerm || replaceMatches.length === 0) {
             return;
         }
-        
-        const editor = document.getElementById('editor');
-        const text = editor.innerText || editor.textContent || '';
-        const matchIndex = replaceMatches[replaceMatchIndex];
-        
+
+        const match = replaceMatches[replaceMatchIndex];
+
         // Select the text at this position
-        selectTextInEditor(matchIndex, searchTerm.length);
-        
+        selectTextInPage(match.pageId, match.index, searchTerm.length);
+
         // Replace selected text
         const selection = window.getSelection();
         if (selection.rangeCount > 0 && !selection.isCollapsed) {
             const range = selection.getRangeAt(0);
             range.deleteContents();
             range.insertNode(document.createTextNode(replaceText));
-            
+
             // Remove from matches array
             replaceMatches.splice(replaceMatchIndex, 1);
             if (replaceMatchIndex >= replaceMatches.length) {
                 replaceMatchIndex = 0;
             }
-            
+
             // Find next match
             if (replaceMatches.length > 0) {
                 performReplaceFind();
@@ -1535,34 +1799,46 @@ function showReplaceDialog() {
             }
         }
     }
-    
+
     // Replace all function
     function performReplaceAll() {
         const searchTerm = findInput.value.trim();
         const replaceText = replaceInput.value;
-        
+
         if (!searchTerm) {
             return;
         }
-        
-        const editor = document.getElementById('editor');
-        const html = editor.innerHTML;
-        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-        
-        const newHtml = html.replace(regex, replaceText);
-        editor.innerHTML = newHtml;
-        
-        status.textContent = 'Replaced all matches';
+
+        const pages = document.querySelectorAll('.page');
+        let count = 0;
+
+        pages.forEach(page => {
+            const html = page.innerHTML;
+            const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+            if (regex.test(page.innerText || page.textContent)) {
+                // This is a naive replacement on innerHTML which might break tags if search term contains tag-like chars
+                // But standard text replacement in contenteditable usually implies text-only match unless regex is complex.
+                // A safer way is complex, but for consistency with previous implementation:
+                const newHtml = html.replace(regex, replaceText);
+                if (newHtml !== html) {
+                    page.innerHTML = newHtml;
+                    count++;
+                }
+            }
+        });
+
+        status.textContent = `Replaced matches in ${count} pages`;
         replaceMatches = [];
         replaceMatchIndex = 0;
     }
-    
+
     // Event listeners
     findInput.addEventListener('input', () => {
         replaceMatchIndex = -1;
         performReplaceFind();
     });
-    
+
     findInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -1571,7 +1847,7 @@ function showReplaceDialog() {
             closeReplaceDialog();
         }
     });
-    
+
     replaceInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && e.ctrlKey) {
             e.preventDefault();
@@ -1580,12 +1856,12 @@ function showReplaceDialog() {
             closeReplaceDialog();
         }
     });
-    
+
     findNextBtn.addEventListener('click', performReplaceFind);
     replaceBtn.addEventListener('click', performReplace);
     replaceAllBtn.addEventListener('click', performReplaceAll);
     closeBtn.addEventListener('click', closeReplaceDialog);
-    
+
     function closeReplaceDialog() {
         if (replaceDialog) {
             replaceDialog.remove();
@@ -1610,7 +1886,7 @@ function detectFormattingInstructions(message) {
         color: null,
         align: null
     };
-    
+
     // Detect formatting requests in the message - be more specific
     // Check for "bolded", "bold", "make bold", "bold the", "bold it", etc.
     if (lowerMessage.includes('bolded') || lowerMessage.includes('make bold') || lowerMessage.includes('bold it') ||
@@ -1618,17 +1894,17 @@ function detectFormattingInstructions(message) {
         instructions.hasFormatting = true;
         instructions.bold = true;
     }
-    
+
     if (lowerMessage.includes('italic') || lowerMessage.includes('make italic') || lowerMessage.includes('italicize')) {
         instructions.hasFormatting = true;
         instructions.italic = true;
     }
-    
+
     if (lowerMessage.includes('underline') || lowerMessage.includes('make underline') || lowerMessage.includes('underline the')) {
         instructions.hasFormatting = true;
         instructions.underline = true;
     }
-    
+
     // Font size (more flexible matching - catch "size 6 font", "size 10", "make it size 10", "font size 10", etc.)
     // Try "size X font" pattern first, then other patterns
     let fontSizeMatch = lowerMessage.match(/size\s+(\d+)\s+font/i);
@@ -1639,7 +1915,7 @@ function detectFormattingInstructions(message) {
         instructions.hasFormatting = true;
         instructions.fontSize = parseInt(fontSizeMatch[1]);
     }
-    
+
     // Font family
     const fontMatch = lowerMessage.match(/(?:font|font family|use font|change font to|set font to)\s+(arial|times|times new roman|comic sans|verdana|courier|helvetica|georgia|tahoma)/i);
     if (fontMatch) {
@@ -1648,7 +1924,7 @@ function detectFormattingInstructions(message) {
         if (fontName === 'times') fontName = 'Times New Roman';
         instructions.fontFamily = fontName.charAt(0).toUpperCase() + fontName.slice(1);
     }
-    
+
     // Color
     const colorMatch = lowerMessage.match(/(?:color|text color|make it|color it|set color to|text color to)\s+(red|blue|green|black|white|yellow|orange|purple|pink|brown|gray|grey|navy|maroon|teal)/i);
     if (colorMatch) {
@@ -1672,7 +1948,7 @@ function detectFormattingInstructions(message) {
         };
         instructions.color = colorMap[colorMatch[1].toLowerCase()] || '#000000';
     }
-    
+
     // Alignment
     if (lowerMessage.includes('center') || lowerMessage.includes('centre') || lowerMessage.includes('center it')) {
         instructions.hasFormatting = true;
@@ -1684,7 +1960,7 @@ function detectFormattingInstructions(message) {
         instructions.hasFormatting = true;
         instructions.align = 'right';
     }
-    
+
     return instructions;
 }
 
@@ -1692,14 +1968,14 @@ function applyFormattingToHTML(html, instructions, originalMessage) {
     // Create a temporary div to parse the HTML
     const temp = document.createElement('div');
     temp.innerHTML = html;
-    
+
     const lowerMessage = originalMessage.toLowerCase();
     const isIntroBold = lowerMessage.includes('intro') && instructions.bold;
-    
+
     // Apply formatting to all elements
     const allElements = temp.querySelectorAll('p, h1, h2, h3, h4, div, span');
     let firstElement = true;
-    
+
     allElements.forEach((el, index) => {
         // Font size - apply to all or just non-intro
         if (instructions.fontSize) {
@@ -1709,22 +1985,22 @@ function applyFormattingToHTML(html, instructions, originalMessage) {
                 el.style.fontSize = instructions.fontSize + 'pt';
             }
         }
-        
+
         // Font family
         if (instructions.fontFamily) {
             el.style.fontFamily = instructions.fontFamily;
         }
-        
+
         // Color
         if (instructions.color) {
             el.style.color = instructions.color;
         }
-        
+
         // Alignment
         if (instructions.align) {
             el.style.textAlign = instructions.align;
         }
-        
+
         // Bold - handle intro paragraph specially
         if (instructions.bold) {
             if (isIntroBold && firstElement) {
@@ -1735,20 +2011,20 @@ function applyFormattingToHTML(html, instructions, originalMessage) {
                 el.style.fontWeight = 'bold';
             }
         }
-        
+
         // Italic
         if (instructions.italic) {
             el.style.fontStyle = 'italic';
         }
-        
+
         // Underline
         if (instructions.underline) {
             el.style.textDecoration = 'underline';
         }
-        
+
         firstElement = false;
     });
-    
+
     // If no elements found, wrap in a paragraph and apply formatting
     if (allElements.length === 0 && temp.textContent.trim()) {
         const p = document.createElement('p');
@@ -1763,25 +2039,25 @@ function applyFormattingToHTML(html, instructions, originalMessage) {
         temp.innerHTML = '';
         temp.appendChild(p);
     }
-    
+
     return temp.innerHTML;
 }
 
 // Apply formatting directly to a selection/range in the editor
 function applyFormattingToSelection(range, instructions) {
     const selection = window.getSelection();
-    
+
     // Select the range
     selection.removeAllRanges();
     selection.addRange(range);
-    
+
     // Apply formatting commands
     if (instructions.fontSize) {
         // Font size needs special handling - wrap in span with fontSize style
         const contents = range.extractContents();
         const span = document.createElement('span');
         span.style.fontSize = instructions.fontSize + 'pt';
-        
+
         // Move all nodes into the span
         const fragment = document.createDocumentFragment();
         while (contents.firstChild) {
@@ -1789,33 +2065,33 @@ function applyFormattingToSelection(range, instructions) {
         }
         span.appendChild(fragment);
         range.insertNode(span);
-        
+
         // Update selection to the new span
         range.selectNodeContents(span);
         selection.removeAllRanges();
         selection.addRange(range);
     }
-    
+
     if (instructions.fontFamily) {
         document.execCommand('fontName', false, instructions.fontFamily);
     }
-    
+
     if (instructions.color) {
         document.execCommand('foreColor', false, instructions.color);
     }
-    
+
     if (instructions.bold) {
         document.execCommand('bold', false, null);
     }
-    
+
     if (instructions.italic) {
         document.execCommand('italic', false, null);
     }
-    
+
     if (instructions.underline) {
         document.execCommand('underline', false, null);
     }
-    
+
     if (instructions.align) {
         if (instructions.align === 'center') {
             document.execCommand('justifyCenter', false, null);

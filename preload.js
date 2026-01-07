@@ -6,48 +6,48 @@ contextBridge.exposeInMainWorld('electronAPI', {
   desktopMaximize: () => ipcRenderer.send('desktop-maximize'),
   desktopClose: () => ipcRenderer.send('desktop-close'),
   desktopIsMaximized: () => ipcRenderer.invoke('desktop-is-maximized'),
-  
+
   // App Window Controls
   appWindowMinimize: (windowId) => ipcRenderer.send('app-window-minimize', windowId),
   appWindowMaximize: (windowId) => ipcRenderer.send('app-window-maximize', windowId),
   appWindowClose: (windowId) => ipcRenderer.send('app-window-close', windowId),
   appWindowIsMaximized: (windowId) => ipcRenderer.invoke('app-window-is-maximized', windowId),
-  
+
   // Get current window ID
   getWindowId: () => ipcRenderer.invoke('get-window-id'),
-  
+
   // Listen for window ID
   onWindowId: (callback) => {
     ipcRenderer.on('app-window-id', (event, windowId) => callback(windowId));
   },
-  
+
   // Listen for open file event
   onOpenFile: (callback) => {
     ipcRenderer.on('open-file', (event, filePath) => callback(filePath));
   },
-  
+
   // Listen for wallet configuration for identity registration
   onWalletConfigureForIdentity: (callback) => {
     ipcRenderer.on('wallet-configure-for-identity', () => callback());
   },
-  
+
   // Listen for app interaction notifications
   onWalletAppInteraction: (callback) => {
     ipcRenderer.on('wallet-app-interaction', (event, data) => callback(data));
   },
-  
+
   // Open external URL
   openExternalUrl: (url) => ipcRenderer.invoke('open-external-url', url),
-  
+
   // Clipboard operations
   clipboardWriteText: (text) => ipcRenderer.invoke('clipboard-write-text', text),
-  
+
   // App Management
   launchApp: (appType, options) => ipcRenderer.invoke('launch-app', appType, options),
   getOpenWindows: () => ipcRenderer.invoke('get-open-windows'),
   focusWindow: (windowId) => ipcRenderer.invoke('focus-window', windowId),
   minimizeWindow: (windowId) => ipcRenderer.invoke('minimize-window', windowId),
-  
+
   // Wallet (still available)
   walletCreate: (password, secretKeyBase64 = null) => ipcRenderer.invoke('wallet-create', password, secretKeyBase64),
   walletImportFromPrivateKey: (privateKeyBase58, password) => ipcRenderer.invoke('wallet-import-from-private-key', privateKeyBase58, password),
@@ -59,7 +59,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   walletIsLoaded: () => ipcRenderer.invoke('wallet-is-loaded'),
   walletSignTransaction: (transactionData) => ipcRenderer.invoke('wallet-sign-transaction', transactionData),
   walletSignMessage: (message) => ipcRenderer.invoke('wallet-sign-message', message),
-  
+
   // EVM Wallet Methods
   walletGetEvmAddress: () => ipcRenderer.invoke('wallet-get-evm-address'),
   walletGetEvmBalance: (chainId) => ipcRenderer.invoke('wallet-get-evm-balance', chainId),
@@ -68,7 +68,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   walletSendEvmTransaction: (to, value, data, chainId) => ipcRenderer.invoke('wallet-send-evm-transaction', to, value, data, chainId),
   walletExportPrivateKey: (password) => ipcRenderer.invoke('wallet-export-private-key', password),
   walletToggleNetwork: (enable) => ipcRenderer.invoke('wallet-toggle-network', enable),
-  
+
   // Multi-wallet methods
   walletCreateForNetwork: (password, network, name) => ipcRenderer.invoke('wallet-create-for-network', password, network, name),
   walletGetWalletsForNetwork: (network) => ipcRenderer.invoke('wallet-get-wallets-for-network', network),
@@ -78,7 +78,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   walletUpdateName: (walletId, name) => ipcRenderer.invoke('wallet-update-name', walletId, name),
   walletDelete: (walletId) => ipcRenderer.invoke('wallet-delete', walletId),
   walletCleanupDuplicates: () => ipcRenderer.invoke('wallet-cleanup-duplicates'),
-  
+
   // Omega Identity APIs
   identityInitialize: () => ipcRenderer.invoke('identity-initialize'),
   identityGet: () => ipcRenderer.invoke('identity-get'),
@@ -93,7 +93,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   identityWithdrawStake: () => ipcRenderer.invoke('identity-withdraw-stake'),
   identityAuthenticate: (message) => ipcRenderer.invoke('identity-authenticate', message),
   identityVerifySignature: (message, signature, address) => ipcRenderer.invoke('identity-verify-signature', message, signature, address),
-  
+
   // File operations (isolated environment only)
   saveFileDialog: (options) => ipcRenderer.invoke('save-file-dialog', options),
   openFileDialog: (options) => ipcRenderer.invoke('open-file-dialog', options),
@@ -112,15 +112,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   renameFile: (filePath, newName) => ipcRenderer.invoke('rename-file', filePath, newName),
   copyFile: (sourcePath, destPath) => ipcRenderer.invoke('copy-file', sourcePath, destPath),
   getFileStats: (filePath) => ipcRenderer.invoke('get-file-stats', filePath),
-  
+
   // Encryption operations (for password manager and secure apps)
   encryptData: (data, key) => ipcRenderer.invoke('encrypt-data', data, key),
   decryptData: (encrypted, key) => ipcRenderer.invoke('decrypt-data', encrypted, key),
   hashPassword: (password) => ipcRenderer.invoke('hash-password', password),
-  
+
   // Tor mode
   setTorMode: (enabled) => ipcRenderer.invoke('set-tor-mode', enabled),
-  
+
   // Firewall notifications
   firewallNotify: (data) => ipcRenderer.send('firewall-network-event', data),
   firewallGetRules: () => ipcRenderer.invoke('firewall-get-rules'),
@@ -138,26 +138,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFirewallSyncEnabled: (callback) => {
     ipcRenderer.on('firewall-sync-enabled', (event, enabled) => callback(enabled));
   },
-  
+
   // Privacy Monitor APIs
   privacyMonitorRegister: () => ipcRenderer.send('privacy-monitor-register'),
   privacyMonitorUnregister: () => ipcRenderer.send('privacy-monitor-unregister'),
   onPrivacyFileAccess: (callback) => {
     ipcRenderer.on('privacy-file-access', (event, data) => callback(data));
   },
-  
+
   // Burn to Hell (B2H) - Wipe all data
   burnToHell: () => ipcRenderer.invoke('burn-to-hell'),
-  
+
   // Extension Management - Removed (extensions not supported, using WalletConnect instead)
   getLoadedExtensions: () => Promise.resolve([]), // Always return empty
   openExtensionPopup: () => Promise.resolve({ success: false }), // No-op
-  
+
   // Get preload path for webviews
   getPreloadPath: () => ipcRenderer.invoke('get-preload-path'),
-  
+
   // AI APIs
-  aiChat: (message, history = []) => ipcRenderer.invoke('ai-chat', message, history),
+  aiChat: (message, history = [], options = {}) => ipcRenderer.invoke('ai-chat', message, history, options),
   aiSummarizePage: (content, maxLength = 200) => ipcRenderer.invoke('ai-summarize-page', content, maxLength),
   aiImproveText: (text, style = 'neutral', task = 'improve') => ipcRenderer.invoke('ai-improve-text', text, style, task),
   aiSuggestFormula: (description, dataContext = null) => ipcRenderer.invoke('ai-suggest-formula', description, dataContext),
@@ -173,23 +173,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   aiGetContentModels: () => ipcRenderer.invoke('ai-get-content-models'),
   aiGetCodeModels: () => ipcRenderer.invoke('ai-get-code-models'),
   aiSelectBestModel: (preferenceList = null) => ipcRenderer.invoke('ai-select-best-model', preferenceList),
-  
-  
+
+
   // Ad Blocker
   adBlockerGetStatus: () => ipcRenderer.invoke('adblocker-get-status'),
   adBlockerSetStatus: (enabled) => ipcRenderer.invoke('adblocker-set-status', enabled),
-  
+
   // Cookie Manager
   cookiesGetAll: (domain) => ipcRenderer.invoke('cookies-get-all', domain),
   cookiesDelete: (url, name) => ipcRenderer.invoke('cookies-delete', url, name),
   cookiesDeleteDomain: (domain) => ipcRenderer.invoke('cookies-delete-domain', domain),
   cookiesGetDomains: () => ipcRenderer.invoke('cookies-get-domains'),
-  
+
   // VPN Kill Switch
   vpnKillSwitchGetStatus: () => ipcRenderer.invoke('vpn-killswitch-get-status'),
   vpnKillSwitchSetStatus: (enabled) => ipcRenderer.invoke('vpn-killswitch-set-status', enabled),
   sendVpnStatus: (connected) => ipcRenderer.send('vpn-status-update', connected),
-  
+
   // VPN Proxy Configuration
   vpnSetProxy: (locationData) => ipcRenderer.invoke('vpn-set-proxy', locationData),
   vpnGetCurrentProxy: () => ipcRenderer.invoke('vpn-get-current-proxy'),
@@ -200,63 +200,81 @@ contextBridge.exposeInMainWorld('electronAPI', {
   torStop: () => ipcRenderer.invoke('tor-stop'),
   torStatus: () => ipcRenderer.invoke('tor-status'),
   torInitialize: () => ipcRenderer.invoke('tor-initialize'),
-  
+
   // Listen for kill switch trigger
   onVpnKillSwitchTriggered: (callback) => {
     ipcRenderer.on('vpn-killswitch-triggered', () => callback());
   },
-  
+
   // Trash/Recycle Bin
   trashList: () => ipcRenderer.invoke('trash-list'),
   trashDelete: (filePath) => ipcRenderer.invoke('trash-delete', filePath),
   trashRestore: (trashPath) => ipcRenderer.invoke('trash-restore', trashPath),
   trashEmpty: () => ipcRenderer.invoke('trash-empty'),
-  
+
   // Desktop Folders
   desktopCreateFolder: (folderName) => ipcRenderer.invoke('desktop-create-folder', folderName),
   desktopListItems: () => ipcRenderer.invoke('desktop-list-items'),
-  
+
   // Screen Lock
   screenLock: () => ipcRenderer.invoke('screen-lock'),
   onScreenLocked: (callback) => {
     ipcRenderer.on('screen-locked', () => callback());
   },
-  
+
   // Volume Control
   getVolume: () => ipcRenderer.invoke('get-volume'),
   setVolume: (volume) => ipcRenderer.invoke('set-volume', volume),
-  
+
   // Brightness Control
   getBrightness: () => ipcRenderer.invoke('get-brightness'),
   setBrightness: (brightness) => ipcRenderer.invoke('set-brightness', brightness),
-  
+
   // Window Snapping
   appWindowMove: (windowId, x, y) => ipcRenderer.send('app-window-move', windowId, x, y),
   appWindowSnap: (windowId, snapPosition) => ipcRenderer.send('app-window-snap', windowId, snapPosition),
-  
+
   // Multiple Desktops
   desktopSwitch: (desktopIndex) => ipcRenderer.invoke('desktop-switch', desktopIndex),
   desktopCreate: () => ipcRenderer.invoke('desktop-create'),
   desktopGetCurrent: () => ipcRenderer.invoke('desktop-get-current'),
   appWindowSetDesktop: (windowId, desktopIndex) => ipcRenderer.send('app-window-set-desktop', windowId, desktopIndex),
-  
+
   // Website HTML Extraction
   fetchWebsite: (url) => ipcRenderer.invoke('fetch-website', url),
-  
+
   // AI Configuration Updates
   updateAIConfig: (appName, config) => ipcRenderer.invoke('update-ai-config', appName, config),
   getAIConfig: (appName) => ipcRenderer.invoke('get-ai-config', appName),
+
+  // Whisper Messenger
+  whisperGetInfo: () => ipcRenderer.invoke('whisper-get-info'),
+  whisperGetMessages: (contactId) => ipcRenderer.invoke('whisper-get-messages', contactId),
+  whisperSendMessage: (contactId, content, ttl) => ipcRenderer.invoke('whisper-send-message', contactId, content, ttl),
+  whisperGetContacts: () => ipcRenderer.invoke('whisper-get-contacts'),
+  whisperAddContact: (onionAddress, name) => ipcRenderer.invoke('whisper-add-contact', onionAddress, name),
+  whisperEditContact: (onionAddress, newName) => ipcRenderer.invoke('whisper-edit-contact', onionAddress, newName),
+  whisperDeleteContact: (onionAddress) => ipcRenderer.invoke('whisper-delete-contact', onionAddress),
+  whisperRetryInit: () => ipcRenderer.invoke('whisper-retry-init'),
+  onWhisperMessageDeleted: (callback) => ipcRenderer.on('whisper-message-deleted', (event, messageId) => callback(messageId)),
+
+  // Bazaar / App Store
+  installApp: (appId) => ipcRenderer.invoke('install-app', appId),
+  onAppInstalled: (callback) => ipcRenderer.on('app-installed', (event, ...args) => callback(...args)),
+
+  // Tor / Netrunner
+  torGetCircuits: () => ipcRenderer.invoke('tor-get-circuits'),
 });
 
 // TOR HARDENING: Fingerprinting Protection
 // Override navigator APIs to prevent fingerprinting when Tor is enabled
 // These values are normalized to common values to reduce uniqueness
-(function() {
+(function () {
   'use strict';
-  
+
   // Store original values
   const originalNavigator = window.navigator;
-  
+
   // Normalized fingerprint values (common/default values)
   const FINGERPRINT_VALUES = {
     hardwareConcurrency: 4, // Common CPU core count
@@ -267,15 +285,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     vendorSub: '',
     productSub: '20030107'
   };
-  
+
   // Override hardwareConcurrency
   try {
     Object.defineProperty(navigator, 'hardwareConcurrency', {
       get: () => FINGERPRINT_VALUES.hardwareConcurrency,
       configurable: true
     });
-  } catch (e) {}
-  
+  } catch (e) { }
+
   // Override deviceMemory (if supported)
   try {
     if ('deviceMemory' in navigator) {
@@ -284,24 +302,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
         configurable: true
       });
     }
-  } catch (e) {}
-  
+  } catch (e) { }
+
   // Override platform (keep consistent)
   try {
     Object.defineProperty(navigator, 'platform', {
       get: () => FINGERPRINT_VALUES.platform,
       configurable: true
     });
-  } catch (e) {}
-  
+  } catch (e) { }
+
   // Override maxTouchPoints
   try {
     Object.defineProperty(navigator, 'maxTouchPoints', {
       get: () => FINGERPRINT_VALUES.maxTouchPoints,
       configurable: true
     });
-  } catch (e) {}
-  
+  } catch (e) { }
+
   // Override vendor/vendorSub/productSub for consistency
   try {
     Object.defineProperty(navigator, 'vendor', {
@@ -316,13 +334,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       get: () => FINGERPRINT_VALUES.productSub,
       configurable: true
     });
-  } catch (e) {}
-  
+  } catch (e) { }
+
   // Canvas fingerprinting protection - add noise to canvas operations
   const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
   const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
-  
-  HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
+
+  HTMLCanvasElement.prototype.toDataURL = function (type, quality) {
     const imageData = this.getContext('2d')?.getImageData(0, 0, this.width, this.height);
     if (imageData) {
       // Add minimal noise (1 bit per 1000 pixels) to prevent fingerprinting
@@ -335,8 +353,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
     return originalToDataURL.apply(this, arguments);
   };
-  
-  CanvasRenderingContext2D.prototype.getImageData = function(sx, sy, sw, sh) {
+
+  CanvasRenderingContext2D.prototype.getImageData = function (sx, sy, sw, sh) {
     const imageData = originalGetImageData.apply(this, arguments);
     // Add minimal noise to prevent fingerprinting
     const data = imageData.data;
@@ -347,19 +365,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
     return imageData;
   };
-  
+
   // AudioContext fingerprinting protection
   const originalAudioContext = window.AudioContext || window.webkitAudioContext;
   if (originalAudioContext) {
     const OriginalAudioContext = originalAudioContext;
-    window.AudioContext = function() {
+    window.AudioContext = function () {
       const ctx = new OriginalAudioContext();
       // Override createAnalyser to add noise
       const originalCreateAnalyser = ctx.createAnalyser.bind(ctx);
-      ctx.createAnalyser = function() {
+      ctx.createAnalyser = function () {
         const analyser = originalCreateAnalyser();
         const originalGetFloatFrequencyData = analyser.getFloatFrequencyData.bind(analyser);
-        analyser.getFloatFrequencyData = function(array) {
+        analyser.getFloatFrequencyData = function (array) {
           originalGetFloatFrequencyData(array);
           // Add minimal noise
           for (let i = 0; i < array.length; i += 100) {
@@ -377,12 +395,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       window.webkitAudioContext = window.AudioContext;
     }
   }
-  
+
   // Font enumeration protection - limit font access
   const originalFontFaceSet = document.fonts;
   if (originalFontFaceSet && originalFontFaceSet.check) {
     const originalCheck = originalFontFaceSet.check.bind(originalFontFaceSet);
-    document.fonts.check = function(font, text) {
+    document.fonts.check = function (font, text) {
       // Return true for common fonts to prevent enumeration
       const commonFonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia'];
       if (commonFonts.some(f => font.includes(f))) {

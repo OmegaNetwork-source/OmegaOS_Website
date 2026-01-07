@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Whisper - P2P Messenger</title>
+    <link rel="stylesheet" href="desktop.css"> <!-- Reuse OS variables if available, but override below -->
+    <style>
+        :root {
+            --bg-dark: #0f0f13;
+            --bg-panel: #1a1a20;
+            --accent: #c0c0c0;
+            /* Silver */
+            --accent-dim: #808080;
+            --secondary: #a0a0a0;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border: #333333;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Changed to column for Title Bar */
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 32px;
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+            /* Allow dragging */
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            height: 100%;
+            /* Full height */
+            -webkit-app-region: no-drag;
+        }
+
+        .control-btn {
+            width: 46px;
+            /* Standard Windows width */
+            height: 100%;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: background 0.2s, color 0.2s;
+            border-radius: 0;
+        }
+
+        .control-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+        }
+
+        .close-btn:hover {
+            background-color: #e81123 !important;
+            color: white !important;
+        }
+
+        .icon-svg {
+            width: 10px;
+            height: 10px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.2;
+        }
+
+        /* Remove old circle button styles */
+
+
+        /* Main Container for Sidebar + Chat */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar - Adjusted for new container */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .my-id-card {
+            background: rgba(192, 192, 192, 0.1);
+            /* Silver tint */
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .my-id-label {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .my-id-value {
+            word-break: break-all;
+            font-family: monospace;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            cursor: pointer;
+            filter: blur(5px);
+            transition: filter 0.3s;
+        }
+
+        .my-id-value:hover {
+            filter: none;
+        }
+
+        /* TTL Menu */
+        .ttl-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .ttl-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ttl-btn:hover,
+        .ttl-btn.active {
+            color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .ttl-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 5px;
+            display: none;
+            flex-direction: column;
+            width: 120px;
+            margin-bottom: 10px;
+            z-index: 100;
+        }
+
+        .ttl-menu.visible {
+            display: flex;
+        }
+
+        .ttl-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: var(--text-main);
+        }
+
+        .ttl-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .ttl-option.selected {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .contacts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .add-contact-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .add-contact-btn:hover {
+            color: #fff;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact-item {
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .contact-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .contact-item.active {
+            background-color: rgba(192, 192, 192, 0.2);
+            border-left: 3px solid var(--accent);
+        }
+
+        .contact-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0e0, #808080);
+            /* Silver gradient */
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .contact-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .contact-status {
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        /* Main Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-dark);
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-panel);
+        }
+
+        .chat-title-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-title {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .chat-subtitle {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            /* Allow empty state to center, but messages stack from bottom or top */
+        }
+
+        /* When empty state is present, center it */
+        .messages-container:has(.empty-state) {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .message.incoming {
+            background-color: #2a2a35;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+
+        .message.outgoing {
+            background-color: var(--accent);
+            color: #000;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .input-area {
+            padding: 20px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .msg-input {
+            flex: 1;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: white;
+            outline: none;
+        }
+
+        .msg-input:focus {
+            border-color: var(--accent);
+        }
+
+        .send-btn {
+            background-color: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            /* Ensure over title bar */
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            border: 1px solid var(--border);
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: white;
+            box-sizing: border-box;
+        }
+
+        .modal input:focus {
+            outline: 1px solid var(--accent);
+            border-color: var(--accent);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-cancel {
+            background: #333;
+            color: #fff;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <div class="app-title">
+            <div
+                style="width: 20px; height: 20px; color: #c0c0c0; display: flex; align-items: center; justify-content: center; margin-right: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h2"></path>
+                    <path d="M6 12v3"></path>
+                    <path d="M10 9v6"></path>
+                    <path d="M14 6v12"></path>
+                    <path d="M18 9v6"></path>
+                    <path d="M22 12v3"></path>
+                </svg>
+            </div> Whisper
+        </div>
+        <div class="window-controls">
+            <button class="control-btn" id="minBtn" title="Minimize">
+                <svg class="icon-svg" viewBox="0 0 10 10">
+                    <path d="M1,5 L9,5" stroke="currentColor"></path>
+                </svg>
+            </button>
+            <button class="control-btn" id="maxBtn" title="Maximize">
+                <svg class="icon-svg" viewBox="0 0 10 10">
+                    <rect x="1.5" y="1.5" width="7" height="7" stroke="currentColor"></rect>
+                </svg>
+            </button>
+            <button class="control-btn close-btn" id="closeBtn" title="Close">
+                <svg class="icon-svg" viewBox="0 0 10 10">
+                    <path d="M1,1 L9,9 M9,1 L1,9" stroke="currentColor"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container Layout -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="my-id-card">
+                <div class="my-id-label">ENCRYPTED ID</div>
+                <div class="my-id-value" id="myOnionId">Loading...</div>
+            </div>
+
+            <div class="contacts-header">
+                <span>Contacts</span>
+                <button class="add-contact-btn" id="addContactBtn">+</button>
+            </div>
+
+            <div class="contacts-list" id="contactsList">
+                <!-- Contacts will be injected here -->
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-title-group">
+                    <div class="chat-title" id="chatTitle">Select a contact</div>
+                    <div class="chat-subtitle" id="chatSubtitle"></div>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be injected here -->
+                <div style="text-align: center; color: #555; margin-top: 50px;">
+                    End-to-End Encrypted via Omega OS
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="ttl-wrapper">
+                    <button class="ttl-btn" id="ttlBtn" title="Self-Destruct Timer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ttl-menu" id="ttlMenu">
+                        <div class="ttl-option selected" data-value="0">Off</div>
+                        <div class="ttl-option" data-value="30000">30 Seconds</div>
+                        <div class="ttl-option" data-value="300000">5 Minutes</div>
+                        <div class="ttl-option" data-value="3600000">1 Hour</div>
+                        <div class="ttl-option" data-value="86400000">1 Day</div>
+                    </div>
+                </div>
+                <input type="text" class="msg-input" id="messageInput" placeholder="Type a message..."
+                    autocomplete="off">
+                <button class="send-btn" id="sendBtn">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Contact Modal -->
+    <div class="modal" id="addContactModal">
+        <div class="modal-content">
+            <h3>Add Contact</h3>
+            <input type="text" id="newContactName" placeholder="Name (e.g. Alice)">
+            <input type="text" id="newContactOnion" placeholder="Encrypted Address (e.g. v2c...onion)">
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" id="cancelAddContact">Cancel</button>
+                <button class="btn btn-primary" id="confirmAddContact">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Contact Modal -->
+    <div class="modal" id="editContactModal">
+        <div class="modal-content">
+            <h3>Edit Contact</h3>
+            <input type="text" id="editContactNameInput" placeholder="Contact Name">
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" id="cancelEditContact">Cancel</button>
+                <button class="btn btn-primary" id="confirmEditContact">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="whisper-app.js"></script>
+</body>
+
+
+</html>

@@ -7,11 +7,11 @@ let activeWindowId = null;
 function loadBackground() {
     const bgType = localStorage.getItem('desktopBgType') || 'color';
     const bgValue = localStorage.getItem('desktopBgValue') || '#1a1a1a';
-    
+
     const wallpaper = document.querySelector('.desktop-wallpaper');
     const omegaTrace = document.querySelector('.omega-trace-wallpaper');
     const omegaSymbol = document.querySelector('.omega-symbol-wallpaper');
-    
+
     // Remove any existing omega overlays
     if (omegaTrace) {
         omegaTrace.remove();
@@ -19,7 +19,7 @@ function loadBackground() {
     if (omegaSymbol) {
         omegaSymbol.remove();
     }
-    
+
     if (bgType === 'image' && bgValue) {
         wallpaper.style.backgroundImage = `url(${bgValue})`;
         wallpaper.style.backgroundSize = 'cover';
@@ -69,7 +69,7 @@ async function loadImageFromPath(filePath) {
             throw error;
         }
     }
-    
+
     try {
         // Read as base64
         const base64Data = await window.electronAPI.readFileFromPath(filePath, 'base64');
@@ -97,10 +97,10 @@ function loadPresetImages() {
 // Initialize default preset if squidward.webp exists
 async function initializePresetImages() {
     const presets = loadPresetImages();
-    
+
     // Add squidward.webp as default if not already added
     const hasSquidward = presets.some(p => p.name === 'Squidward' || p.path?.includes('squidward.webp'));
-    
+
     if (!hasSquidward) {
         const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
         // Try to load and convert to base64
@@ -149,14 +149,14 @@ function createOmegaSymbolWallpaper(bgColor) {
 async function loadSquidwardWallpaper() {
     const wallpaper = document.querySelector('.desktop-wallpaper');
     const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
-    
+
     try {
         const imageData = await loadImageFromPath(squidwardPath);
         wallpaper.style.backgroundImage = `url(${imageData})`;
         wallpaper.style.backgroundSize = 'cover';
         wallpaper.style.backgroundPosition = 'center';
         wallpaper.style.backgroundColor = 'transparent';
-        
+
         // Save to localStorage for quick access
         localStorage.setItem('squidwardImageData', imageData);
     } catch (error) {
@@ -177,9 +177,9 @@ async function loadSquidwardWallpaper() {
 async function loadSquidwardPreview() {
     const preview = document.getElementById('squidwardPreview');
     if (!preview) return;
-    
+
     const squidwardPath = 'C:\\Users\\richa\\Desktop\\squidward.webp';
-    
+
     try {
         const imageData = await loadImageFromPath(squidwardPath);
         preview.style.backgroundImage = `url(${imageData})`;
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBackground(); // Load saved background
     updateTime();
     setInterval(updateTime, 1000);
-    
+
     // Initialize crypto widget
     const selectedCryptos = loadSelectedCryptos();
     if (selectedCryptos.length > 0) {
@@ -218,21 +218,21 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCryptoSettings();
     updateCryptoPrices();
     setInterval(updateCryptoPrices, 60000); // Update every minute
-    
+
     // Initialize preset images
     initializePresetImages().then(() => {
         renderPresetImages();
     });
-    
+
     // Load Squidward preview thumbnail
     loadSquidwardPreview();
-    
+
     // Listen for window state updates from main process
     if (window.electronAPI) {
         console.log('Electron API available');
         // Request initial window state
         updateTaskbar();
-        
+
         // Listen for window events
         window.addEventListener('app-window-closed', (event) => {
             const windowId = event.detail;
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupDesktopIcons() {
     // Load saved icon positions
     loadIconPositions();
-    
+
     const desktopIcons = document.querySelectorAll('.desktop-icon');
     desktopIcons.forEach(icon => {
         // Click events
@@ -260,7 +260,7 @@ function setupDesktopIcons() {
                 icon.classList.add('selected');
             }
         });
-        
+
         // Double-click to launch
         icon.addEventListener('dblclick', (e) => {
             e.preventDefault();
@@ -268,7 +268,7 @@ function setupDesktopIcons() {
             const appType = icon.dataset.app;
             const action = icon.dataset.action;
             const folder = icon.dataset.folder;
-            
+
             if (appType) {
                 launchApp(appType);
             } else if (action === 'open-folder') {
@@ -279,102 +279,102 @@ function setupDesktopIcons() {
                 openAppFolder(folder);
             }
         });
-        
+
         // Drag and drop
         let isDragging = false;
         let dragStartX = 0;
         let dragStartY = 0;
         let initialX = 0;
         let initialY = 0;
-        
+
         icon.addEventListener('mousedown', (e) => {
             if (e.button === 0) { // Left mouse button only
                 isDragging = true;
                 icon.classList.add('dragging');
-                
+
                 // Get current position
                 const rect = icon.getBoundingClientRect();
                 initialX = rect.left;
                 initialY = rect.top;
-                
+
                 // Get mouse position
                 dragStartX = e.clientX;
                 dragStartY = e.clientY;
-                
+
                 e.preventDefault();
             }
         });
-        
+
         document.addEventListener('mousemove', (e) => {
             if (isDragging && icon.classList.contains('dragging')) {
                 const deltaX = e.clientX - dragStartX;
                 const deltaY = e.clientY - dragStartY;
-                
+
                 let newX = initialX + deltaX;
                 let newY = initialY + deltaY;
-                
+
                 // Constrain to desktop area (above taskbar)
                 const maxX = window.innerWidth - icon.offsetWidth - 20;
                 const maxY = window.innerHeight - 48 - icon.offsetHeight - 20; // 48px taskbar
-                
+
                 newX = Math.max(20, Math.min(newX, maxX));
                 newY = Math.max(20, Math.min(newY, maxY));
-                
+
                 icon.style.left = newX + 'px';
                 icon.style.top = newY + 'px';
-                
+
                 // Save position
                 saveIconPosition(icon.id, newX, newY);
             }
         });
-        
+
         document.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
                 icon.classList.remove('dragging');
             }
         });
-        
+
         // Touch events for mobile support
         icon.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
                 icon.classList.add('dragging');
-                
+
                 const rect = icon.getBoundingClientRect();
                 initialX = rect.left;
                 initialY = rect.top;
-                
+
                 dragStartX = e.touches[0].clientX;
                 dragStartY = e.touches[0].clientY;
-                
+
                 e.preventDefault();
             }
         });
-        
+
         document.addEventListener('touchmove', (e) => {
             if (isDragging && icon.classList.contains('dragging') && e.touches.length === 1) {
                 const deltaX = e.touches[0].clientX - dragStartX;
                 const deltaY = e.touches[0].clientY - dragStartY;
-                
+
                 let newX = initialX + deltaX;
                 let newY = initialY + deltaY;
-                
+
                 const maxX = window.innerWidth - icon.offsetWidth - 20;
                 const maxY = window.innerHeight - 48 - icon.offsetHeight - 20;
-                
+
                 newX = Math.max(20, Math.min(newX, maxX));
                 newY = Math.max(20, Math.min(newY, maxY));
-                
+
                 icon.style.left = newX + 'px';
                 icon.style.top = newY + 'px';
-                
+
                 saveIconPosition(icon.id, newX, newY);
-                
+
                 e.preventDefault();
             }
         });
-        
+
         document.addEventListener('touchend', () => {
             if (isDragging) {
                 isDragging = false;
@@ -387,7 +387,7 @@ function setupDesktopIcons() {
 function loadIconPositions() {
     const icons = document.querySelectorAll('.desktop-icon');
     const savedPositions = JSON.parse(localStorage.getItem('desktopIconPositions') || '{}');
-    
+
     // Default grid layout
     const gridCols = 4;
     const iconWidth = 80;
@@ -395,10 +395,10 @@ function loadIconPositions() {
     const spacing = 30;
     const startX = 20;
     const startY = 20;
-    
+
     icons.forEach((icon, index) => {
         const iconId = icon.id;
-        
+
         if (savedPositions[iconId]) {
             // Use saved position
             icon.style.left = savedPositions[iconId].x + 'px';
@@ -409,7 +409,7 @@ function loadIconPositions() {
             const row = Math.floor(index / gridCols);
             const x = startX + col * (iconWidth + spacing);
             const y = startY + row * (iconHeight + spacing);
-            
+
             icon.style.left = x + 'px';
             icon.style.top = y + 'px';
             saveIconPosition(iconId, x, y);
@@ -427,22 +427,22 @@ function initializeDesktop() {
     // Start Button
     const startButton = document.getElementById('startButton');
     const startMenu = document.getElementById('startMenu');
-    
+
     startButton.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleStartMenu();
     });
-    
+
     // Close start menu when clicking outside
     document.addEventListener('click', (e) => {
         if (!startMenu.contains(e.target) && !startButton.contains(e.target)) {
             closeStartMenu();
         }
     });
-    
+
     // Desktop Icons - Load positions and setup drag
     setupDesktopIcons();
-    
+
     // Start Menu Items
     const startMenuItems = document.querySelectorAll('.start-menu-item');
     startMenuItems.forEach(item => {
@@ -458,20 +458,20 @@ function initializeDesktop() {
             }
         });
     });
-    
+
     // Burn to Hell (B2H) Button Handler
     const burnToHellMenuItem = document.getElementById('burnToHellStartMenuItem');
     if (burnToHellMenuItem) {
         burnToHellMenuItem.addEventListener('click', async () => {
             closeStartMenu();
-            
+
             // Double confirmation for safety
             const firstConfirm = confirm('⚠️ BURN TO HELL (B2H) ⚠️\n\nThis will PERMANENTLY DELETE:\n• All browser history\n• All bookmarks\n• All downloads\n• All files in Documents/Desktop/Trash\n• All cookies and cache\n• All wallet data\n• All identity data\n• ALL DATA\n\nThis CANNOT be undone!\n\nAre you absolutely sure?');
             if (!firstConfirm) return;
-            
+
             const secondConfirm = confirm('🔥 FINAL WARNING 🔥\n\nYou are about to DELETE EVERYTHING.\n\nThe application will restart after wiping all data.\n\nClick OK to proceed with BURN TO HELL.');
             if (!secondConfirm) return;
-            
+
             try {
                 if (window.electronAPI && window.electronAPI.burnToHell) {
                     const result = await window.electronAPI.burnToHell();
@@ -487,13 +487,13 @@ function initializeDesktop() {
             }
         });
     }
-    
+
     // Start Menu Search
     setupStartMenuSearch();
-    
+
     // Taskbar Search
     setupTaskbarSearch();
-    
+
     // Power Button
     const powerButton = document.getElementById('powerButton');
     powerButton.addEventListener('click', () => {
@@ -501,49 +501,49 @@ function initializeDesktop() {
             window.electronAPI?.desktopClose();
         }
     });
-    
+
     // Context Menu
     setupContextMenu();
-    
+
     // Color Picker
     setupColorPicker();
-    
+
     // Image Upload
     setupImageUpload();
-    
+
     // App Folders
     setupAppFolders();
-    
+
     // Trash/Recycle Bin
     setupTrash();
-    
+
     // Screen Lock
     setupScreenLock();
-    
+
     // System Tray
     setupSystemTray();
-    
+
     // Volume/Brightness Controls
     setupVolumeBrightnessControls();
-    
+
     // Desktop Folders
     setupDesktopFolders();
-    
+
     // File Preview
     setupFilePreview();
-    
+
     // Multiple Desktops
     setupMultipleDesktops();
-    
+
     // Window Snapping
     setupWindowSnapping();
-    
+
     // AI Assistant
     setupAIAssistant();
-    
+
     // Identity Registration
     setupIdentityRegistration();
-    
+
     // Load identity status on startup
     loadIdentityStatus();
 }
@@ -556,7 +556,7 @@ const appFolders = {
             { id: 'word', name: 'Omega Word', icon: '📄', app: 'word' },
             { id: 'notes', name: 'Omega Notes', icon: '📝', app: 'notes' },
             { id: 'finance', name: 'Omega Finance', icon: '📊', app: 'finance' },
-            { id: 'slides', name: 'Omega Slides', icon: '📽️', app: 'slides' },
+            { id: 'slides', name: 'Omega Slides', icon: '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: block;"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M7 7h10M7 11h6"/></svg>', app: 'slides' },
             { id: 'paint', name: 'Omega Paint', icon: '🎨', app: 'paint' },
             { id: 'calculator', name: 'Calculator', icon: '🔢', app: 'calculator' }
         ]
@@ -575,13 +575,13 @@ const appFolders = {
 function setupAppFolders() {
     const modal = document.getElementById('appFolderModal');
     const closeBtn = document.getElementById('closeFolderBtn');
-    
+
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             modal.classList.remove('active');
         });
     }
-    
+
     // Close on background click
     if (modal) {
         modal.addEventListener('click', (e) => {
@@ -595,16 +595,16 @@ function setupAppFolders() {
 function openAppFolder(folderId) {
     const folder = appFolders[folderId];
     if (!folder) return;
-    
+
     const modal = document.getElementById('appFolderModal');
     const title = document.getElementById('folderTitle');
     const grid = document.getElementById('folderGrid');
-    
+
     if (!modal || !title || !grid) return;
-    
+
     title.textContent = folder.name;
     grid.innerHTML = '';
-    
+
     folder.apps.forEach(app => {
         const item = document.createElement('div');
         item.className = 'folder-app-item';
@@ -612,15 +612,15 @@ function openAppFolder(folderId) {
             <div class="icon-image">${app.icon}</div>
             <div class="icon-label">${app.name}</div>
         `;
-        
+
         item.addEventListener('click', () => {
             launchApp(app.app);
             modal.classList.remove('active');
         });
-        
+
         grid.appendChild(item);
     });
-    
+
     modal.classList.add('active');
 }
 
@@ -628,16 +628,16 @@ function setupContextMenu() {
     const contextMenu = document.getElementById('contextMenu');
     const desktopBackground = document.querySelector('.desktop-background');
     const desktopIcons = document.querySelector('.desktop-icons');
-    
+
     document.addEventListener('contextmenu', (e) => {
         // Allow context menu on desktop area, but not on taskbar/menus
-        if (e.target.closest('.taskbar') || 
-            e.target.closest('.start-menu') || 
+        if (e.target.closest('.taskbar') ||
+            e.target.closest('.start-menu') ||
             e.target.closest('.context-menu') ||
             e.target.closest('.color-picker-modal')) {
             return;
         }
-        
+
         // Only show on desktop background or icons
         if (e.target.closest('.desktop-background') || e.target.closest('.desktop-icons')) {
             e.preventDefault();
@@ -647,7 +647,7 @@ function setupContextMenu() {
             contextMenu.classList.add('active');
         }
     });
-    
+
     // Close context menu on click outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.context-menu')) {
@@ -655,20 +655,20 @@ function setupContextMenu() {
             contextMenu.style.display = 'none';
         }
     });
-    
+
     // Change Background Color
     document.getElementById('changeBackgroundColor').addEventListener('click', () => {
         const modal = document.getElementById('colorPickerModal');
         modal.classList.add('active');
         contextMenu.classList.remove('active');
     });
-    
+
     // Upload Background Image
     document.getElementById('uploadBackgroundImage').addEventListener('click', () => {
         document.getElementById('imageUploadInput').click();
         contextMenu.classList.remove('active');
     });
-    
+
     // Reset Background
     document.getElementById('resetBackground').addEventListener('click', () => {
         saveBackground('color', '#1a1a1a');
@@ -684,16 +684,16 @@ function setupColorPicker() {
     const customPicker = document.getElementById('customColorPicker');
     const colorPresetsSection = document.getElementById('colorPresetsSection');
     const colorCustomSection = document.getElementById('colorCustomSection');
-    
+
     let selectedTheme = 'color';
     let selectedColor = '#1a1a1a';
-    
+
     // Load current settings
     const currentBgType = localStorage.getItem('desktopBgType') || 'color';
     const currentBgValue = localStorage.getItem('desktopBgValue') || '#1a1a1a';
     selectedTheme = currentBgType;
     selectedColor = currentBgValue;
-    
+
     // Update UI to reflect current selection
     document.querySelectorAll('.theme-preset').forEach(p => {
         if (p.dataset.theme === currentBgType) {
@@ -702,12 +702,12 @@ function setupColorPicker() {
             p.classList.remove('active');
         }
     });
-    
+
     // Show/hide color options based on theme
     function updateThemeUI(theme) {
         const imageUploadSection = document.getElementById('imageUploadSection');
         const selectImageBtn = document.getElementById('selectImageBtn');
-        
+
         if (theme === 'omega-trace' || theme === 'omega-symbol' || theme === 'squidward') {
             colorPresetsSection.style.display = 'none';
             colorCustomSection.style.display = 'block';
@@ -728,7 +728,7 @@ function setupColorPicker() {
             }
         }
     }
-    
+
     // Image upload button handler
     const selectImageBtn = document.getElementById('selectImageBtn');
     if (selectImageBtn) {
@@ -736,7 +736,7 @@ function setupColorPicker() {
             document.getElementById('imageUploadInput').click();
         });
     }
-    
+
     // Re-render preset images when image section is shown
     const imageUploadSection = document.getElementById('imageUploadSection');
     if (imageUploadSection) {
@@ -749,7 +749,7 @@ function setupColorPicker() {
     }
     updateThemeUI(currentBgType);
     customPicker.value = currentBgValue;
-    
+
     // Close modal
     closeBtn.addEventListener('click', () => modal.classList.remove('active'));
     cancelBtn.addEventListener('click', () => {
@@ -767,14 +767,14 @@ function setupColorPicker() {
         customPicker.value = currentBgValue;
         modal.classList.remove('active');
     });
-    
+
     // Close on backdrop click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             modal.classList.remove('active');
         }
     });
-    
+
     // Theme presets - handle clicks on the theme preset divs
     document.querySelectorAll('.theme-preset').forEach(preset => {
         preset.addEventListener('click', (e) => {
@@ -784,17 +784,17 @@ function setupColorPicker() {
                 selectedColor = preset.dataset.value;
                 customPicker.value = selectedColor;
             }
-            
+
             // Visual feedback
             document.querySelectorAll('.theme-preset').forEach(p => {
                 p.classList.remove('active');
             });
             preset.classList.add('active');
-            
+
             updateThemeUI(selectedTheme);
         });
     });
-    
+
     // Color presets (for solid color theme)
     document.querySelectorAll('.color-preset').forEach(preset => {
         preset.addEventListener('click', () => {
@@ -809,7 +809,7 @@ function setupColorPicker() {
             }
         });
     });
-    
+
     // Custom color picker
     customPicker.addEventListener('change', (e) => {
         selectedColor = e.target.value;
@@ -817,7 +817,7 @@ function setupColorPicker() {
             p.style.borderColor = 'transparent';
         });
     });
-    
+
     // Apply
     applyBtn.addEventListener('click', () => {
         saveBackground(selectedTheme, selectedColor);
@@ -829,20 +829,20 @@ function setupColorPicker() {
 function renderPresetImages() {
     const container = document.getElementById('presetImagesList');
     if (!container) return;
-    
+
     const presets = loadPresetImages();
     if (presets.length === 0) {
         container.innerHTML = '';
         return;
     }
-    
+
     container.innerHTML = '<p style="color: rgba(255, 255, 255, 0.7); font-size: 13px; margin-bottom: 12px;">Preset Images:</p><div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; margin-bottom: 16px;">';
-    
+
     presets.forEach((preset, index) => {
         const presetDiv = document.createElement('div');
         presetDiv.style.cssText = 'position: relative; cursor: pointer; border-radius: 6px; overflow: hidden; border: 2px solid transparent; transition: all 0.2s; aspect-ratio: 1;';
         presetDiv.title = preset.name;
-        
+
         if (preset.data) {
             presetDiv.style.backgroundImage = `url(${preset.data})`;
             presetDiv.style.backgroundSize = 'cover';
@@ -851,10 +851,10 @@ function renderPresetImages() {
             presetDiv.style.background = 'rgba(255, 255, 255, 0.1)';
             presetDiv.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; font-size: 24px;">📷</div>';
         }
-        
+
         presetDiv.addEventListener('click', async () => {
             let imageData = preset.data;
-            
+
             // Load from path if data not available
             if (!imageData && preset.path) {
                 try {
@@ -869,32 +869,32 @@ function renderPresetImages() {
                     return;
                 }
             }
-            
+
             if (imageData) {
                 saveBackground('image', imageData);
                 document.getElementById('colorPickerModal').classList.remove('active');
             }
         });
-        
+
         presetDiv.addEventListener('mouseenter', () => {
             presetDiv.style.transform = 'scale(1.05)';
             presetDiv.style.borderColor = 'rgba(255, 255, 255, 0.5)';
         });
-        
+
         presetDiv.addEventListener('mouseleave', () => {
             presetDiv.style.transform = 'scale(1)';
             presetDiv.style.borderColor = 'transparent';
         });
-        
+
         container.querySelector('div').appendChild(presetDiv);
     });
-    
+
     container.innerHTML += '</div>';
 }
 
 function setupImageUpload() {
     const input = document.getElementById('imageUploadInput');
-    
+
     // File input handler
     input.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -905,12 +905,12 @@ function setupImageUpload() {
                 input.value = '';
                 return;
             }
-            
+
             const reader = new FileReader();
             reader.onload = async (event) => {
                 const imageData = event.target.result;
                 saveBackground('image', imageData);
-                
+
                 // Ask if user wants to save as preset
                 if (confirm('Would you like to save this image as a preset for quick access?')) {
                     const name = prompt('Enter a name for this preset:', file.name.split('.')[0] || 'My Image');
@@ -937,7 +937,7 @@ function setupImageUpload() {
         // Reset input
         input.value = '';
     });
-    
+
     // Paste handler - works anywhere on the desktop
     document.addEventListener('paste', (e) => {
         // Only handle paste if the color picker modal is open
@@ -945,19 +945,19 @@ function setupImageUpload() {
         if (!colorPickerModal || !colorPickerModal.classList.contains('active')) {
             return;
         }
-        
+
         const items = e.clipboardData.items;
         for (let i = 0; i < items.length; i++) {
             if (items[i].type.indexOf('image') !== -1) {
                 e.preventDefault();
                 const blob = items[i].getAsFile();
-                
+
                 // Check file size (limit to 10MB)
                 if (blob.size > 10 * 1024 * 1024) {
                     alert('Image is too large. Please use an image smaller than 10MB.');
                     return;
                 }
-                
+
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const imageData = event.target.result;
@@ -979,7 +979,7 @@ function toggleStartMenu() {
     startMenuOpen = !startMenuOpen;
     const startMenu = document.getElementById('startMenu');
     const startButton = document.getElementById('startButton');
-    
+
     if (startMenuOpen) {
         startMenu.classList.add('active');
         startButton.classList.add('active');
@@ -1003,7 +1003,7 @@ async function launchApp(appType, options = {}) {
             console.error('Electron API not available');
             return;
         }
-        
+
         // Check license for productivity apps
         const productivityApps = ['word', 'finance', 'slides'];
         if (productivityApps.includes(appType)) {
@@ -1014,7 +1014,7 @@ async function launchApp(appType, options = {}) {
                     const message = `${appName} requires an active Omega OS Pro license.\n\n` +
                         `Please stake 1,000 OMEGA tokens for a 30-day license or purchase a lifetime license for 10,000 OMEGA tokens.\n\n` +
                         `Open the Omega Identity app to manage your license.`;
-                    
+
                     if (confirm(message + '\n\nWould you like to open the Identity app now?')) {
                         await launchApp('identity');
                     }
@@ -1029,17 +1029,17 @@ async function launchApp(appType, options = {}) {
                 }
             }
         }
-        
+
         const defaultOptions = {
             width: 1200,
             height: 800
         };
-        
+
         const windowId = await window.electronAPI.launchApp(appType, {
             ...defaultOptions,
             ...options
         });
-        
+
         if (windowId) {
             openWindows.set(windowId, {
                 id: windowId,
@@ -1102,7 +1102,7 @@ function getAppIcon(appType) {
         'firewall': '🔥',
         'calculator': '🔢',
         'cookie-manager': '🍪',
-        'ai-dev': '🤖',
+        'ai-dev': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
         'integrations': '🔗'
     };
     return icons[appType] || '📄';
@@ -1110,14 +1110,14 @@ function getAppIcon(appType) {
 
 async function updateTaskbar() {
     if (!window.electronAPI) return;
-    
+
     try {
         const windows = await window.electronAPI.getOpenWindows();
         const taskbarApps = document.getElementById('taskbarApps');
-        
+
         // Clear taskbar
         taskbarApps.innerHTML = '';
-        
+
         // Add each window to taskbar
         windows.forEach(win => {
             const taskbarApp = document.createElement('div');
@@ -1129,12 +1129,12 @@ async function updateTaskbar() {
             if (win.isMinimized) {
                 taskbarApp.classList.add('minimized');
             }
-            
+
             taskbarApp.innerHTML = `
                 <div class="taskbar-app-icon">${getAppIcon(win.type)}</div>
                 <span>${getAppName(win.type)}</span>
             `;
-            
+
             taskbarApp.addEventListener('click', async () => {
                 // If clicking the active window, toggle minimize
                 if (win.id === activeWindowId) {
@@ -1154,16 +1154,16 @@ async function updateTaskbar() {
                 // Update taskbar after a short delay to reflect state changes
                 setTimeout(updateTaskbar, 100);
             });
-            
+
             taskbarApps.appendChild(taskbarApp);
         });
-        
+
         // Update openWindows map
         openWindows.clear();
         windows.forEach(win => {
             openWindows.set(win.id, win);
         });
-        
+
     } catch (error) {
         console.error('Failed to update taskbar:', error);
     }
@@ -1217,16 +1217,16 @@ function saveSelectedCryptos(selection) {
 function renderCryptoWidget(selectedIds) {
     const widget = document.getElementById('cryptoWidget');
     if (!widget) return;
-    
+
     // Clear existing items
     const existingItems = widget.querySelectorAll('.crypto-item');
     existingItems.forEach(item => item.remove());
-    
+
     // Add new items
     selectedIds.forEach(coinId => {
         const coin = CRYPTO_OPTIONS.find(c => c.id === coinId);
         if (!coin) return;
-        
+
         const item = document.createElement('div');
         item.className = 'crypto-item';
         item.setAttribute('data-coin', coinId);
@@ -1246,9 +1246,9 @@ function setupCryptoSettings() {
     const cancelBtn = document.getElementById('cancelCryptoSettings');
     const applyBtn = document.getElementById('applyCryptoSettings');
     const tokensList = document.getElementById('cryptoTokensList');
-    
+
     let tempSelection = [...loadSelectedCryptos()];
-    
+
     // Render token checkboxes
     function renderTokenList() {
         tokensList.innerHTML = '';
@@ -1263,7 +1263,7 @@ function setupCryptoSettings() {
                     <span class="crypto-token-name">${coin.name}</span>
                 </label>
             `;
-            
+
             const checkbox = item.querySelector('input');
             checkbox.addEventListener('change', () => {
                 if (checkbox.checked) {
@@ -1277,25 +1277,25 @@ function setupCryptoSettings() {
                     tempSelection = tempSelection.filter(id => id !== coin.id);
                 }
             });
-            
+
             tokensList.appendChild(item);
         });
     }
-    
+
     widget.addEventListener('click', () => {
         tempSelection = [...loadSelectedCryptos()];
         renderTokenList();
         modal.classList.add('active');
     });
-    
+
     closeBtn.addEventListener('click', () => {
         modal.classList.remove('active');
     });
-    
+
     cancelBtn.addEventListener('click', () => {
         modal.classList.remove('active');
     });
-    
+
     applyBtn.addEventListener('click', () => {
         if (tempSelection.length === 0) {
             alert('Please select at least one cryptocurrency');
@@ -1306,7 +1306,7 @@ function setupCryptoSettings() {
         modal.classList.remove('active');
         updateCryptoPrices(); // Refresh prices with new selection
     });
-    
+
     // Close on click outside
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
@@ -1320,7 +1320,7 @@ async function updateCryptoPrices() {
     try {
         const selectedIds = loadSelectedCryptos();
         if (selectedIds.length === 0) return;
-        
+
         // Try to use cached data first if available and recent
         const cached = localStorage.getItem('cryptoPricesCache');
         if (cached) {
@@ -1349,17 +1349,17 @@ async function updateCryptoPrices() {
                 console.error('Error using cached prices:', e);
             }
         }
-        
+
         const idsParam = selectedIds.join(',');
         console.log('Fetching crypto prices for:', idsParam);
-        
+
         // Retry logic with exponential backoff
         let lastError = null;
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-                
+
                 const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idsParam}&vs_currencies=usd&include_24hr_change=true`, {
                     method: 'GET',
                     headers: {
@@ -1368,9 +1368,9 @@ async function updateCryptoPrices() {
                     },
                     signal: controller.signal
                 });
-                
+
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) {
                     if (response.status === 429) {
                         // Rate limited - wait longer before retry
@@ -1379,18 +1379,18 @@ async function updateCryptoPrices() {
                     }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 const data = await response.json();
                 console.log('Crypto price data received:', data);
-                
+
                 // Update each selected crypto
                 selectedIds.forEach(coinId => {
                     const coinData = data[coinId];
                     if (!coinData) return;
-                    
+
                     const priceEl = document.getElementById(`${coinId}Price`);
                     const changeEl = document.getElementById(`${coinId}Change`);
-                    
+
                     if (priceEl) {
                         const price = coinData.usd;
                         // Format price based on value
@@ -1400,14 +1400,14 @@ async function updateCryptoPrices() {
                             priceEl.textContent = `$${price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`;
                         }
                     }
-                    
+
                     if (changeEl) {
                         const change = coinData.usd_24h_change || 0;
                         changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
                         changeEl.className = 'crypto-change ' + (change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral');
                     }
                 });
-                
+
                 // Cache successful response
                 const cacheData = {
                     timestamp: Date.now(),
@@ -1426,9 +1426,9 @@ async function updateCryptoPrices() {
                     }
                 });
                 localStorage.setItem('cryptoPricesCache', JSON.stringify(cacheData));
-                
+
                 return; // Success, exit function
-                
+
             } catch (fetchError) {
                 lastError = fetchError;
                 if (fetchError.name === 'AbortError') {
@@ -1436,14 +1436,14 @@ async function updateCryptoPrices() {
                 } else {
                     console.warn(`Crypto price fetch failed (attempt ${attempt + 1}/3):`, fetchError.message);
                 }
-                
+
                 // Wait before retry (exponential backoff)
                 if (attempt < 2) {
                     await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
                 }
             }
         }
-        
+
         // All retries failed - use cached data if available
         if (cached) {
             try {
@@ -1466,9 +1466,9 @@ async function updateCryptoPrices() {
                 console.error('Error using cached prices:', e);
             }
         }
-        
+
         throw lastError || new Error('Failed to fetch crypto prices after 3 attempts');
-        
+
     } catch (error) {
         console.error('Error fetching crypto prices:', error);
         // Show error state but don't break the UI
@@ -1484,7 +1484,7 @@ async function updateCryptoPrices() {
 function updateTime() {
     const timeElement = document.getElementById('trayTimeHour');
     const dateElement = document.getElementById('trayDate');
-    
+
     if (timeElement || dateElement) {
         const now = new Date();
         const hours = now.getHours();
@@ -1492,12 +1492,12 @@ function updateTime() {
         const ampm = hours >= 12 ? 'PM' : 'AM';
         const displayHours = hours % 12 || 12;
         const timeString = `${displayHours}:${minutes} ${ampm}`;
-        
+
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         const year = now.getFullYear();
         const dateString = `${month}/${day}/${year}`;
-        
+
         if (timeElement) timeElement.textContent = timeString;
         if (dateElement) dateElement.textContent = dateString;
     }
@@ -1561,7 +1561,7 @@ async function fetchVpnInfo(retryAttempt = 0) {
             updateVpnDisplay();
             updateVpnIndicator();
         }
-        
+
         // Check if a VPN location is selected
         const selectedLocation = localStorage.getItem('selectedVpnLocation');
         if (selectedLocation) {
@@ -1573,7 +1573,7 @@ async function fetchVpnInfo(retryAttempt = 0) {
                 // If parsing fails, fall through to real location fetch
             }
         }
-        
+
         // Fetch IP through VPN proxy (uses Electron's net module which respects proxy settings)
         let data;
         if (window.electronAPI && window.electronAPI.vpnFetchIp) {
@@ -1592,10 +1592,10 @@ async function fetchVpnInfo(retryAttempt = 0) {
             // Fallback to direct fetch if IPC not available (shouldn't happen)
             throw new Error('VPN fetch API not available');
         }
-        
+
         // All VPN locations use Tor proxy, so always show TOR as ISP
         const isp = 'TOR';
-        
+
         // Update VPN info with successful data
         vpnInfo = {
             ip: data.ip || 'Unknown',
@@ -1605,10 +1605,10 @@ async function fetchVpnInfo(retryAttempt = 0) {
             connected: true,
             isFakeLocation: false
         };
-        
+
         // Reset retry count on success
         vpnRetryCount = 0;
-        
+
         // Notify main process of VPN status for kill switch
         if (window.electronAPI && window.electronAPI.vpnKillSwitchGetStatus) {
             window.electronAPI.vpnKillSwitchGetStatus().then(status => {
@@ -1617,10 +1617,10 @@ async function fetchVpnInfo(retryAttempt = 0) {
                 }
             });
         }
-        
+
         updateVpnDisplay();
         updateVpnIndicator();
-        
+
         // Store in localStorage to show it's isolated
         try {
             localStorage.setItem('vpnInfo', JSON.stringify(vpnInfo));
@@ -1638,7 +1638,7 @@ async function fetchVpnInfo(retryAttempt = 0) {
             }, delay);
             return;
         }
-        
+
         // All retries failed - use cached data if available
         const saved = localStorage.getItem('vpnInfo');
         if (saved) {
@@ -1652,10 +1652,10 @@ async function fetchVpnInfo(retryAttempt = 0) {
                 // Ignore parse errors
             }
         }
-        
+
         // No cached data - show disconnected state
         vpnInfo.connected = false;
-        
+
         // Notify main process of VPN status for kill switch
         if (window.electronAPI && window.electronAPI.vpnKillSwitchGetStatus) {
             window.electronAPI.vpnKillSwitchGetStatus().then(status => {
@@ -1664,10 +1664,10 @@ async function fetchVpnInfo(retryAttempt = 0) {
                 }
             });
         }
-        
+
         updateVpnDisplay();
         updateVpnIndicator();
-        
+
         // Log error (suppressed in production to reduce console noise)
         // Only log final failure, not intermediate retries
         if (retryAttempt === MAX_VPN_RETRIES) {
@@ -1681,11 +1681,11 @@ function updateVpnDisplay() {
     document.getElementById('vpnLocation').textContent = vpnInfo.location || 'Loading...';
     document.getElementById('vpnCountry').textContent = vpnInfo.country || 'Loading...';
     document.getElementById('vpnIsp').textContent = vpnInfo.isp || 'Loading...';
-    
+
     const statusText = document.getElementById('vpnStatusText');
     const statusDot = document.getElementById('vpnStatusDot');
     const fakeIndicator = document.getElementById('vpnFakeIndicator');
-    
+
     if (vpnInfo.connected) {
         statusText.textContent = 'Connected';
         statusDot.className = 'vpn-status-dot connected';
@@ -1693,7 +1693,7 @@ function updateVpnDisplay() {
         statusText.textContent = 'Disconnected';
         statusDot.className = 'vpn-status-dot disconnected';
     }
-    
+
     // Show fake location indicator if using spoofed location
     if (fakeIndicator) {
         if (vpnInfo.isFakeLocation && vpnInfo.connected) {
@@ -1713,12 +1713,12 @@ function updateVpnIndicator() {
         indicator.classList.remove('active');
         indicator.classList.add('connecting');
     }
-    
+
     // Update top badge as well
     const badgeDot = document.getElementById('vpnStatusBadgeDot');
     const badgeLocation = document.getElementById('vpnStatusBadgeLocation');
     const badge = document.getElementById('vpnStatusBadge');
-    
+
     if (badgeDot && badgeLocation && badge) {
         if (vpnInfo.connected) {
             badgeDot.className = 'vpn-status-badge-dot connected';
@@ -1748,22 +1748,22 @@ function setupVpnPanel() {
     const refreshBtn = document.getElementById('refreshVpnBtn');
     const vpnInfoBtn = document.getElementById('vpnInfoBtn');
     const vpnStatusBadge = document.getElementById('vpnStatusBadge');
-    
+
     vpnIndicator.addEventListener('click', () => {
         vpnPanel.classList.toggle('active');
     });
-    
+
     // Make the top badge clickable to open VPN panel
     if (vpnStatusBadge) {
         vpnStatusBadge.addEventListener('click', () => {
             vpnPanel.classList.toggle('active');
         });
     }
-    
+
     closeBtn.addEventListener('click', () => {
         vpnPanel.classList.remove('active');
     });
-    
+
     refreshBtn.addEventListener('click', () => {
         vpnRetryCount = 0; // Reset retry count on manual refresh
         vpnInfo.connected = false;
@@ -1771,10 +1771,10 @@ function setupVpnPanel() {
         updateVpnIndicator();
         fetchVpnInfo(0);
     });
-    
+
     // Remove location selection - Tor exit nodes are random
     // Location button removed since we're using Tor
-    
+
     // VPN Kill Switch Toggle
     const vpnKillSwitchToggle = document.getElementById('vpnKillSwitchToggle');
     if (vpnKillSwitchToggle && window.electronAPI) {
@@ -1785,14 +1785,14 @@ function setupVpnPanel() {
         }).catch(err => {
             console.error('Error loading VPN kill switch status:', err);
         });
-        
+
         // Handle toggle
         vpnKillSwitchToggle.addEventListener('change', async (e) => {
             const enabled = e.target.checked;
             try {
                 await window.electronAPI.vpnKillSwitchSetStatus(enabled);
                 updateVpnKillSwitchVisual(enabled);
-                
+
                 // Send current VPN status
                 if (enabled) {
                     window.electronAPI.sendVpnStatus(vpnInfo.connected);
@@ -1804,7 +1804,7 @@ function setupVpnPanel() {
                 updateVpnKillSwitchVisual(!enabled);
             }
         });
-        
+
         // Also handle click on the label
         const killSwitchLabel = vpnKillSwitchToggle.closest('label');
         if (killSwitchLabel) {
@@ -1817,13 +1817,13 @@ function setupVpnPanel() {
                 }, 10);
             });
         }
-        
+
         // Listen for kill switch trigger
         window.electronAPI.onVpnKillSwitchTriggered(() => {
             alert('⚠️ VPN Kill Switch Activated!\n\nYour VPN connection dropped and network access has been disabled for security.');
         });
     }
-    
+
     function updateVpnKillSwitchVisual(checked) {
         const toggle = document.getElementById('vpnKillSwitchToggle');
         if (toggle) {
@@ -1840,7 +1840,7 @@ function setupVpnPanel() {
             }
         }
     }
-    
+
     // Close on click outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.vpn-panel') && !e.target.closest('.vpn-indicator') && !e.target.closest('.vpn-status-badge')) {
@@ -1856,7 +1856,7 @@ function setupStartMenuSearch() {
     const filesContainer = document.getElementById('startMenuFiles');
     let allFiles = [];
     let searchTimeout = null;
-    
+
     // Load files on start menu open
     const startMenu = document.getElementById('startMenu');
     const observer = new MutationObserver(() => {
@@ -1865,10 +1865,10 @@ function setupStartMenuSearch() {
         }
     });
     observer.observe(startMenu, { attributes: true, attributeFilter: ['class'] });
-    
+
     // Initial load
     loadFilesForSearch();
-    
+
     async function loadFilesForSearch() {
         if (window.electronAPI && window.electronAPI.listDocuments) {
             try {
@@ -1879,26 +1879,26 @@ function setupStartMenuSearch() {
             }
         }
     }
-    
+
     searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
-        
+
         // Clear previous timeout
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
-        
+
         // Debounce search
         searchTimeout = setTimeout(() => {
             performSearch(searchTerm);
         }, 150);
     });
-    
+
     // Make performSearch available globally for taskbar search
-    window.performStartMenuSearch = function(searchTerm) {
+    window.performStartMenuSearch = function (searchTerm) {
         performSearch(searchTerm.toLowerCase().trim());
     };
-    
+
     function performSearch(searchTerm) {
         if (!searchTerm) {
             // Show all apps, hide files
@@ -1909,14 +1909,14 @@ function setupStartMenuSearch() {
             });
             return;
         }
-        
+
         // Filter apps
         let hasAppMatches = false;
         document.querySelectorAll('.start-menu-item').forEach(item => {
             const title = item.querySelector('.start-menu-title')?.textContent.toLowerCase() || '';
             const subtitle = item.querySelector('.start-menu-subtitle')?.textContent.toLowerCase() || '';
             const matches = title.includes(searchTerm) || subtitle.includes(searchTerm);
-            
+
             if (matches) {
                 item.style.display = 'flex';
                 hasAppMatches = true;
@@ -1924,13 +1924,13 @@ function setupStartMenuSearch() {
                 item.style.display = 'none';
             }
         });
-        
+
         // Filter files
         const fileMatches = allFiles.filter(file => {
             if (file.isDirectory) return false;
             return file.name.toLowerCase().includes(searchTerm);
         });
-        
+
         // Show/hide containers
         if (hasAppMatches || fileMatches.length > 0) {
             appsContainer.style.display = hasAppMatches ? 'flex' : 'none';
@@ -1945,7 +1945,7 @@ function setupStartMenuSearch() {
                 filesContainer.innerHTML = '<div style="padding: 40px 20px; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 14px;">No results found</div>';
             }
         }
-        
+
         // Render file results
         if (fileMatches.length > 0 && filesContainer) {
             renderFileResults(fileMatches, searchTerm);
@@ -1956,10 +1956,10 @@ function setupStartMenuSearch() {
             }
         }
     }
-    
+
     function renderFileResults(files, searchTerm) {
         filesContainer.innerHTML = '';
-        
+
         // Add header
         const header = document.createElement('div');
         header.style.padding = '8px 16px';
@@ -1970,12 +1970,12 @@ function setupStartMenuSearch() {
         header.style.marginTop = '8px';
         header.textContent = 'Files';
         filesContainer.appendChild(header);
-        
+
         files.slice(0, 5).forEach(file => { // Limit to 5 results
             const item = document.createElement('div');
             item.className = 'start-menu-item';
             item.style.cursor = 'pointer';
-            
+
             // Get file icon
             const ext = file.extension;
             let icon = '📄';
@@ -1983,7 +1983,7 @@ function setupStartMenuSearch() {
             else if (['.xls', '.xlsx', '.csv', '.json'].includes(ext)) icon = '📊';
             else if (['.txt', '.rtf'].includes(ext)) icon = '📝';
             else if (['.html', '.htm'].includes(ext)) icon = '🌐';
-            
+
             item.innerHTML = `
                 <div class="start-menu-icon">${icon}</div>
                 <div class="start-menu-text">
@@ -1991,7 +1991,7 @@ function setupStartMenuSearch() {
                     <div class="start-menu-subtitle">Document</div>
                 </div>
             `;
-            
+
             item.addEventListener('click', () => {
                 if (window.electronAPI && window.electronAPI.openFileInApp) {
                     window.electronAPI.openFileInApp(file.path).then(result => {
@@ -2003,7 +2003,7 @@ function setupStartMenuSearch() {
                     });
                 }
             });
-            
+
             filesContainer.appendChild(item);
         });
     }
@@ -2014,9 +2014,9 @@ function setupTaskbarSearch() {
     const taskbarSearch = document.getElementById('taskbarSearch');
     const startMenu = document.getElementById('startMenu');
     const startSearch = document.getElementById('startSearch');
-    
+
     if (!taskbarSearch) return;
-    
+
     // Ensure start menu opens when taskbar search is interacted with
     const ensureStartMenuOpen = () => {
         if (!startMenu || !startMenu.classList.contains('active')) {
@@ -2026,7 +2026,7 @@ function setupTaskbarSearch() {
             }
         }
     };
-    
+
     // When taskbar search is clicked/focused, open start menu
     taskbarSearch.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2047,7 +2047,7 @@ function setupTaskbarSearch() {
             }
         }, 100);
     });
-    
+
     taskbarSearch.addEventListener('focus', () => {
         ensureStartMenuOpen();
         setTimeout(() => {
@@ -2064,32 +2064,32 @@ function setupTaskbarSearch() {
             }
         }, 100);
     });
-    
+
     // When typing in taskbar search, sync with start menu search
     taskbarSearch.addEventListener('input', (e) => {
         const value = e.target.value;
-        
+
         // Always ensure start menu is open when typing
         if (!startMenu || !startMenu.classList.contains('active')) {
             if (!startMenuOpen) {
                 toggleStartMenu();
             }
         }
-        
+
         // Sync with start menu search immediately - no delay for better responsiveness
         if (startSearch) {
             startSearch.value = value;
             // Trigger search with proper event
             const inputEvent = new Event('input', { bubbles: true, cancelable: true });
             startSearch.dispatchEvent(inputEvent);
-            
+
             // Also manually trigger the search function if available
             if (window.performStartMenuSearch) {
                 window.performStartMenuSearch(value);
             }
         }
     });
-    
+
     // Handle Enter key to launch first result
     taskbarSearch.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -2114,26 +2114,26 @@ function showVpnLocationModal() {
     const searchInput = document.getElementById('vpnLocationSearch');
     const skipBtn = document.getElementById('skipVpnLocation');
     const useRealBtn = document.getElementById('useRealLocation');
-    
+
     // Clear and populate location list
     list.innerHTML = '';
-    
+
     // Get currently selected location
     const currentLocation = localStorage.getItem('selectedVpnLocation');
     let currentLocationData = null;
     if (currentLocation) {
         try {
             currentLocationData = JSON.parse(currentLocation);
-        } catch (e) {}
+        } catch (e) { }
     }
-    
+
     VPN_LOCATIONS.forEach(location => {
         const item = document.createElement('div');
         item.className = 'vpn-location-item';
         if (currentLocationData && currentLocationData.country === location.country) {
             item.classList.add('selected');
         }
-        
+
         item.innerHTML = `
             <span class="vpn-location-item-flag">${location.flag}</span>
             <div class="vpn-location-item-info">
@@ -2141,16 +2141,16 @@ function showVpnLocationModal() {
                 <div class="vpn-location-item-details">${location.city}, ${location.region} • ${location.ip}</div>
             </div>
         `;
-        
+
         item.addEventListener('click', () => {
             // Remove selected class from all items
             document.querySelectorAll('.vpn-location-item').forEach(i => i.classList.remove('selected'));
             item.classList.add('selected');
-            
+
             // Store selected location and clear real location preference
             localStorage.setItem('selectedVpnLocation', JSON.stringify(location));
             localStorage.removeItem('vpnUseRealLocation');
-            
+
             // Try to set VPN proxy for this location (uses Tor)
             if (window.electronAPI && window.electronAPI.vpnSetProxy) {
                 window.electronAPI.vpnSetProxy({
@@ -2175,7 +2175,7 @@ function showVpnLocationModal() {
                     console.error('[VPN] Error setting proxy:', err);
                 });
             }
-            
+
             // Show connecting state (will update with real IP after Tor connects)
             vpnInfo = {
                 ip: 'Connecting via Tor...',
@@ -2185,19 +2185,19 @@ function showVpnLocationModal() {
                 connected: false,
                 isFakeLocation: false
             };
-            
+
             updateVpnDisplay();
             updateVpnIndicator();
-            
+
             // Close modal after a brief delay
             setTimeout(() => {
                 modal.classList.remove('active');
             }, 300);
         });
-        
+
         list.appendChild(item);
     });
-    
+
     // Search functionality
     searchInput.value = '';
     searchInput.addEventListener('input', (e) => {
@@ -2207,7 +2207,7 @@ function showVpnLocationModal() {
             item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
         });
     });
-    
+
     // Skip button - use real location
     skipBtn.addEventListener('click', () => {
         localStorage.removeItem('selectedVpnLocation');
@@ -2221,7 +2221,7 @@ function showVpnLocationModal() {
         modal.classList.remove('active');
         fetchVpnInfo(0);
     });
-    
+
     // Use real location button
     useRealBtn.addEventListener('click', () => {
         localStorage.removeItem('selectedVpnLocation');
@@ -2235,7 +2235,7 @@ function showVpnLocationModal() {
         modal.classList.remove('active');
         fetchVpnInfo(0);
     });
-    
+
     modal.classList.add('active');
 }
 
@@ -2250,31 +2250,32 @@ if (document.readyState === 'loading') {
 
 function initializeVpn() {
     setupVpnPanel();
-    
+
     // Since we're using Tor, all locations use the same Tor proxy
     // Auto-connect to Tor without location selection (Tor exit nodes are random)
     const torLocationKey = 'United States-New York'; // Just use any location key, they all use Tor
-    const torLocation = VPN_LOCATIONS.find(loc => 
-        `${loc.country}-${loc.city}` === torLocationKey || 
+    const torLocation = VPN_LOCATIONS.find(loc =>
+        `${loc.country}-${loc.city}` === torLocationKey ||
         (loc.country === 'United States' && loc.city === 'New York')
     );
-    
+
     if (!torLocation) {
         console.error('[VPN] Tor location not found');
         return;
     }
-    
+
     // Clear any cached VPN info to force fresh fetch
     localStorage.removeItem('vpnInfo');
     localStorage.removeItem('selectedVpnLocation');
     localStorage.removeItem('vpnUseRealLocation');
-    
+
     // Show connecting state initially
     vpnInfo.connected = false;
     updateVpnDisplay();
     updateVpnIndicator();
-    
+
     // Auto-connect to Tor on startup (all locations use the same Tor proxy)
+    // But only if Tor is available - don't block internet if Tor fails
     if (window.electronAPI && window.electronAPI.vpnSetProxy) {
         window.electronAPI.vpnSetProxy({
             country: torLocation.country,
@@ -2283,25 +2284,46 @@ function initializeVpn() {
             if (result.success) {
                 console.log('[VPN] Auto-connected to Tor:', result.message);
                 // Wait for Tor to bootstrap, then fetch real IP through Tor
-                console.log('[VPN] Waiting for Tor to establish connection...');
-                setTimeout(() => {
-                    console.log('[VPN] Verifying Tor connection by fetching IP...');
-                    fetchVpnInfo(0);
-                }, 5000); // Wait 5 seconds for Tor to bootstrap
+                // First launch can take 30-60 seconds, subsequent launches are faster (10-20s)
+                console.log('[VPN] Waiting for Tor to establish connection (this may take up to 60 seconds on first launch)...');
+                // Try fetching IP after 10 seconds, then retry every 10 seconds up to 60 seconds
+                let retryCount = 0;
+                const maxRetries = 6; // 6 retries * 10 seconds = 60 seconds max
+                const checkTorReady = () => {
+                    retryCount++;
+                    console.log(`[VPN] Checking if Tor is ready... (attempt ${retryCount}/${maxRetries})`);
+                    fetchVpnInfo(0).then(() => {
+                        console.log('[VPN] Tor connection verified');
+                    }).catch(() => {
+                        if (retryCount < maxRetries) {
+                            setTimeout(checkTorReady, 10000); // Retry every 10 seconds
+                        } else {
+                            console.warn('[VPN] Tor did not become ready within timeout. VPN will connect when Tor is available.');
+                        }
+                    });
+                };
+                // Start checking after 10 seconds
+                setTimeout(checkTorReady, 10000);
             } else {
-                console.warn('[VPN] Auto-connect to Tor failed:', result.message);
+                console.warn('[VPN] Auto-connect to Tor failed:', result.message || result.error);
+                console.warn('[VPN] Continuing with normal internet access (no VPN)');
                 vpnInfo.connected = false;
                 updateVpnDisplay();
                 updateVpnIndicator();
+                // Clear any cached VPN location to prevent retry on next startup
+                localStorage.removeItem('selectedVpnLocation');
             }
         }).catch(err => {
             console.error('[VPN] Error auto-connecting to Tor:', err);
+            console.warn('[VPN] Continuing with normal internet access (no VPN)');
             vpnInfo.connected = false;
             updateVpnDisplay();
             updateVpnIndicator();
+            // Clear any cached VPN location to prevent retry on next startup
+            localStorage.removeItem('selectedVpnLocation');
         });
     }
-    
+
     // Refresh VPN info every 5 minutes
     setInterval(fetchVpnInfo, 5 * 60 * 1000);
 }
@@ -2315,22 +2337,22 @@ function setupTrash() {
     const emptyTrashBtn = document.getElementById('emptyTrashBtn');
     const restoreAllBtn = document.getElementById('restoreAllBtn');
     const trashCount = document.getElementById('trashCount');
-    
+
     if (!trashIcon || !window.electronAPI) return;
-    
+
     // Open trash on double click
     trashIcon.addEventListener('dblclick', async () => {
         await loadTrashContents();
         trashModal.style.display = 'flex';
     });
-    
+
     // Close modal
     if (closeTrashModal) {
         closeTrashModal.addEventListener('click', () => {
             trashModal.style.display = 'none';
         });
     }
-    
+
     // Empty trash
     if (emptyTrashBtn) {
         emptyTrashBtn.addEventListener('click', async () => {
@@ -2339,7 +2361,7 @@ function setupTrash() {
                 emptyTrashBtn.disabled = true;
                 emptyTrashBtn.textContent = 'Deleting...';
                 if (restoreAllBtn) restoreAllBtn.disabled = true;
-                
+
                 // Show loading indicator in modal body
                 const originalContent = trashModalBody.innerHTML;
                 trashModalBody.innerHTML = `
@@ -2349,7 +2371,7 @@ function setupTrash() {
                         <div style="font-size: 12px; color: #999; margin-top: 8px;">Please wait</div>
                     </div>
                 `;
-                
+
                 try {
                     const result = await window.electronAPI.trashEmpty();
                     if (result.success) {
@@ -2376,7 +2398,7 @@ function setupTrash() {
             }
         });
     }
-    
+
     // Restore all
     if (restoreAllBtn) {
         restoreAllBtn.addEventListener('click', async () => {
@@ -2390,7 +2412,7 @@ function setupTrash() {
             }
         });
     }
-    
+
     async function loadTrashContents() {
         const result = await window.electronAPI.trashList();
         if (result.success) {
@@ -2417,13 +2439,13 @@ function setupTrash() {
             }
         }
     }
-    
+
     window.restoreTrashItem = async (path) => {
         await window.electronAPI.trashRestore(path);
         await loadTrashContents();
         updateTrashCount();
     };
-    
+
     window.deleteTrashItem = async (path) => {
         if (confirm('Permanently delete this item?')) {
             // For now, just remove from list (full delete can be added later)
@@ -2431,7 +2453,7 @@ function setupTrash() {
             updateTrashCount();
         }
     };
-    
+
     async function updateTrashCount() {
         const result = await window.electronAPI.trashList();
         if (result.success) {
@@ -2444,7 +2466,7 @@ function setupTrash() {
             }
         }
     }
-    
+
     // Update count on load
     updateTrashCount();
 }
@@ -2454,9 +2476,9 @@ function setupScreenLock() {
     const lockScreen = document.getElementById('lockScreen');
     const lockScreenBtn = document.getElementById('lockScreenBtn');
     const unlockBtn = document.getElementById('unlockBtn');
-    
+
     if (!lockScreen || !window.electronAPI) return;
-    
+
     // Lock screen button
     if (lockScreenBtn) {
         lockScreenBtn.addEventListener('click', async () => {
@@ -2464,19 +2486,19 @@ function setupScreenLock() {
             lockScreen.style.display = 'flex';
         });
     }
-    
+
     // Listen for lock event
     window.electronAPI.onScreenLocked(() => {
         lockScreen.style.display = 'flex';
     });
-    
+
     // Unlock button - simple click to unlock
     if (unlockBtn) {
         unlockBtn.addEventListener('click', () => {
             lockScreen.style.display = 'none';
         });
     }
-    
+
     // Also allow any key press to unlock
     document.addEventListener('keydown', (e) => {
         if (lockScreen.style.display === 'flex') {
@@ -2489,7 +2511,7 @@ function setupScreenLock() {
 function setupSystemTray() {
     const trayToggle = document.getElementById('trayToggle');
     const systemTray = document.getElementById('systemTray');
-    
+
     if (trayToggle && systemTray) {
         trayToggle.addEventListener('click', () => {
             systemTray.classList.toggle('expanded');
@@ -2506,9 +2528,9 @@ function setupVolumeBrightnessControls() {
     const brightnessSlider = document.getElementById('brightnessSlider');
     const volumeValue = document.getElementById('volumeValue');
     const brightnessValue = document.getElementById('brightnessValue');
-    
+
     if (!window.electronAPI) return;
-    
+
     // Volume Control
     if (volumeSlider && volumeValue && volumeControl) {
         // Load current volume
@@ -2522,14 +2544,14 @@ function setupVolumeBrightnessControls() {
             volumeSlider.value = 50;
             volumeValue.textContent = '50%';
         });
-        
+
         // Keep popup open when interacting with slider
         const volumePopup = document.getElementById('volumeSliderPopup');
-        
+
         volumeControl.addEventListener('mouseenter', () => {
             if (volumePopup) volumePopup.style.display = 'flex';
         });
-        
+
         volumeControl.addEventListener('mouseleave', (e) => {
             // Only hide if not moving to popup
             if (!volumePopup.contains(e.relatedTarget)) {
@@ -2540,12 +2562,12 @@ function setupVolumeBrightnessControls() {
                 }, 100);
             }
         });
-        
+
         if (volumePopup) {
             volumePopup.addEventListener('mouseenter', () => {
                 volumePopup.style.display = 'flex';
             });
-            
+
             volumePopup.addEventListener('mouseleave', () => {
                 setTimeout(() => {
                     if (!volumeControl.matches(':hover')) {
@@ -2554,7 +2576,7 @@ function setupVolumeBrightnessControls() {
                 }, 100);
             });
         }
-        
+
         volumeSlider.addEventListener('input', async (e) => {
             e.stopPropagation();
             const volume = parseInt(e.target.value);
@@ -2563,17 +2585,17 @@ function setupVolumeBrightnessControls() {
                 // Ignore errors if not supported
             });
         });
-        
+
         volumeSlider.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             if (volumePopup) volumePopup.style.display = 'flex';
         });
-        
+
         volumeSlider.addEventListener('mouseup', (e) => {
             e.stopPropagation();
         });
     }
-    
+
     // Brightness Control
     if (brightnessSlider && brightnessValue && brightnessControl) {
         // Load current brightness
@@ -2587,14 +2609,14 @@ function setupVolumeBrightnessControls() {
             brightnessSlider.value = 100;
             brightnessValue.textContent = '100%';
         });
-        
+
         // Keep popup open when interacting with slider
         const brightnessPopup = document.getElementById('brightnessSliderPopup');
-        
+
         brightnessControl.addEventListener('mouseenter', () => {
             if (brightnessPopup) brightnessPopup.style.display = 'flex';
         });
-        
+
         brightnessControl.addEventListener('mouseleave', (e) => {
             // Only hide if not moving to popup
             if (!brightnessPopup.contains(e.relatedTarget)) {
@@ -2605,12 +2627,12 @@ function setupVolumeBrightnessControls() {
                 }, 100);
             }
         });
-        
+
         if (brightnessPopup) {
             brightnessPopup.addEventListener('mouseenter', () => {
                 brightnessPopup.style.display = 'flex';
             });
-            
+
             brightnessPopup.addEventListener('mouseleave', () => {
                 setTimeout(() => {
                     if (!brightnessControl.matches(':hover')) {
@@ -2619,7 +2641,7 @@ function setupVolumeBrightnessControls() {
                 }, 100);
             });
         }
-        
+
         brightnessSlider.addEventListener('input', async (e) => {
             e.stopPropagation();
             const brightness = parseInt(e.target.value);
@@ -2628,12 +2650,12 @@ function setupVolumeBrightnessControls() {
                 // Ignore errors if not supported
             });
         });
-        
+
         brightnessSlider.addEventListener('mousedown', (e) => {
             e.stopPropagation();
             if (brightnessPopup) brightnessPopup.style.display = 'flex';
         });
-        
+
         brightnessSlider.addEventListener('mouseup', (e) => {
             e.stopPropagation();
         });
@@ -2644,11 +2666,11 @@ function setupVolumeBrightnessControls() {
 function setupDesktopFolders() {
     // Right-click on desktop to create folder
     const desktopBackground = document.querySelector('.desktop-background');
-    
+
     if (desktopBackground) {
         desktopBackground.addEventListener('contextmenu', async (e) => {
             e.preventDefault();
-            
+
             // Show context menu with "New Folder" option
             const folderName = prompt('Enter folder name:', 'New Folder');
             if (folderName && folderName.trim() && window.electronAPI) {
@@ -2662,7 +2684,7 @@ function setupDesktopFolders() {
             }
         });
     }
-    
+
     // Load existing desktop folders
     loadDesktopItems();
 }
@@ -2670,21 +2692,21 @@ function setupDesktopFolders() {
 function createDesktopFolderIcon(name, folderPath) {
     const desktopIcons = document.querySelector('.desktop-icons');
     if (!desktopIcons) return;
-    
+
     // Check if icon already exists
     const existing = document.querySelector(`.desktop-icon[data-folder="${name}"]`);
     if (existing) return;
-    
+
     const icon = document.createElement('div');
     icon.className = 'desktop-icon desktop-folder-icon';
     icon.dataset.folder = name;
     icon.dataset.path = folderPath;
-    
+
     icon.innerHTML = `
         <div class="icon-image">📁</div>
         <div class="icon-label">${name}</div>
     `;
-    
+
     // Double-click to open folder
     icon.addEventListener('dblclick', () => {
         // Open folder in file manager
@@ -2692,16 +2714,16 @@ function createDesktopFolderIcon(name, folderPath) {
             window.electronAPI.launchApp('filemanager', { folderPath: folderPath });
         }
     });
-    
+
     desktopIcons.appendChild(icon);
-    
+
     // Make it draggable like other icons
     setupIconDrag(icon);
 }
 
 async function loadDesktopItems() {
     if (!window.electronAPI) return;
-    
+
     try {
         const result = await window.electronAPI.desktopListItems();
         if (result.success) {
@@ -2731,7 +2753,7 @@ function setupFilePreview() {
             showFilePreview(fileIcon, filePath);
         }
     });
-    
+
     document.addEventListener('mouseout', (e) => {
         const fileIcon = e.target.closest('.desktop-icon[data-file]');
         if (fileIcon) {
@@ -2745,13 +2767,13 @@ let currentPreview = null;
 
 function showFilePreview(icon, filePath) {
     clearTimeout(previewTimeout);
-    
+
     previewTimeout = setTimeout(async () => {
         // Remove existing preview
         if (currentPreview) {
             currentPreview.remove();
         }
-        
+
         const rect = icon.getBoundingClientRect();
         const preview = document.createElement('div');
         preview.className = 'file-preview';
@@ -2765,13 +2787,13 @@ function showFilePreview(icon, filePath) {
         preview.style.borderRadius = '8px';
         preview.style.maxWidth = '300px';
         preview.style.fontSize = '12px';
-        
+
         // Get file info
         const fileName = filePath.split(/[/\\]/).pop();
         const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : '';
-        
+
         let previewContent = `<div style="font-weight: 600; margin-bottom: 8px;">${fileName}</div>`;
-        
+
         // Show preview based on file type
         if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
             previewContent += `<img src="file://${filePath}" style="max-width: 280px; max-height: 200px; border-radius: 4px;">`;
@@ -2785,7 +2807,7 @@ function showFilePreview(icon, filePath) {
         } else {
             previewContent += `<div>File: ${ext || 'No extension'}</div>`;
         }
-        
+
         preview.innerHTML = previewContent;
         document.body.appendChild(preview);
         currentPreview = preview;
@@ -2824,14 +2846,14 @@ function setupMultipleDesktops() {
                 await switchDesktop(currentDesktop + 1);
             }
         }
-        
+
         // Show desktop switcher with Win+Tab
         if (e.metaKey && e.key === 'Tab' && !e.repeat) {
             e.preventDefault();
             showDesktopSwitcher();
         }
     });
-    
+
     // Hide desktop switcher on release
     document.addEventListener('keyup', (e) => {
         if (e.key === 'Meta' || e.key === 'Tab') {
@@ -2842,9 +2864,9 @@ function setupMultipleDesktops() {
 
 async function switchDesktop(index) {
     if (index < 0) index = 0;
-    
+
     if (!window.electronAPI) return;
-    
+
     // Create new desktop if needed
     if (index >= desktops.length) {
         const result = await window.electronAPI.desktopCreate();
@@ -2854,7 +2876,7 @@ async function switchDesktop(index) {
             return;
         }
     }
-    
+
     // Switch desktop
     const result = await window.electronAPI.desktopSwitch(index);
     if (result.success) {
@@ -2955,7 +2977,7 @@ function setupAIAssistant() {
     aiHeader.addEventListener('mousedown', (e) => {
         // Don't start drag on button clicks
         if (e.target.closest('.ai-window-btn')) return;
-        
+
         isDragging = true;
         const rect = aiContainer.getBoundingClientRect();
         dragOffset.x = e.clientX - rect.left;
@@ -2966,18 +2988,18 @@ function setupAIAssistant() {
 
     document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        
+
         const modal = aiModal.getBoundingClientRect();
         const containerWidth = aiContainer.offsetWidth;
         const containerHeight = aiContainer.offsetHeight;
-        
+
         let newX = e.clientX - dragOffset.x;
         let newY = e.clientY - dragOffset.y;
-        
+
         // Constrain to viewport
         newX = Math.max(0, Math.min(newX, modal.width - containerWidth));
         newY = Math.max(0, Math.min(newY, modal.height - containerHeight));
-        
+
         aiContainer.style.left = newX + 'px';
         aiContainer.style.top = newY + 'px';
         aiContainer.style.transform = 'none';
@@ -3016,7 +3038,7 @@ function setupAIAssistant() {
         try {
             const actionResult = await checkAndExecuteAction(message);
             removeTypingIndicator(typingId);
-            
+
             if (actionResult.executed) {
                 // Action was executed, show result
                 addAIMessage(actionResult.message || `Done! ${actionResult.action || ''}`);
@@ -3047,10 +3069,10 @@ function saveAIAssistantState() {
         const container = document.getElementById('aiAssistantContainer');
         const modal = document.getElementById('aiAssistantModal');
         if (!container || !modal) return;
-        
+
         const rect = container.getBoundingClientRect();
         const modalRect = modal.getBoundingClientRect();
-        
+
         const state = {
             x: rect.left - modalRect.left,
             y: rect.top - modalRect.top,
@@ -3058,7 +3080,7 @@ function saveAIAssistantState() {
             height: container.offsetHeight,
             minimized: container.classList.contains('minimized')
         };
-        
+
         localStorage.setItem('aiAssistantState', JSON.stringify(state));
     } catch (error) {
         console.error('Error saving AI Assistant state:', error);
@@ -3070,17 +3092,17 @@ function loadAIAssistantState() {
     try {
         const container = document.getElementById('aiAssistantContainer');
         if (!container) return;
-        
+
         const saved = localStorage.getItem('aiAssistantState');
         if (saved) {
             const state = JSON.parse(saved);
-            
+
             if (state.x !== undefined && state.y !== undefined) {
                 container.style.left = state.x + 'px';
                 container.style.top = state.y + 'px';
                 container.style.transform = 'none';
             }
-            
+
             if (state.width) container.style.width = state.width + 'px';
             if (state.height) container.style.height = state.height + 'px';
             if (state.minimized) container.classList.add('minimized');
@@ -3095,7 +3117,7 @@ function restoreAIAssistantState() {
     try {
         const container = document.getElementById('aiAssistantContainer');
         if (!container) return;
-        
+
         // First try to restore from before minimize
         const beforeMinimize = localStorage.getItem('aiAssistantStateBeforeMinimize');
         if (beforeMinimize) {
@@ -3105,7 +3127,7 @@ function restoreAIAssistantState() {
             localStorage.removeItem('aiAssistantStateBeforeMinimize');
             return;
         }
-        
+
         // Fallback to saved state
         const saved = localStorage.getItem('aiAssistantState');
         if (saved) {
@@ -3188,7 +3210,7 @@ async function checkAndExecuteAction(message) {
     }
 
     const lowerMessage = message.toLowerCase().trim();
-    
+
     // App mapping
     const appMap = {
         'browser': 'browser',
@@ -3234,28 +3256,36 @@ async function checkAndExecuteAction(message) {
         'omega identity': 'identity',
         'password': 'password-manager',
         'password manager': 'password-manager',
+        'whisper': 'whisper',
+        'messenger': 'whisper',
+        'chat': 'whisper',
+        'messaging': 'whisper',
     };
 
-    // Open app actions
-    if (lowerMessage.match(/^(open|launch|start|run|show)\s+(.+)$/i)) {
-        const match = lowerMessage.match(/^(open|launch|start|run|show)\s+(.+)$/i);
-        const appName = match[2].trim();
-        
-        for (const [key, appType] of Object.entries(appMap)) {
-            if (appName.includes(key)) {
-                try {
-                    await launchApp(appType);
-                    return { executed: true, action: `Opened ${appName}`, message: `✅ Opened ${appName}` };
-                } catch (error) {
-                    return { executed: true, action: 'open app', message: `❌ Failed to open ${appName}: ${error.message}` };
+    // Open app actions - more flexible pattern matching
+    // Match patterns like: "open X", "can you open X", "please open X", "open X for me", etc.
+    if (lowerMessage.match(/(open|launch|start|run|show)/i)) {
+        const openMatch = lowerMessage.match(/(open|launch|start|run|show)\s+(?:the\s+)?(.+?)(?:\s+(?:app|application|for me|please))?$/i);
+        if (openMatch) {
+            const appName = openMatch[2].trim();
+
+            for (const [key, appType] of Object.entries(appMap)) {
+                if (appName.includes(key)) {
+                    try {
+                        await launchApp(appType);
+                        return { executed: true, action: `Opened ${key}`, message: `✅ Opened ${getAppName(appType)}!` };
+                    } catch (error) {
+                        return { executed: true, action: 'open app', message: `❌ Failed to open ${key}: ${error.message}` };
+                    }
                 }
             }
         }
     }
 
-    // Close app actions
-    if (lowerMessage.match(/^(close|quit|exit|kill)\s+(.+)$/i) || lowerMessage === 'close all' || lowerMessage === 'close everything') {
-        if (lowerMessage === 'close all' || lowerMessage === 'close everything') {
+    // Close app actions - more flexible pattern matching
+    // Match patterns like: "close X", "can you close X", "please close X", "close X for me", etc.
+    if (lowerMessage.match(/(close|quit|exit|kill|shut down)/i) || lowerMessage.includes('close all') || lowerMessage.includes('close everything')) {
+        if (lowerMessage.includes('close all') || lowerMessage.includes('close everything')) {
             try {
                 const windows = await window.electronAPI.getOpenWindows();
                 let closed = 0;
@@ -3268,31 +3298,33 @@ async function checkAndExecuteAction(message) {
                 return { executed: true, action: 'close all', message: `❌ Failed to close apps: ${error.message}` };
             }
         }
-        
-        const match = lowerMessage.match(/^(close|quit|exit|kill)\s+(.+)$/i);
-        const appName = match[2].trim();
-        
-        try {
-            const windows = await window.electronAPI.getOpenWindows();
-            for (const win of windows) {
-                const winName = getAppName(win.type).toLowerCase();
-                const requestedName = appName.toLowerCase();
-                // Check if the requested name matches the window name or type
-                if (winName.includes(requestedName) || requestedName.includes(winName) || 
-                    win.type.toLowerCase().includes(requestedName) || requestedName.includes(win.type.toLowerCase())) {
-                    const appDisplayName = getAppName(win.type);
-                    await window.electronAPI.appWindowClose(win.id);
-                    return { executed: true, action: 'close app', message: `✅ Closed ${appDisplayName}` };
+
+        const closeMatch = lowerMessage.match(/(close|quit|exit|kill|shut down)\s+(?:the\s+)?(.+?)(?:\s+(?:app|application|for me|please))?$/i);
+        if (closeMatch) {
+            const appName = closeMatch[2].trim();
+
+            try {
+                const windows = await window.electronAPI.getOpenWindows();
+                for (const win of windows) {
+                    const winName = getAppName(win.type).toLowerCase();
+                    const requestedName = appName.toLowerCase();
+                    // Check if the requested name matches the window name or type
+                    if (winName.includes(requestedName) || requestedName.includes(winName) ||
+                        win.type.toLowerCase().includes(requestedName) || requestedName.includes(win.type.toLowerCase())) {
+                        const appDisplayName = getAppName(win.type);
+                        await window.electronAPI.appWindowClose(win.id);
+                        return { executed: true, action: 'close app', message: `✅ Closed ${appDisplayName}!` };
+                    }
                 }
+                return { executed: true, action: 'close app', message: `❌ Could not find ${appName} to close` };
+            } catch (error) {
+                return { executed: true, action: 'close app', message: `❌ Failed to close app: ${error.message}` };
             }
-            return { executed: true, action: 'close app', message: `❌ Could not find ${appName} to close` };
-        } catch (error) {
-            return { executed: true, action: 'close app', message: `❌ Failed to close app: ${error.message}` };
         }
     }
 
     // List open windows
-    if (lowerMessage.match(/^(list|show|what|which)\s+(apps|windows|programs|applications)/i) || 
+    if (lowerMessage.match(/^(list|show|what|which)\s+(apps|windows|programs|applications)/i) ||
         lowerMessage === 'what\'s open' || lowerMessage === 'whats open' || lowerMessage === 'what is open') {
         try {
             const windows = await window.electronAPI.getOpenWindows();
@@ -3310,11 +3342,11 @@ async function checkAndExecuteAction(message) {
     if (lowerMessage.match(/^(check|status|show)\s+(system|vpn|tor|network|connection)/i)) {
         try {
             let status = '**System Status:**\n\n';
-            
+
             // Check open windows
             const windows = await window.electronAPI.getOpenWindows();
             status += `• Open Applications: ${windows.length}\n`;
-            
+
             // Check VPN/Tor (if available)
             if (window.electronAPI.torStatus) {
                 try {
@@ -3324,7 +3356,7 @@ async function checkAndExecuteAction(message) {
                     status += `• Tor: Status unavailable\n`;
                 }
             }
-            
+
             // Check AI status
             if (window.electronAPI.aiCheckReady) {
                 try {
@@ -3334,7 +3366,7 @@ async function checkAndExecuteAction(message) {
                     status += `• AI: Status unavailable\n`;
                 }
             }
-            
+
             return { executed: true, action: 'check status', message: status };
         } catch (error) {
             return { executed: true, action: 'check status', message: `❌ Failed to check status: ${error.message}` };
@@ -3345,7 +3377,7 @@ async function checkAndExecuteAction(message) {
     if (lowerMessage.match(/^(run|execute|command|cmd)\s+(.+)$/i)) {
         const match = lowerMessage.match(/^(run|execute|command|cmd)\s+(.+)$/i);
         const command = match[2].trim();
-        
+
         try {
             // Open terminal first
             await launchApp('terminal');
@@ -3399,6 +3431,7 @@ APPLICATIONS:
 - Firewall: Network traffic monitoring and control
 - Omega Identity: Decentralized identity and sync management
 - File Manager: Browse and manage files in isolated environment
+- Whisper: Private messaging application with end-to-end encryption and secure P2P communication
 
 AI:
 - Local AI: Uses Ollama for local AI chat (no data sent to external servers)
@@ -3444,7 +3477,7 @@ Actions are executed automatically before you respond. Acknowledge what was done
         const fullPrompt = `${systemPrompt}\n\nUser Question: ${userMessage}\n\nProvide a helpful, conversational response:`;
 
         const response = await window.electronAPI.aiChat(fullPrompt, []);
-        
+
         if (response.success) {
             return response.response;
         } else {
@@ -3458,13 +3491,13 @@ Actions are executed automatically before you respond. Acknowledge what was done
 
 function getLocalResponse(message) {
     const lowerMessage = message.toLowerCase();
-    
+
     // Check if this is a feedback/report about AI issues
-    if (lowerMessage.includes('report') || lowerMessage.includes('issue') || lowerMessage.includes('problem') || 
+    if (lowerMessage.includes('report') || lowerMessage.includes('issue') || lowerMessage.includes('problem') ||
         lowerMessage.includes('fix') || lowerMessage.includes('bug') || lowerMessage.includes('feedback')) {
         return handleAIFeedback(message);
     }
-    
+
     // Feature knowledge base
     const responses = {
         'browser': 'Omega Browser is a secure web browser with built-in VPN/Tor, ad blocker, AI Mode, and a VPN toggle button. The VPN toggle button (top toolbar) lets you disable Tor/VPN for normal browsing. You can find it in the start menu or on the desktop.',
@@ -3482,6 +3515,7 @@ function getLocalResponse(message) {
         'file': 'Files are stored in the Documents folder. You can create desktop folders by right-clicking the desktop. Deleted files go to Trash.',
         'security': 'Omega OS has VPN (with bundled Tor), Firewall, Ad Blocker, Cookie Manager, and Screen Lock. Check the top-right for VPN status.',
         'crypto': 'Crypto prices (BTC, ETH, SOL) are shown in the taskbar. Click the widget to customize which coins to display.',
+        'whisper': 'Whisper is a private messaging application with end-to-end encryption and secure peer-to-peer communication. Send encrypted messages without any server storage. Find it on the desktop or in the start menu.',
         'normal browsing': 'To browse normally without VPN/Tor, click the "VPN Off" button in the browser toolbar (next to the AI Mode button). This disables both Tor and VPN.',
         'help': 'I can help you with any Omega OS feature! Try asking about: Browser, Wallet, VPN/Tor, Paint, AI, Firewall, File Management, Shortcuts, Security, or Customization. You can also report issues with AI in Word, Finance, or Slides by saying "report issue" or "fix AI".',
     };
@@ -3510,16 +3544,16 @@ You can also report issues with AI features in Word, Finance, or Slides by sayin
 // AI Feedback and Improvement System
 function handleAIFeedback(message) {
     const lowerMessage = message.toLowerCase();
-    
+
     // Detect which app the issue is about
     let appName = null;
     if (lowerMessage.includes('word')) appName = 'word';
     else if (lowerMessage.includes('finance') || lowerMessage.includes('spreadsheet') || lowerMessage.includes('excel')) appName = 'finance';
     else if (lowerMessage.includes('slide')) appName = 'slides';
-    
+
     // Store the feedback
     storeAIFeedback(appName, message);
-    
+
     // Try to analyze and fix the issue
     analyzeAndFixAIIssue(appName, message).then(fix => {
         if (fix) {
@@ -3527,7 +3561,7 @@ function handleAIFeedback(message) {
             showAIFixNotification(appName, fix);
         }
     });
-    
+
     if (appName) {
         return `Thank you for reporting the issue with ${appName} AI! I've recorded your feedback and will analyze it to improve the AI agent. The fix will be applied automatically. You can continue using the app - the improvements will take effect on the next AI request.`;
     } else {
@@ -3555,12 +3589,12 @@ function storeAIFeedback(appName, message) {
 
 async function analyzeAndFixAIIssue(appName, issueMessage) {
     if (!appName || !window.electronAPI) return null;
-    
+
     try {
         // Get existing feedbacks for context
         const feedbacks = JSON.parse(localStorage.getItem('aiFeedback') || '[]');
         const appFeedbacks = feedbacks.filter(f => f.app === appName).slice(-5);
-        
+
         // Build analysis prompt
         const analysisPrompt = `You are analyzing issues with the AI agent in ${appName} application. 
 
@@ -3585,7 +3619,7 @@ INSTRUCTIONS: [specific instructions for the AI agent]
 REASON: [why this fix addresses the issue]`;
 
         const response = await window.electronAPI.aiChat(analysisPrompt, []);
-        
+
         if (response.success) {
             const fix = parseAIFix(response.response, appName);
             if (fix) {
@@ -3596,7 +3630,7 @@ REASON: [why this fix addresses the issue]`;
     } catch (error) {
         console.error('Error analyzing AI issue:', error);
     }
-    
+
     return null;
 }
 
@@ -3605,7 +3639,7 @@ function parseAIFix(response, appName) {
         const fixPromptMatch = response.match(/FIX_PROMPT:\s*(.+?)(?=INSTRUCTIONS:|$)/s);
         const instructionsMatch = response.match(/INSTRUCTIONS:\s*(.+?)(?=REASON:|$)/s);
         const reasonMatch = response.match(/REASON:\s*(.+?)$/s);
-        
+
         if (fixPromptMatch) {
             return {
                 prompt: fixPromptMatch[1].trim(),
@@ -3617,7 +3651,7 @@ function parseAIFix(response, appName) {
     } catch (error) {
         console.error('Error parsing AI fix:', error);
     }
-    
+
     return null;
 }
 
@@ -3626,7 +3660,7 @@ function saveAIFix(appName, fix) {
         const fixes = JSON.parse(localStorage.getItem('aiFixes') || '{}');
         fixes[appName] = fix;
         localStorage.setItem('aiFixes', JSON.stringify(fixes));
-        
+
         // Notify main process to update AI service
         if (window.electronAPI && window.electronAPI.updateAIConfig) {
             window.electronAPI.updateAIConfig(appName, fix);
@@ -3662,23 +3696,23 @@ function setupIdentityRegistration() {
     const identityModal = document.getElementById('identityRegistrationModal');
     const closeBtn = document.getElementById('closeIdentityRegistration');
     const registerBtn = document.getElementById('registerIdentityBtn');
-    
-    console.log('Setting up identity registration...', { 
-        userProfileBtn: !!userProfileBtn, 
-        userRegisterLink: !!userRegisterLink, 
-        identityModal: !!identityModal 
+
+    console.log('Setting up identity registration...', {
+        userProfileBtn: !!userProfileBtn,
+        userRegisterLink: !!userRegisterLink,
+        identityModal: !!identityModal
     });
-    
+
     if (!userProfileBtn) {
         console.error('userProfileBtn not found!');
         return;
     }
-    
+
     if (!identityModal) {
         console.error('identityModal not found!');
         return;
     }
-    
+
     // Open wallet first, then modal when clicking "Register Here"
     if (userRegisterLink) {
         console.log('Adding click handler to Register Here link');
@@ -3705,7 +3739,7 @@ function setupIdentityRegistration() {
     } else {
         console.error('userRegisterLink not found!');
     }
-    
+
     // Open modal when clicking user profile (but not the register link)
     userProfileBtn.addEventListener('click', (e) => {
         // Don't open if clicking the register link
@@ -3715,21 +3749,21 @@ function setupIdentityRegistration() {
         identityModal.style.display = 'flex';
         loadIdentityStatus();
     });
-    
+
     // Close modal
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
             identityModal.style.display = 'none';
         });
     }
-    
+
     // Register identity
     if (registerBtn) {
         registerBtn.addEventListener('click', async () => {
             await registerIdentity();
         });
     }
-    
+
     // Close on outside click
     if (identityModal) {
         identityModal.addEventListener('click', (e) => {
@@ -3742,7 +3776,7 @@ function setupIdentityRegistration() {
 
 async function loadIdentityStatus() {
     if (!window.electronAPI) return;
-    
+
     try {
         const hasIdentity = await window.electronAPI.identityHasIdentity();
         const userName = document.getElementById('userName');
@@ -3752,12 +3786,12 @@ async function loadIdentityStatus() {
         const registeredOmegaId = document.getElementById('registeredOmegaId');
         const registeredWallet = document.getElementById('registeredWallet');
         const registeredDate = document.getElementById('registeredDate');
-        
+
         if (hasIdentity) {
             const result = await window.electronAPI.identityGet();
             if (result.success && result.identity) {
                 const identity = result.identity;
-                
+
                 // Update start menu footer
                 if (userName) {
                     userName.textContent = identity.omegaId.substring(0, 20) + '...';
@@ -3768,7 +3802,7 @@ async function loadIdentityStatus() {
                     userRegisterLink.style.textDecoration = 'none';
                     userRegisterLink.style.cursor = 'default';
                 }
-                
+
                 // Update modal
                 if (identityRegistered) {
                     identityRegistered.style.display = 'block';
@@ -3800,7 +3834,7 @@ async function loadIdentityStatus() {
                 userRegisterLink.style.fontSize = '13px';
                 userRegisterLink.style.fontWeight = '500';
             }
-            
+
             // Update modal
             if (identityRegistered) {
                 identityRegistered.style.display = 'none';
@@ -3819,10 +3853,10 @@ async function registerIdentity() {
         alert('Electron API not available');
         return;
     }
-    
+
     const registerBtn = document.getElementById('registerIdentityBtn');
     const statusDiv = document.getElementById('identityRegistrationStatus');
-    
+
     try {
         // Check if wallet is loaded
         const walletLoaded = await window.electronAPI.walletIsLoaded();
@@ -3830,13 +3864,13 @@ async function registerIdentity() {
             alert('Please unlock your wallet first in Omega Wallet app');
             return;
         }
-        
+
         // Disable button
         if (registerBtn) {
             registerBtn.disabled = true;
             registerBtn.textContent = 'Registering...';
         }
-        
+
         // Show status
         if (statusDiv) {
             statusDiv.style.display = 'block';
@@ -3844,16 +3878,16 @@ async function registerIdentity() {
             statusDiv.style.color = '#333';
             statusDiv.innerHTML = '<p>Initializing identity...</p>';
         }
-        
+
         // Initialize identity
         const result = await window.electronAPI.identityInitialize();
-        
+
         if (result.success) {
             if (statusDiv) {
                 statusDiv.className = 'identity-registration-status success';
                 statusDiv.innerHTML = '<p>✓ Identity registered successfully!</p>';
             }
-            
+
             // Reload status
             setTimeout(() => {
                 loadIdentityStatus();
