@@ -257,6 +257,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   whisperDeleteContact: (onionAddress) => ipcRenderer.invoke('whisper-delete-contact', onionAddress),
   whisperRetryInit: () => ipcRenderer.invoke('whisper-retry-init'),
   onWhisperMessageDeleted: (callback) => ipcRenderer.on('whisper-message-deleted', (event, messageId) => callback(messageId)),
+  onWhisperLog: (callback) => ipcRenderer.on('whisper-log', (event, data) => callback(data)),
 
   // Bazaar / App Store
   installApp: (appId) => ipcRenderer.invoke('install-app', appId),

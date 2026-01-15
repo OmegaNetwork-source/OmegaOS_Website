@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load contacts
     loadContacts();
 
+    // Setup debug panel
+    setupDebugPanel();
+
+    // Setup debug panel
+    setupDebugPanel();
+
     // Event Listeners
     setupEventListeners();
 
@@ -616,4 +622,72 @@ async function setupWindowControls() {
     } catch (e) {
         console.error('Failed to setup window controls:', e);
     }
+}
+
+function setupDebugPanel() {
+    const debugPanel = document.getElementById('debugLogPanel');
+    const toggleBtn = document.getElementById('toggleDebugBtn');
+    const closeBtn = document.getElementById('closeDebugBtn');
+    const clearBtn = document.getElementById('clearLogsBtn');
+    const content = document.getElementById('debugLogContent');
+
+    if (!debugPanel || !toggleBtn) return;
+
+    // Toggle Visibility
+    toggleBtn.addEventListener('click', () => {
+        debugPanel.style.display = debugPanel.style.display === 'none' ? 'flex' : 'none';
+        // Auto-scroll to bottom when opening
+        if (debugPanel.style.display === 'flex') {
+            content.scrollTop = content.scrollHeight;
+        }
+    });
+
+    closeBtn.addEventListener('click', () => {
+        debugPanel.style.display = 'none';
+    });
+
+    clearBtn.addEventListener('click', () => {
+        content.innerHTML = '';
+    });
+
+    // Append Log Helper
+    const appendLog = (type, message, timestamp) => {
+        const line = document.createElement('div');
+        const timeStr = new Date(timestamp || Date.now()).toLocaleTimeString();
+
+        let color = '#00ff00'; // Info
+        if (type.includes('error') || type === 'stderr') color = '#ff5555';
+        else if (type.includes('warn')) color = '#ffcc00';
+        else if (type === 'stdout') color = '#aaaaaa';
+
+        line.style.color = color;
+        line.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        line.style.fontFamily = 'Consolas, monospace';
+        line.style.whiteSpace = 'pre-wrap';
+        line.textContent = `[${timeStr}] [${type.toUpperCase()}] ${message}`;
+
+        content.appendChild(line);
+
+        // Auto-scroll if near bottom
+        if (content.scrollHeight - content.scrollTop - content.clientHeight < 100) {
+            content.scrollTop = content.scrollHeight;
+        }
+    };
+
+    // Listen for Backend Logs
+    if (window.electronAPI.onWhisperLog) {
+        window.electronAPI.onWhisperLog((data) => {
+            appendLog(data.type, data.message, data.timestamp);
+        });
+    }
+
+    // Override local debugLog to also show in panel
+    const originalDebugLog = debugLog;
+    debugLog = function (msg) {
+        originalDebugLog(msg); // Keep console logging
+        appendLog('frontend', msg, Date.now());
+    };
+
+    // Log initial message
+    appendLog('system', 'Debug panel initialized. Waiting for logs...', Date.now());
 }

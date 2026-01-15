@@ -13,6 +13,7 @@ class WhisperService {
         this.onionAddress = null;
         this.contacts = new Map();
         this.messages = [];
+        this.logger = null; // Custom logger callback
 
         // Paths
         const userDataPath = app.getPath('userData');
@@ -20,6 +21,24 @@ class WhisperService {
         this.ensureStorage();
 
         this.loadData();
+    }
+
+    setLogger(callback) {
+        this.logger = callback;
+    }
+
+    log(type, msg) {
+        // Console fallback
+        if (type === 'error') {
+            console.error(`[Whisper] ${msg}`);
+        } else {
+            console.log(`[Whisper] ${msg}`);
+        }
+
+        // Send to attached logger (if any)
+        if (this.logger) {
+            this.logger(type, msg);
+        }
     }
 
     ensureStorage() {
@@ -38,7 +57,7 @@ class WhisperService {
                 this.messages = JSON.parse(fs.readFileSync(path.join(this.storagePath, 'messages.json')));
             }
         } catch (e) {
-            console.error('[Whisper] Failed to load data:', e);
+            this.log('error', `Failed to load data: ${e.message}`);
         }
     }
 
@@ -47,34 +66,38 @@ class WhisperService {
             fs.writeFileSync(path.join(this.storagePath, 'contacts.json'), JSON.stringify(Array.from(this.contacts.entries())));
             fs.writeFileSync(path.join(this.storagePath, 'messages.json'), JSON.stringify(this.messages));
         } catch (e) {
-            console.error('[Whisper] Failed to save data:', e);
+            this.log('error', `Failed to save data: ${e.message}`);
         }
     }
 
     async initialize() {
         this.initError = null;
+        this.log('info', 'Initializing Whisper Service...');
+
         // 1. Start Local Server
         await this.startServer();
 
         // 2. Setup Tor Hidden Service
         try {
             // Wait for Tor to be fully ready (bootstrapped)
-            if (!torManager.isRunning) {
-                console.log('[Whisper] Waiting for Tor to start...');
+            this.log('info', 'Checking Tor status...');
+            if (!(await torManager.isTorRunning())) {
+                this.log('info', 'Waiting for Tor to start...');
                 // Wait up to 60 seconds for Tor to start
                 for (let i = 0; i < 60; i++) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    if (torManager.isRunning) {
+                    if (await torManager.isTorRunning()) {
                         break;
                     }
                     if (i === 59) {
                         throw new Error('Tor did not start within 60 seconds');
                     }
+                    if (i % 5 === 0) this.log('info', `Waiting for Tor... (${i}s)`);
                 }
             }
 
             // Wait for Tor to fully bootstrap (establish circuits)
-            console.log('[Whisper] Waiting for Tor to bootstrap (this may take 30-60 seconds on first launch)...');
+            this.log('info', 'Waiting for Tor to bootstrap (this may take 30-60 seconds on first launch)...');
             let bootstrapped = false;
             for (let i = 0; i < 60; i++) {
                 try {
@@ -99,23 +122,25 @@ class WhisperService {
             }
 
             if (!bootstrapped) {
-                console.warn('[Whisper] Tor may not be fully bootstrapped, but proceeding anyway...');
+                this.log('warn', 'Tor may not be fully bootstrapped, but proceeding anyway...');
+            } else {
+                this.log('info', 'Tor appears ready.');
             }
 
             this.onionAddress = await torManager.setupHiddenService(this.port, 80);
-            console.log('[Whisper] Hidden service created: ', this.onionAddress);
-            console.log('[Whisper] ⚠️ IMPORTANT: Hidden services take 30-60 seconds to propagate through the Tor network.');
-            console.log('[Whisper] Other users may not be able to connect immediately. Please wait 1-2 minutes before testing.');
+            this.log('info', `Hidden service created: ${this.onionAddress}`);
+            this.log('warn', '⚠️ IMPORTANT: Hidden services take 30-60 seconds to propagate through the Tor network.');
+            this.log('warn', 'Other users may not be able to connect immediately. Please wait 1-2 minutes before testing.');
 
             // Wait a bit for hidden service to start propagating (doesn't need to be fully ready)
             // Hidden services propagate asynchronously, so we just give it a moment
             await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
 
-            console.log('[Whisper] Service initialized at:', this.onionAddress);
-            console.log('[Whisper] Note: Full propagation may take up to 60 seconds.');
+            this.log('info', `Service initialized at: ${this.onionAddress}`);
+            this.log('info', 'Note: Full propagation may take up to 60 seconds.');
             return this.onionAddress;
         } catch (error) {
-            console.error('[Whisper] Failed to setup Hidden Service:', error);
+            this.log('error', `Failed to setup Hidden Service: ${error.message}`);
             this.initError = error.message;
             throw error;
         }
@@ -136,6 +161,7 @@ class WhisperService {
                 }
 
                 if (req.method === 'POST' && req.url === '/message') {
+                    this.log('info', 'Incoming message connection received');
                     let body = '';
                     req.on('data', chunk => body += chunk.toString());
                     req.on('end', () => {
@@ -145,6 +171,7 @@ class WhisperService {
                             res.writeHead(200, { 'Content-Type': 'application/json' });
                             res.end(JSON.stringify({ status: 'received' }));
                         } catch (e) {
+                            this.log('error', `Failed to parse incoming message: ${e.message}`);
                             res.writeHead(400);
                             res.end(JSON.stringify({ error: 'Invalid JSON' }));
                         }
@@ -160,20 +187,20 @@ class WhisperService {
                 this.server.listen(port, '127.0.0.1', () => {
                     this.port = port; // Store actual port
                     this.localPort = port;
-                    console.log(`[Whisper] Local server listening on port ${this.port}`);
+                    this.log('info', `Local server listening on port ${this.port}`);
                     resolve();
                 });
 
                 this.server.on('error', (err) => {
                     if (err.code === 'EADDRINUSE' && maxRetries > 0) {
-                        console.log(`[Whisper] Port ${port} in use, trying ${port + 1}...`);
+                        this.log('info', `Port ${port} in use, trying ${port + 1}...`);
                         this.server.removeAllListeners('error');
                         this.server.close();
                         // Create new server for next attempt
                         this.server = http.createServer(this.server._events.request);
                         tryPort(port + 1, maxRetries - 1);
                     } else if (err.code === 'EADDRINUSE') {
-                        console.error('[Whisper] All ports 7777-7787 in use!');
+                        this.log('error', 'All ports 7777-7787 in use!');
                         reject(new Error('All Whisper ports in use'));
                     } else {
                         reject(err);
@@ -187,7 +214,7 @@ class WhisperService {
 
     handleIncomingMessage(payload) {
         // payload: { from: 'onionAddr', content: '...', timestamp: ..., ttl: number (ms) }
-        console.log('[Whisper] Received message from', payload.from);
+        this.log('info', `Received message from ${payload.from}`);
 
         const message = {
             id: Date.now() + Math.random().toString(),
@@ -209,7 +236,7 @@ class WhisperService {
 
         // Handle Self-Destruct (TTL)
         if (message.ttl) {
-            console.log(`[Whisper] Message ${message.id} will self-destruct in ${message.ttl}ms`);
+            this.log('info', `Message ${message.id} will self-destruct in ${message.ttl}ms`);
             setTimeout(() => {
                 this.deleteMessage(message.id);
             }, message.ttl);
@@ -221,7 +248,7 @@ class WhisperService {
         if (index > -1) {
             this.messages.splice(index, 1);
             this.saveData();
-            console.log(`[Whisper] Message ${messageId} deleted (TTL expired).`);
+            this.log('info', `Message ${messageId} deleted (TTL expired).`);
             // Notify frontend to remove message
             if (this.onMessageDeleted) {
                 this.onMessageDeleted(messageId);
@@ -248,10 +275,10 @@ class WhisperService {
             status: 'sending' // pending status
         };
 
-        console.log('[Whisper Service] Saving outgoing message to:', targetOnion);
+        this.log('info', `Saving outgoing message to: ${targetOnion}`);
         this.messages.push(message);
         this.saveData();
-        console.log('[Whisper Service] Total messages after save:', this.messages.length);
+        this.log('info', `Total messages after save: ${this.messages.length}`);
 
         try {
             // Check if sending to self
@@ -262,33 +289,33 @@ class WhisperService {
 
             if (isSelf) {
                 // Send to localhost directly (Tor can't connect to its own hidden service)
-                console.log(`[Whisper] Sending to self via localhost:${this.port}...`);
+                this.log('info', `Sending to self via localhost:${this.port}...`);
                 response = await axios.post(`http://127.0.0.1:${this.port}/message`, payload, {
                     timeout: 5000
                 });
-                console.log(`[Whisper] Message sent to self successfully`);
+                this.log('info', 'Message sent to self successfully');
             } else {
                 // Try local network first (for same-machine testing)
                 // On the same machine, Tor can't route between its own hidden services
                 let sentViaLocalNetwork = false;
 
                 // Try all possible local ports (7777-7787) to find other Whisper instances
-                console.log(`[Whisper] My port is ${this.port}. Scanning local network ports 7777-7787...`);
+                this.log('info', `My port is ${this.port}. Scanning local network ports 7777-7787...`);
                 const localPorts = [7777, 7778, 7779, 7780, 7781, 7782, 7783, 7784, 7785, 7786, 7787];
 
                 for (const port of localPorts) {
                     // Skip our own port
                     if (port === this.port) {
-                        console.log(`[Whisper] Skipping port ${port} (my own port)`);
+                        this.log('info', `Skipping port ${port} (my own port)`);
                         continue;
                     }
 
                     try {
-                        console.log(`[Whisper] Trying localhost:${port}...`);
+                        this.log('info', `Trying localhost:${port}...`);
                         const localResponse = await axios.post(`http://127.0.0.1:${port}/message`, payload, {
                             timeout: 1000 // Short timeout for local check
                         });
-                        console.log(`[Whisper] Message sent via local network on port ${port}!`);
+                        this.log('info', `Message sent via local network on port ${port}!`);
                         response = localResponse;
                         sentViaLocalNetwork = true;
                         break;
@@ -298,10 +325,10 @@ class WhisperService {
                 }
 
                 if (!sentViaLocalNetwork) {
-                    console.log(`[Whisper] No local Whisper found, trying Tor...`);
+                    this.log('info', 'No local Whisper found, trying Tor...');
 
                     // Verify Tor is running before attempting
-                    if (!torManager.isRunning) {
+                    if (!(await torManager.isTorRunning())) {
                         throw new Error('Tor is not running. Please wait for Tor to connect.');
                     }
 
@@ -313,10 +340,10 @@ class WhisperService {
                     // Remove .onion extension if present (SocksProxyAgent handles it)
                     cleanOnion = cleanOnion.replace(/\.onion$/, '');
 
-                    console.log(`[Whisper] Sending to http://${cleanOnion}.onion:80/message...`);
-                    console.log(`[Whisper] Using SOCKS proxy: socks5h://127.0.0.1:9050`);
-                    console.log(`[Whisper] From: ${this.onionAddress}`);
-                    console.log(`[Whisper] Payload size: ${JSON.stringify(payload).length} bytes`);
+                    this.log('info', `Sending to http://${cleanOnion}.onion:80/message...`);
+                    this.log('info', 'Using SOCKS proxy: socks5h://127.0.0.1:9050');
+                    this.log('info', `From: ${this.onionAddress}`);
+                    this.log('info', `Payload size: ${JSON.stringify(payload).length} bytes`);
 
                     // Retry with exponential backoff (hidden services can take time to propagate)
                     let lastError = null;
@@ -325,15 +352,15 @@ class WhisperService {
                         try {
                             // Use native http request with SOCKS agent for better .onion handling
                             response = await this.sendViaTor(cleanOnion, payload);
-                            console.log(`[Whisper] Message sent successfully to ${targetOnion} (attempt ${attempt + 1})`);
-                            console.log(`[Whisper] Response status: ${response.status}`);
+                            this.log('info', `Message sent successfully to ${targetOnion} (attempt ${attempt + 1})`);
+                            this.log('info', `Response status: ${response.status}`);
                             break; // Success, exit retry loop
                         } catch (err) {
                             lastError = err;
                             if (attempt < maxRetries - 1) {
                                 const waitTime = Math.min(5000 * (attempt + 1), 15000); // 5s, 10s, 15s max
-                                console.warn(`[Whisper] Send attempt ${attempt + 1} failed: ${err.message}`);
-                                console.log(`[Whisper] Retrying in ${waitTime/1000} seconds... (Hidden services may still be propagating)`);
+                                this.log('warn', `Send attempt ${attempt + 1} failed: ${err.message}`);
+                                this.log('info', `Retrying in ${waitTime / 1000} seconds... (Hidden services may still be propagating)`);
                                 await new Promise(resolve => setTimeout(resolve, waitTime));
                             }
                         }
@@ -359,14 +386,8 @@ class WhisperService {
 
             return { success: true };
         } catch (error) {
-            console.error('[Whisper] Send failed:', error.message);
-            console.error('[Whisper] Error details:', {
-                code: error.code,
-                errno: error.errno,
-                syscall: error.syscall,
-                address: error.address,
-                port: error.port
-            });
+            this.log('error', `Send failed: ${error.message}`);
+            this.log('error', `Error details code: ${error.code}, errno: ${error.errno}, syscall: ${error.syscall}`);
 
             // Provide more helpful error messages
             let userError = error.message;
@@ -399,7 +420,7 @@ class WhisperService {
         return new Promise((resolve, reject) => {
             // Ensure onion address has .onion extension for proper routing
             const fullOnionAddress = onionAddress.endsWith('.onion') ? onionAddress : onionAddress + '.onion';
-            
+
             // Use socks5h:// (note the 'h' at the end) which enables hostname resolution through SOCKS
             // This is important for .onion addresses
             const agent = new SocksProxyAgent('socks5h://127.0.0.1:9050');
@@ -421,15 +442,19 @@ class WhisperService {
                 lookup: false // Disable DNS lookup (SOCKS handles it)
             };
 
-            console.log(`[Whisper] Making HTTP request to ${fullOnionAddress}:80/message via SOCKS5`);
+            this.log('info', `Making HTTP request to ${fullOnionAddress}:80/message via SOCKS5`);
+            this.log('info', `Request Options: ${JSON.stringify({ hostname: fullOnionAddress, port: 80, path: '/message' })}`);
 
             const req = http.request(options, (res) => {
                 let data = '';
+
+                this.log('info', `Response headers received: ${res.statusCode}`);
+
                 res.on('data', (chunk) => {
                     data += chunk;
                 });
                 res.on('end', () => {
-                    console.log(`[Whisper] Response received: ${res.statusCode}`);
+                    this.log('info', `Response body received (${data.length} bytes)`);
                     if (res.statusCode >= 200 && res.statusCode < 300) {
                         resolve({ status: res.statusCode, data: data });
                     } else {
@@ -439,12 +464,22 @@ class WhisperService {
             });
 
             req.on('error', (e) => {
-                console.error(`[Whisper] Request error: ${e.message}`);
+                this.log('error', `Request error: ${e.message}`);
                 reject(e);
             });
 
+            req.on('socket', (socket) => {
+                this.log('info', 'Socket assigned to request');
+                socket.on('connect', () => {
+                    this.log('info', 'Socket connected to SOCKS proxy');
+                });
+                socket.on('timeout', () => {
+                    this.log('info', 'Socket timeout');
+                });
+            })
+
             req.on('timeout', () => {
-                console.error('[Whisper] Request timed out');
+                this.log('error', 'Request timed out waiting for response');
                 req.destroy();
                 reject(new Error('Connection timed out'));
             });
@@ -456,14 +491,12 @@ class WhisperService {
 
     // Helpers for Frontend
     getMessages(contactId) {
-        console.log('[Whisper Service] getMessages called with contactId:', contactId);
-        console.log('[Whisper Service] Total messages in store:', this.messages.length);
-        if (this.messages.length > 0) {
-            console.log('[Whisper Service] Sample message:', JSON.stringify(this.messages[0]));
-        }
+        this.log('info', `getMessages called with contactId: ${contactId}`);
+        this.log('info', `Total messages in store: ${this.messages.length}`);
+
         if (!contactId) return this.messages;
         const filtered = this.messages.filter(m => m.from === contactId || m.to === contactId);
-        console.log('[Whisper Service] Filtered messages count:', filtered.length);
+        this.log('info', `Filtered messages count: ${filtered.length}`);
         return filtered;
     }
 

@@ -21,6 +21,28 @@ let whisperService;
 try {
   whisperService = require('./whisper-service');
 
+  // Helper to send logs to Whisper window
+  const sendWhisperLog = (type, message) => {
+    const whisperAppData = Array.from(appWindows.values()).find(w => w.type === 'whisper');
+    if (whisperAppData && whisperAppData.window && !whisperAppData.window.isDestroyed()) {
+      whisperAppData.window.webContents.send('whisper-log', { type, message, timestamp: Date.now() });
+    }
+  };
+
+  // Attach logger to Whisper Service
+  whisperService.setLogger((type, msg) => {
+    console.log(`[Whisper ${type}] ${msg}`); // Keep console log
+    sendWhisperLog(type, msg);
+  });
+
+  // Attach logger to Tor Manager if available
+  if (torManager) {
+    torManager.setLogger((type, msg) => {
+      // console.log(`[Tor ${type}] ${msg}`); // Reduce noise in main console if needed, or keep it
+      sendWhisperLog('tor-' + type, msg);
+    });
+  }
+
   // Forward message deletion events to renderer
   whisperService.onMessageDeleted = (messageId) => {
     // Find Whisper window
@@ -4735,7 +4757,7 @@ app.whenReady().then(async () => {
         try {
           console.log('[Ollama] Starting system Ollama...');
           const { spawn } = require('child_process');
-          
+
           // Start system Ollama
           const ollamaProcess = spawn(systemOllamaPath, ['serve'], {
             detached: true,
@@ -4804,83 +4826,83 @@ app.whenReady().then(async () => {
             }
           }
 
-      // Method 3: Find and kill process using port 11434 (multiple attempts)
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          const { stdout } = await execPromise('netstat -ano | findstr :11434');
-          if (!stdout || stdout.trim().length === 0) {
-            // Port is free
-            break;
-          }
-          const lines = stdout.trim().split('\n').filter(line => line.trim());
-          const pids = new Set();
-          for (const line of lines) {
-            const parts = line.trim().split(/\s+/);
-            if (parts.length >= 5) {
-              const pid = parts[parts.length - 1];
-              if (pid && !isNaN(parseInt(pid))) {
-                pids.add(pid);
-              }
-            }
-          }
-          if (pids.size === 0) {
-            break; // No PIDs found, port should be free
-          }
-          for (const pid of pids) {
+          // Method 3: Find and kill process using port 11434 (multiple attempts)
+          for (let attempt = 0; attempt < 3; attempt++) {
             try {
-              await execPromise(`taskkill /F /PID ${pid} 2>nul`);
-              console.log(`[Ollama] Killed process ${pid} using port 11434`);
-            } catch (e) {
-              // Process might already be gone
-            }
-          }
-          // Wait a bit before checking again
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (e) {
-          // Port might not be in use or command failed
-          break;
-        }
-      }
-
-      // Final check - wait longer for port to be fully released
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Verify port is free - if not, keep trying
-      let portFree = false;
-      for (let checkAttempt = 0; checkAttempt < 5; checkAttempt++) {
-        try {
-          const { stdout } = await execPromise('netstat -ano | findstr :11434');
-          if (!stdout || stdout.trim().length === 0) {
-            portFree = true;
-            console.log('[Ollama] Port 11434 is now free');
-            break;
-          } else {
-            // Port still in use - try killing again
-            const lines = stdout.trim().split('\n').filter(line => line.trim());
-            for (const line of lines) {
-              const parts = line.trim().split(/\s+/);
-              if (parts.length >= 5) {
-                const pid = parts[parts.length - 1];
-                if (pid && !isNaN(parseInt(pid))) {
-                  try {
-                    await execPromise(`taskkill /F /PID ${pid} 2>nul`);
-                    console.log(`[Ollama] Killed remaining process ${pid}`);
-                  } catch (e) { }
+              const { stdout } = await execPromise('netstat -ano | findstr :11434');
+              if (!stdout || stdout.trim().length === 0) {
+                // Port is free
+                break;
+              }
+              const lines = stdout.trim().split('\n').filter(line => line.trim());
+              const pids = new Set();
+              for (const line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 5) {
+                  const pid = parts[parts.length - 1];
+                  if (pid && !isNaN(parseInt(pid))) {
+                    pids.add(pid);
+                  }
                 }
               }
+              if (pids.size === 0) {
+                break; // No PIDs found, port should be free
+              }
+              for (const pid of pids) {
+                try {
+                  await execPromise(`taskkill /F /PID ${pid} 2>nul`);
+                  console.log(`[Ollama] Killed process ${pid} using port 11434`);
+                } catch (e) {
+                  // Process might already be gone
+                }
+              }
+              // Wait a bit before checking again
+              await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (e) {
+              // Port might not be in use or command failed
+              break;
             }
-            await new Promise(resolve => setTimeout(resolve, 1000));
           }
-        } catch (e) {
-          // Command failed, assume port is free
-          portFree = true;
-          break;
-        }
-      }
 
-      if (!portFree) {
-        console.warn('[Ollama] WARNING: Port 11434 is still in use after cleanup - bundled Ollama may fail to start');
-      }
+          // Final check - wait longer for port to be fully released
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Verify port is free - if not, keep trying
+          let portFree = false;
+          for (let checkAttempt = 0; checkAttempt < 5; checkAttempt++) {
+            try {
+              const { stdout } = await execPromise('netstat -ano | findstr :11434');
+              if (!stdout || stdout.trim().length === 0) {
+                portFree = true;
+                console.log('[Ollama] Port 11434 is now free');
+                break;
+              } else {
+                // Port still in use - try killing again
+                const lines = stdout.trim().split('\n').filter(line => line.trim());
+                for (const line of lines) {
+                  const parts = line.trim().split(/\s+/);
+                  if (parts.length >= 5) {
+                    const pid = parts[parts.length - 1];
+                    if (pid && !isNaN(parseInt(pid))) {
+                      try {
+                        await execPromise(`taskkill /F /PID ${pid} 2>nul`);
+                        console.log(`[Ollama] Killed remaining process ${pid}`);
+                      } catch (e) { }
+                    }
+                  }
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            } catch (e) {
+              // Command failed, assume port is free
+              portFree = true;
+              break;
+            }
+          }
+
+          if (!portFree) {
+            console.warn('[Ollama] WARNING: Port 11434 is still in use after cleanup - bundled Ollama may fail to start');
+          }
 
           console.log('[Ollama] Cleaned up existing Ollama instances');
         } catch (e) {
@@ -4910,7 +4932,7 @@ app.whenReady().then(async () => {
           let metadata;
           let downloadComplete = false;
           let downloadPercent = 0;
-          
+
           try {
             metadata = await ollama.getMetadata('latest');
           } catch (metadataError) {
@@ -4929,7 +4951,7 @@ app.whenReady().then(async () => {
                 path.join(userDataPath, 'ollama', 'ollama'),
                 path.join(userDataPath, '.ollama', 'ollama.exe'),
               ];
-              
+
               let existingPath = null;
               for (const checkPath of possiblePaths) {
                 if (fs.existsSync(checkPath)) {
@@ -4937,7 +4959,7 @@ app.whenReady().then(async () => {
                   break;
                 }
               }
-              
+
               if (existingPath) {
                 console.log('[Ollama] Found existing bundled Ollama installation');
                 try {
@@ -4975,75 +4997,75 @@ app.whenReady().then(async () => {
 
           // Start bundled Ollama if we have metadata
           if (metadata && !downloadComplete) {
-          console.log('[Ollama] Starting bundled Ollama download and startup (this may take a few minutes)...');
-          
-          // Start the download/startup process
-          const servePromise = ollama.serve(metadata.version, {
-            serverLog: (message) => {
-              console.log('[Ollama]', message);
-            },
-            downloadLog: (percent, message) => {
-              downloadPercent = percent;
-              if (percent % 10 === 0 || percent === 100) {
-                console.log(`[Ollama Download] ${percent}% - ${message}`);
+            console.log('[Ollama] Starting bundled Ollama download and startup (this may take a few minutes)...');
+
+            // Start the download/startup process
+            const servePromise = ollama.serve(metadata.version, {
+              serverLog: (message) => {
+                console.log('[Ollama]', message);
+              },
+              downloadLog: (percent, message) => {
+                downloadPercent = percent;
+                if (percent % 10 === 0 || percent === 100) {
+                  console.log(`[Ollama Download] ${percent}% - ${message}`);
+                }
+                if (percent === 100) {
+                  downloadComplete = true;
+                }
+              },
+            });
+
+            // Wait for download to complete (with timeout)
+            const maxWaitTime = 600000; // 10 minutes max
+            const startTime = Date.now();
+            let serveCompleted = false;
+
+            // Monitor download progress and wait for serve to complete
+            servePromise.then(() => {
+              serveCompleted = true;
+              console.log('[Ollama] ✅ Bundled Ollama started successfully');
+            }).catch((err) => {
+              if (!err.message || !err.message.includes('failed to start in 5s')) {
+                console.error('[Ollama] Serve error:', err.message);
               }
-              if (percent === 100) {
+            });
+
+            // Wait for download to reach 100% or serve to complete
+            while (!downloadComplete && !serveCompleted && (Date.now() - startTime) < maxWaitTime) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            // After download completes, wait for Ollama to actually start responding
+            console.log('[Ollama] Download complete. Waiting for Ollama to start...');
+            for (let i = 0; i < 60; i++) { // Wait up to 60 seconds for startup
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              try {
+                await new Promise((resolve, reject) => {
+                  const req = http.get('http://127.0.0.1:11434/api/tags', { timeout: 3000 }, (res) => {
+                    resolve(true);
+                  });
+                  req.on('error', reject);
+                  req.on('timeout', () => {
+                    req.destroy();
+                    reject(new Error('timeout'));
+                  });
+                });
+                console.log('[Ollama] ✅ Bundled Ollama is running and responding!');
                 downloadComplete = true;
-              }
-            },
-          });
-
-          // Wait for download to complete (with timeout)
-          const maxWaitTime = 600000; // 10 minutes max
-          const startTime = Date.now();
-          let serveCompleted = false;
-
-          // Monitor download progress and wait for serve to complete
-          servePromise.then(() => {
-            serveCompleted = true;
-            console.log('[Ollama] ✅ Bundled Ollama started successfully');
-          }).catch((err) => {
-            if (!err.message || !err.message.includes('failed to start in 5s')) {
-              console.error('[Ollama] Serve error:', err.message);
-            }
-          });
-
-          // Wait for download to reach 100% or serve to complete
-          while (!downloadComplete && !serveCompleted && (Date.now() - startTime) < maxWaitTime) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-
-          // After download completes, wait for Ollama to actually start responding
-          console.log('[Ollama] Download complete. Waiting for Ollama to start...');
-          for (let i = 0; i < 60; i++) { // Wait up to 60 seconds for startup
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            try {
-              await new Promise((resolve, reject) => {
-                const req = http.get('http://127.0.0.1:11434/api/tags', { timeout: 3000 }, (res) => {
-                  resolve(true);
-                });
-                req.on('error', reject);
-                req.on('timeout', () => {
-                  req.destroy();
-                  reject(new Error('timeout'));
-                });
-              });
-              console.log('[Ollama] ✅ Bundled Ollama is running and responding!');
-              downloadComplete = true;
-              break;
-            } catch (e) {
-              // Keep waiting
-              if (i % 10 === 0) {
-                console.log(`[Ollama] Still waiting for Ollama to start... (${i + 1}/60)`);
+                break;
+              } catch (e) {
+                // Keep waiting
+                if (i % 10 === 0) {
+                  console.log(`[Ollama] Still waiting for Ollama to start... (${i + 1}/60)`);
+                }
               }
             }
-          }
 
-          if (!downloadComplete) {
-            console.warn('[Ollama] ⚠️ Ollama did not start within timeout. AI features may not work yet.');
-            console.warn('[Ollama] The download may still be in progress. AI features will work once Ollama is ready.');
+            if (!downloadComplete) {
+              console.warn('[Ollama] ⚠️ Ollama did not start within timeout. AI features may not work yet.');
+              console.warn('[Ollama] The download may still be in progress. AI features will work once Ollama is ready.');
+            }
           }
-        }
         } catch (error) {
           console.error('[Ollama] Error starting bundled Ollama:', error.message);
           if (error.message && error.message.includes('bind')) {

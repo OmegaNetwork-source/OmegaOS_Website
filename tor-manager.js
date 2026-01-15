@@ -18,6 +18,25 @@ class TorManager {
     this.controlPort = 9051; // Control port for Tor
     this.platform = process.platform;
     this.arch = process.arch;
+    this.logger = null;
+  }
+
+  setLogger(callback) {
+    this.logger = callback;
+  }
+
+  log(type, msg) {
+    // Always log to console for terminal debugging
+    if (type === 'error') {
+      console.error(`[Tor] ${msg}`);
+    } else {
+      console.log(`[Tor] ${msg}`);
+    }
+
+    // Forward to custom logger (e.g. UI)
+    if (this.logger) {
+      this.logger(type, msg);
+    }
   }
 
   // Get Tor executable path based on platform
@@ -30,7 +49,7 @@ class TorManager {
     const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
 
     if (fs.existsSync(bundledTorPath)) {
-      console.log('[Tor] Using bundled Tor from:', bundledTorPath);
+      this.log('info', `Using bundled Tor from: ${bundledTorPath}`);
       return bundledTorPath;
     }
 
@@ -60,14 +79,14 @@ class TorManager {
     const resourcesPath = process.resourcesPath || (app.isPackaged ? path.join(path.dirname(app.getAppPath()), '..') : app.getAppPath());
     const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
     if (fs.existsSync(bundledTorPath)) {
-      console.log('[Tor] Found bundled Tor at:', bundledTorPath);
+      this.log('info', `Found bundled Tor at: ${bundledTorPath}`);
       return true;
     }
 
     // Check user data directory
     const torPath = this.getTorPath();
     if (fs.existsSync(torPath)) {
-      console.log('[Tor] Found Tor at:', torPath);
+      this.log('info', `Found Tor at: ${torPath}`);
       return true;
     }
 
@@ -86,12 +105,12 @@ class TorManager {
     const bundledTorPath = path.join(resourcesPath, 'build', 'tor', 'tor.exe');
 
     if (fs.existsSync(bundledTorPath)) {
-      console.log('[Tor] Using bundled Tor');
+      this.log('info', 'Using bundled Tor');
       // Copy to user data directory for easier access
       const targetPath = path.join(torDir, 'tor.exe');
       if (!fs.existsSync(targetPath)) {
         fs.copyFileSync(bundledTorPath, targetPath);
-        console.log('[Tor] Copied bundled Tor to user data directory');
+        this.log('info', 'Copied bundled Tor to user data directory');
       }
       return;
     }
@@ -115,7 +134,7 @@ class TorManager {
 
     for (const commonPath of commonPaths) {
       if (fs.existsSync(commonPath)) {
-        console.log('[Tor] Found Tor installation at:', commonPath);
+        this.log('info', `Found Tor installation at: ${commonPath}`);
         // Copy to our directory
         const targetPath = path.join(torDir, 'tor.exe');
         fs.copyFileSync(commonPath, targetPath);
@@ -124,10 +143,10 @@ class TorManager {
     }
 
     // Tor not found
-    console.log('[Tor] Tor not found. Please install Tor manually:');
-    console.log('[Tor] 1. Download Tor Expert Bundle from: https://www.torproject.org/download/tor/');
-    console.log('[Tor] 2. Extract it and place tor.exe in:', torDir);
-    console.log('[Tor] Or install Tor Browser, and Tor will be found automatically.');
+    this.log('info', 'Tor not found. Please install Tor manually:');
+    this.log('info', '1. Download Tor Expert Bundle from: https://www.torproject.org/download/tor/');
+    this.log('info', `2. Extract it and place tor.exe in: ${torDir}`);
+    this.log('info', 'Or install Tor Browser, and Tor will be found automatically.');
     throw new Error('Tor not installed. Please install Tor Browser or Tor Expert Bundle manually. See console for instructions.');
   }
 
@@ -165,7 +184,7 @@ class TorManager {
       // Clean up temp directory
       fs.rmSync(tempDir, { recursive: true, force: true });
 
-      console.log('[Tor] Tor extracted successfully');
+      this.log('info', 'Tor extracted successfully');
     } else {
       throw new Error('tor.exe not found in downloaded archive');
     }
@@ -175,12 +194,12 @@ class TorManager {
   async downloadTorUnix() {
     // For macOS/Linux, we'll try to use system Tor if available
     // Otherwise, we can download the static binary
-    console.log('[Tor] Checking for system Tor installation...');
+    this.log('info', 'Checking for system Tor installation...');
 
     try {
       const { stdout } = await execPromise('which tor');
       if (stdout && stdout.trim()) {
-        console.log('[Tor] System Tor found:', stdout.trim());
+        this.log('info', `System Tor found: ${stdout.trim()}`);
         this.torPath = stdout.trim();
         return true;
       }
@@ -190,13 +209,13 @@ class TorManager {
 
     // For now, we'll require users to install Tor via package manager
     // or we can download static binaries (more complex)
-    console.log('[Tor] System Tor not found.');
-    console.log('[Tor] Please install Tor using:');
+    this.log('info', 'System Tor not found.');
+    this.log('info', 'Please install Tor using:');
     if (this.platform === 'darwin') {
-      console.log('[Tor]   brew install tor');
+      this.log('info', '  brew install tor');
     } else {
-      console.log('[Tor]   sudo apt-get install tor  (Debian/Ubuntu)');
-      console.log('[Tor]   sudo yum install tor       (RHEL/CentOS)');
+      this.log('info', '  sudo apt-get install tor  (Debian/Ubuntu)');
+      this.log('info', '  sudo yum install tor       (RHEL/CentOS)');
     }
 
     return false;
@@ -210,13 +229,13 @@ class TorManager {
 
     // Check if Tor is installed
     if (!(await this.isTorInstalled())) {
-      console.log('[Tor] Tor not found, checking for system installation...');
+      this.log('info', 'Tor not found, checking for system installation...');
 
       if (this.platform === 'win32') {
         try {
           await this.downloadTorWindows(); // This now checks for system installations
         } catch (error) {
-          console.error('[Tor]', error.message);
+          this.log('error', error.message);
           throw error;
         }
       } else {
@@ -241,27 +260,27 @@ class TorManager {
   // Start Tor daemon
   async start() {
     if (this.isRunning) {
-      console.log('[Tor] Tor is already running');
+      this.log('info', 'Tor is already running');
       return true;
     }
 
     try {
       await this.initialize();
     } catch (error) {
-      console.error('[Tor] Initialization failed:', error);
+      this.log('error', `Initialization failed: ${error}`);
       throw error;
     }
 
     // Check if port is already in use
     const portInUse = await this.checkPortInUse(this.torPort);
     if (portInUse) {
-      console.log('[Tor] Port 9050 is already in use. Checking if it\'s a leftover process...');
+      this.log('info', 'Port 9050 is already in use. Checking if it\'s a leftover process...');
 
       // Try to verify if Tor is actually responding
       const isActuallyRunning = await this.verifyTorRunning();
 
       if (!isActuallyRunning) {
-        console.log('[Tor] Port 9050 is in use but Tor is not responding. Killing orphaned processes...');
+        this.log('info', 'Port 9050 is in use but Tor is not responding. Killing orphaned processes...');
         await this.killAllTorProcesses();
 
         // Wait a bit for port to be released
@@ -270,10 +289,10 @@ class TorManager {
         // Check again
         const stillInUse = await this.checkPortInUse(this.torPort);
         if (stillInUse) {
-          console.warn('[Tor] Port 9050 still in use after cleanup. Attempting to start anyway...');
+          this.log('warn', 'Port 9050 still in use after cleanup. Attempting to start anyway...');
         }
       } else {
-        console.log('[Tor] Tor is running and responding. Using existing instance.');
+        this.log('info', 'Tor is running and responding. Using existing instance.');
         this.isRunning = true;
         return true;
       }
@@ -292,7 +311,7 @@ CookieAuthentication 0
     fs.writeFileSync(torrcPath, torrc, 'utf8');
 
     // Start Tor process
-    console.log('[Tor] Starting Tor daemon...');
+    this.log('info', 'Starting Tor daemon...');
 
     const args = [
       '-f', torrcPath
@@ -306,14 +325,17 @@ CookieAuthentication 0
 
     this.torProcess.stdout.on('data', (data) => {
       const output = data.toString();
+      // Log raw output for comprehensive debugging
+      this.log('info', output.trim());
+
       if (output.includes('Bootstrapped 100%')) {
-        console.log('[Tor] Tor is ready!');
+        this.log('info', 'Tor is ready!');
         this.isRunning = true;
       } else if (output.includes('Bootstrapped')) {
         const match = output.match(/Bootstrapped (\d+)%/);
         if (match) {
           const percent = match[1];
-          console.log(`[Tor] Bootstrapping: ${percent}%`);
+          this.log('info', `Bootstrapping: ${percent}%`);
         }
       }
     });
@@ -321,13 +343,15 @@ CookieAuthentication 0
     this.torProcess.stderr.on('data', (data) => {
       const error = data.toString();
       // Log all stderr output for debugging (Tor outputs warnings/errors here)
-      if (error.includes('ERROR') || error.includes('WARN') || error.includes('Bootstrapped')) {
-        console.log('[Tor]', error.trim());
+      this.log('info', `[STDERR] ${error.trim()}`);
+
+      if (error.includes('Bootstrapped 100%')) {
+        this.isRunning = true;
       }
     });
 
     this.torProcess.on('exit', (code) => {
-      console.log(`[Tor] Process exited with code ${code}`);
+      this.log('info', `Process exited with code ${code}`);
       this.isRunning = false;
       this.torProcess = null;
     });
@@ -346,6 +370,13 @@ CookieAuthentication 0
     }
 
     if (!this.isRunning) {
+      // NOTE: It might still be running in the background or bootstrapped via stderr
+      // Double check
+      if (await this.verifyTorRunning()) {
+        this.log('info', 'Tor verified running despite no 100% bootstrap message');
+        this.isRunning = true;
+        return true;
+      }
       throw new Error(`Tor failed to bootstrap within ${maxAttempts} seconds`);
     }
 
@@ -354,7 +385,7 @@ CookieAuthentication 0
 
   // Stop Tor daemon
   async stop() {
-    console.log('[Tor] Stopping Tor daemon...');
+    this.log('info', 'Stopping Tor daemon...');
 
     if (this.torProcess) {
       this.torProcess.kill('SIGTERM');
@@ -368,7 +399,7 @@ CookieAuthentication 0
 
       // Force kill if still running
       if (this.torProcess && !this.torProcess.killed) {
-        console.log('[Tor] Force killing Tor process...');
+        this.log('info', 'Force killing Tor process...');
         this.torProcess.kill('SIGKILL');
         await new Promise(resolve => setTimeout(resolve, 500));
       }
@@ -390,7 +421,7 @@ CookieAuthentication 0
         // Kill all tor.exe processes
         try {
           await execPromise('taskkill /F /IM tor.exe /T 2>nul');
-          console.log('[Tor] Killed all Tor processes');
+          this.log('info', 'Killed all Tor processes');
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (e) {
           // No Tor processes running - that's fine
@@ -399,14 +430,14 @@ CookieAuthentication 0
         // Unix: kill all tor processes
         try {
           await execPromise('pkill -9 tor 2>/dev/null || true');
-          console.log('[Tor] Killed all Tor processes');
+          this.log('info', 'Killed all Tor processes');
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (e) {
           // No Tor processes running - that's fine
         }
       }
     } catch (e) {
-      console.warn('[Tor] Error killing Tor processes:', e.message);
+      this.log('warn', `Error killing Tor processes: ${e.message}`);
     }
   }
 
@@ -511,6 +542,7 @@ CookieAuthentication 0
             // Now send the actual command
             socket.write(command + '\r\n');
           } else {
+            console.error('Tor Auth Failed:', raw); // Direct log if no logger attached yet
             reject(new Error(`Authentication failed: ${raw}`));
             socket.destroy();
           }
@@ -555,7 +587,7 @@ CookieAuthentication 0
     }
 
     try {
-      console.log(`[Tor] Creating Hidden Service forwarding ${targetPort} -> ${localPort}...`);
+      this.log('info', `Creating Hidden Service forwarding ${targetPort} -> ${localPort}...`);
 
       // ADD_ONION NEW:BEST Port=TargetPort,127.0.0.1:LocalPort
       // NEW:BEST generates a new v3 key
@@ -573,14 +605,14 @@ CookieAuthentication 0
         const match = response.match(/ServiceID=([a-z2-7]+)/);
         if (match && match[1]) {
           const onionAddress = match[1];
-          console.log(`[Tor] Hidden Service created: ${onionAddress}.onion`);
+          this.log('info', `Hidden Service created: ${onionAddress}.onion`);
           return onionAddress + '.onion';
         }
       }
 
       throw new Error(`Failed to create Hidden Service. Response: ${response}`);
     } catch (error) {
-      console.error('[Tor] Hidden Service setup failed:', error);
+      this.log('error', `Hidden Service setup failed: ${error}`);
       throw error;
     }
   }
@@ -637,4 +669,3 @@ CookieAuthentication 0
 }
 
 module.exports = new TorManager();
-
