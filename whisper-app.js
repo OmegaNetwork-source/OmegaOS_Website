@@ -4,6 +4,11 @@ let currentContactId = null;
 let myOnionAddress = null;
 let currentTTL = null; // null = off
 
+// Debug helper - just console logs now (debug panel removed)
+function debugLog(msg) {
+    console.log('[Whisper Frontend] ' + msg);
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     // Get basic info
@@ -88,6 +93,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadMessages(currentContactId);
         }
     });
+
+    // Setup Tor status checker
+    updateTorStatus();
+    setInterval(updateTorStatus, 5000);
+
+    // Self-test button
+    const testSelfBtn = document.getElementById('testSelfBtn');
+    if (testSelfBtn) {
+        testSelfBtn.addEventListener('click', async () => {
+            debugLog('Self-test button clicked');
+            if (!myOnionAddress) {
+                debugLog('No onion address yet, cannot test');
+                alert('Wait for your Encrypted ID to load first');
+                return;
+            }
+
+            // Add self as contact if not already
+            debugLog('Testing message to self: ' + myOnionAddress);
+            await window.electronAPI.whisperAddContact(myOnionAddress, 'Me (Test)');
+            await loadContacts();
+
+            // Select self as contact
+            currentContactId = myOnionAddress;
+            document.getElementById('chatTitle').textContent = 'Me (Test)';
+            document.getElementById('chatSubtitle').textContent = myOnionAddress;
+
+            // Send test message
+            debugLog('Sending test message...');
+            const testContent = 'Test message at ' + new Date().toLocaleTimeString();
+            const result = await window.electronAPI.whisperSendMessage(myOnionAddress, testContent, null);
+            debugLog('Test result: ' + JSON.stringify(result));
+
+            // Reload messages
+            await loadMessages(myOnionAddress);
+
+            if (result.success) {
+                debugLog('Self-test SUCCESS!');
+            } else {
+                debugLog('Self-test FAILED: ' + result.error);
+            }
+        });
+    }
 });
 
 async function loadContacts() {
@@ -219,7 +266,9 @@ async function deleteContactPrompt(contact) {
 }
 
 async function selectContact(contact) {
+    debugLog('selectContact called with: ' + contact.name + ' / ' + contact.id);
     currentContactId = contact.id;
+    debugLog('currentContactId set to: ' + currentContactId);
 
     // Update UI
     document.querySelectorAll('.contact-item').forEach(el => el.classList.remove('active'));
@@ -236,82 +285,111 @@ async function loadMessages(contactId) {
     if (!contactId) return;
 
     try {
+        debugLog('loadMessages called for: ' + contactId);
         const messages = await window.electronAPI.whisperGetMessages(contactId);
+        debugLog('Got ' + messages.length + ' messages from backend');
+        if (messages.length > 0) {
+            debugLog('Last msg: ' + JSON.stringify(messages[messages.length - 1]).substring(0, 100));
+        }
         renderMessages(messages);
     } catch (e) {
+        debugLog('loadMessages ERROR: ' + e.message);
         console.error('Failed to load messages:', e);
     }
 }
 
 function renderMessages(messages) {
+    debugLog('renderMessages called with ' + messages.length + ' messages');
     const container = document.getElementById('messagesContainer');
-    container.innerHTML = '';
+    debugLog('Container found: ' + !!container);
 
+    // Sort by timestamp
     messages.sort((a, b) => a.timestamp - b.timestamp);
 
-    messages.forEach(msg => {
-        const el = document.createElement('div');
-        el.className = `message ${msg.isIncoming ? 'incoming' : 'outgoing'}`;
+    // Build HTML string using CSS classes (not inline styles which may be blocked by CSP)
+    let html = '';
+    messages.forEach((msg, idx) => {
+        debugLog('Rendering message ' + idx + ': ' + (msg.content || '').substring(0, 30));
 
         const date = new Date(msg.timestamp);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        el.innerHTML = `
-            ${msg.content}
-            <div class="message-time">${timeStr}</div>
-        `;
-        container.appendChild(el);
+        let statusText = timeStr;
+        if (msg.status === 'failed') {
+            // Show error reason if available
+            const errorReason = msg.error ? ` (${msg.error})` : '';
+            statusText = `⚠ Failed${errorReason} - ${timeStr}`;
+        } else if (msg.status === 'sending') {
+            statusText = 'Sending...';
+        }
+
+        const className = msg.isIncoming ? 'message incoming' : 'message outgoing';
+        const bgColor = msg.isIncoming ? '#2a2a35' : '#6366f1';
+        const textColor = msg.isIncoming ? '#fff' : '#000';
+        const alignSelf = msg.isIncoming ? 'flex-start' : 'flex-end';
+
+        // Use !important inline styles like the working test div
+        html += `<div style="
+            background-color: ${bgColor} !important;
+            color: ${textColor} !important;
+            padding: 12px 16px !important;
+            margin: 8px 0 !important;
+            border-radius: 12px !important;
+            max-width: 70% !important;
+            align-self: ${alignSelf} !important;
+            display: block !important;
+            word-wrap: break-word !important;
+        ">
+            ${msg.content || '[No content]'}
+            <div style="font-size: 0.7em !important; opacity: 0.7 !important; margin-top: 5px !important; text-align: right !important;">${statusText}</div>
+        </div>`;
     });
+
+    // If no messages, show placeholder
+    if (messages.length === 0) {
+        html = '<div class="empty-state">No messages yet</div>';
+    }
+
+    // Set innerHTML directly
+    container.innerHTML = html;
+    debugLog('Set innerHTML. Children: ' + container.children.length + ', HTML length: ' + container.innerHTML.length);
 
     // Scroll to bottom
     container.scrollTop = container.scrollHeight;
 }
 
 async function sendMessage() {
+    debugLog('sendMessage() called');
     const input = document.getElementById('messageInput');
     const content = input.value.trim();
 
+    debugLog('content: "' + content + '"');
+    debugLog('currentContactId: ' + currentContactId);
+
     if (!content || !currentContactId) {
-        console.log('Cannot send: no content or no contact selected');
+        debugLog('BLOCKED: content empty=' + !content + ', contact null=' + !currentContactId);
         return;
     }
 
     input.value = ''; // Clear input immediately for responsiveness
 
-    // Optimistic UI update
-    const container = document.getElementById('messagesContainer');
-    const tempEl = document.createElement('div');
-    tempEl.className = 'message outgoing';
-    tempEl.style.opacity = '0.7';
-    tempEl.innerHTML = `${content} <div class="message-time">Sending...</div>`;
-    container.appendChild(tempEl);
-    container.scrollTop = container.scrollHeight;
-
     try {
+        debugLog('Calling whisperSendMessage...');
         const result = await window.electronAPI.whisperSendMessage(currentContactId, content, currentTTL);
-        if (result.success) {
-            // Remove temp message
-            tempEl.remove();
-            // Wait a bit for backend to process, then reload messages
-            setTimeout(() => {
-                loadMessages(currentContactId);
-            }, 300);
-        } else {
-            // Show error with specific message
-            tempEl.style.opacity = '1';
-            tempEl.style.backgroundColor = '#ff4444';
-            const errorMsg = result.error && result.error.includes('HostUnreachable')
-                ? 'Contact offline'
-                : 'Failed to send';
-            tempEl.innerHTML = `${content} <div class="message-time">${errorMsg}</div>`;
-            tempEl.title = result.error || 'Unknown error';
+        debugLog('Send result: ' + JSON.stringify(result));
+
+        // Always reload messages - backend saves them regardless of success/failure
+        debugLog('Reloading messages for: ' + currentContactId);
+        await loadMessages(currentContactId);
+
+        if (!result.success) {
+            debugLog('Send FAILED: ' + result.error);
         }
     } catch (e) {
+        debugLog('Send EXCEPTION: ' + e.message);
         console.error('Send failed:', e);
-        tempEl.style.opacity = '1';
-        tempEl.style.backgroundColor = '#ff4444';
-        tempEl.innerHTML = `${content} <div class="message-time">Error</div>`;
-        tempEl.title = e.message || 'Unknown error';
+        // Still reload to show any saved messages
+        await loadMessages(currentContactId);
     }
 }
 
@@ -339,27 +417,81 @@ async function checkNewMessages() {
     }
 }
 
+// Update Tor status indicator
+async function updateTorStatus() {
+    const statusContainer = document.getElementById('torStatus');
+    const statusDot = document.getElementById('torStatusDot');
+    const statusText = document.getElementById('torStatusText');
+
+    if (!statusContainer || !statusDot || !statusText) return;
+
+    try {
+        const info = await window.electronAPI.whisperGetInfo();
+
+        if (info && info.onionAddress) {
+            // Tor is connected and hidden service is set up
+            statusContainer.style.background = 'rgba(100, 255, 100, 0.2)';
+            statusContainer.style.borderColor = '#66ff66';
+            statusDot.style.background = '#66ff66';
+            statusText.textContent = 'Tor: Connected';
+            statusText.style.color = '#66ff66';
+        } else if (info && info.error) {
+            // Tor has an error
+            statusContainer.style.background = 'rgba(255, 100, 100, 0.2)';
+            statusContainer.style.borderColor = '#ff6666';
+            statusDot.style.background = '#ff6666';
+            statusText.textContent = 'Tor: ' + info.error;
+            statusText.style.color = '#ff6666';
+        } else {
+            // Tor is initializing
+            statusContainer.style.background = 'rgba(255, 200, 100, 0.2)';
+            statusContainer.style.borderColor = '#ffcc66';
+            statusDot.style.background = '#ffcc66';
+            statusText.textContent = 'Tor: Initializing...';
+            statusText.style.color = '#ffcc66';
+        }
+    } catch (e) {
+        statusContainer.style.background = 'rgba(255, 100, 100, 0.2)';
+        statusContainer.style.borderColor = '#ff6666';
+        statusDot.style.background = '#ff6666';
+        statusText.textContent = 'Tor: Error';
+        statusText.style.color = '#ff6666';
+    }
+}
+
 function setupEventListeners() {
     // Send button
     const sendBtn = document.getElementById('sendBtn');
     const messageInput = document.getElementById('messageInput');
 
+    debugLog('SETUP: sendBtn found=' + !!sendBtn);
+    debugLog('SETUP: messageInput found=' + !!messageInput);
+
     if (sendBtn) {
-        sendBtn.onclick = (e) => {
+        sendBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            debugLog('CLICK: Send button clicked!');
             sendMessage();
-            // Refocus input
             if (messageInput) messageInput.focus();
-        };
+        });
+        debugLog('SETUP: Click listener attached');
+    } else {
+        debugLog('ERROR: sendBtn NOT FOUND!');
     }
 
     if (messageInput) {
-        messageInput.onkeypress = (e) => {
-            if (e.key === 'Enter') {
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                e.stopPropagation();
+                debugLog('KEYDOWN: Enter pressed!');
                 sendMessage();
             }
-        };
+        });
+        debugLog('SETUP: Keydown listener attached');
+    } else {
+        debugLog('ERROR: messageInput NOT FOUND!');
     }
 
     // Add Contact Modal
@@ -410,6 +542,22 @@ function setupEventListeners() {
                     myOnionId.textContent = original;
                 }, 1500);
             }
+        });
+    }
+
+    // Beta Banner Dismiss
+    const betaBanner = document.getElementById('betaBanner');
+    const betaBannerClose = document.getElementById('betaBannerClose');
+    if (betaBannerClose && betaBanner) {
+        // Check if user has previously dismissed the banner
+        const bannerDismissed = localStorage.getItem('whisperBetaBannerDismissed');
+        if (bannerDismissed === 'true') {
+            betaBanner.classList.add('hidden');
+        }
+
+        betaBannerClose.addEventListener('click', () => {
+            betaBanner.classList.add('hidden');
+            localStorage.setItem('whisperBetaBannerDismissed', 'true');
         });
     }
 

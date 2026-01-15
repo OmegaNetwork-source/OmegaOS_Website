@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega QR Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 32px;
+            background: #2d2d2d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+
+        .title-bar-title {
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .title-bar-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .title-bar-btn {
+            width: 46px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: #ccc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .title-bar-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .title-bar-btn.close:hover {
+            background: #e81123;
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+            transition: width 0.3s ease, padding 0.3s ease;
+            position: relative;
+        }
+
+        .sidebar.minimized {
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            border-right: none;
+            overflow: hidden;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 50%;
+            left: 285px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 60px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            transition: left 0.3s ease, background 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background: #f5f5f5;
+        }
+
+        .sidebar-toggle-icon {
+            font-size: 18px;
+            color: #666;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #fafafa;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .type-btn.active {
+            border-color: #0078d4;
+            background: #0078d4;
+            color: white;
+        }
+
+        .type-btn:hover {
+            border-color: #0078d4;
+        }
+
+        .special-input {
+            display: none;
+        }
+
+        .special-input.active {
+            display: block;
+        }
+
+        .color-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .color-input {
+            flex: 1;
+        }
+
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .size-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .size-input {
+            flex: 1;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: #0078d4;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #006cbe;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .qr-preview {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #qrcode {
+            margin-bottom: 20px;
+        }
+
+        #qrcode canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .btn-download {
+            flex: 1;
+        }
+
+        .error-message {
+            color: #e81123;
+            font-size: 13px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="title-bar">
+        <div class="title-bar-title">Omega QR Generator</div>
+        <div class="title-bar-controls">
+            <button class="title-bar-btn" id="minimizeBtn">−</button>
+            <button class="title-bar-btn" id="maximizeBtn">□</button>
+            <button class="title-bar-btn close" id="closeBtn">×</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="sidebar" id="sidebar">
+            <h2>QR Code Generator</h2>
+
+            <div class="type-selector">
+                <button class="type-btn active" data-type="text" onclick="setType('text')">Text</button>
+                <button class="type-btn" data-type="url" onclick="setType('url')">URL</button>
+                <button class="type-btn" data-type="wifi" onclick="setType('wifi')">WiFi</button>
+                <button class="type-btn" data-type="email" onclick="setType('email')">Email</button>
+            </div>
+
+            <!-- Text Input -->
+            <div class="input-group special-input active" id="text-input">
+                <label>Text Content</label>
+                <textarea id="textContent" placeholder="Enter text to encode..."></textarea>
+            </div>
+
+            <!-- URL Input -->
+            <div class="input-group special-input" id="url-input">
+                <label>Website URL</label>
+                <input type="url" id="urlContent" placeholder="https://example.com">
+            </div>
+
+            <!-- WiFi Input -->
+            <div class="input-group special-input" id="wifi-input">
+                <label>Network Name (SSID)</label>
+                <input type="text" id="wifiSSID" placeholder="MyWiFi">
+                <label style="margin-top: 10px;">Password</label>
+                <input type="password" id="wifiPassword" placeholder="password123">
+                <label style="margin-top: 10px;">Security Type</label>
+                <select id="wifiSecurity">
+                    <option value="WPA">WPA/WPA2</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">None</option>
+                </select>
+                <div class="info-text">QR code will allow devices to connect automatically</div>
+            </div>
+
+            <!-- Email Input -->
+            <div class="input-group special-input" id="email-input">
+                <label>Email Address</label>
+                <input type="email" id="emailAddress" placeholder="user@example.com">
+                <label style="margin-top: 10px;">Subject (optional)</label>
+                <input type="text" id="emailSubject" placeholder="Hello">
+                <label style="margin-top: 10px;">Body (optional)</label>
+                <textarea id="emailBody" placeholder="Message content..."></textarea>
+            </div>
+
+            <!-- Size Options -->
+            <div class="input-group size-group">
+                <div class="size-input">
+                    <label>Width</label>
+                    <input type="number" id="qrWidth" value="400" min="100" max="2000" step="50">
+                </div>
+                <div class="size-input">
+                    <label>Height</label>
+                    <input type="number" id="qrHeight" value="400" min="100" max="2000" step="50">
+                </div>
+            </div>
+
+            <!-- Color Options -->
+            <div class="input-group">
+                <label>Foreground Color</label>
+                <div class="color-group">
+                    <input type="color" id="foregroundColor" value="#000000" class="color-input">
+                    <div class="color-preview" id="fgPreview" style="background: #000000;"></div>
+                    <input type="text" id="fgColorText" value="#000000" class="color-input">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Background Color</label>
+                <div class="color-group">
+                    <input type="color" id="backgroundColor" value="#ffffff" class="color-input">
+                    <div class="color-preview" id="bgPreview" style="background: #ffffff;"></div>
+                    <input type="text" id="bgColorText" value="#ffffff" class="color-input">
+                </div>
+            </div>
+
+            <!-- Error Correction Level -->
+            <div class="input-group">
+                <label>Error Correction Level</label>
+                <select id="errorLevel">
+                    <option value="L">L (Low - ~7%)</option>
+                    <option value="M">M (Medium - ~15%)</option>
+                    <option value="Q">Q (Quartile - ~25%)</option>
+                    <option value="H" selected>H (High - ~30%)</option>
+                </select>
+                <div class="info-text">Higher levels allow more damage before becoming unreadable</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="generateQR()">Generate QR Code</button>
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <span class="sidebar-toggle-icon" id="sidebarToggleIcon">◀</span>
+        </button>
+
+        <div class="main-content">
+            <div class="qr-preview">
+                <div id="qrcode"></div>
+                <div class="qr-actions" id="qrActions" style="display: none;">
+                    <button class="btn btn-secondary btn-download" onclick="downloadQR('png')">Download PNG</button>
+                    <button class="btn btn-secondary btn-download" onclick="downloadQR('svg')">Download SVG</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let qrcode = null;
+        let currentType = 'text';
+        let sidebarMinimized = false;
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const toggleIcon = document.getElementById('sidebarToggleIcon');
+            sidebarMinimized = !sidebarMinimized;
+            
+            if (sidebarMinimized) {
+                sidebar.classList.add('minimized');
+                toggleBtn.style.left = '0';
+                toggleIcon.textContent = '▶';
+            } else {
+                sidebar.classList.remove('minimized');
+                toggleBtn.style.left = '285px';
+                toggleIcon.textContent = '◀';
+            }
+        }
+
+        // Set input type
+        function setType(type) {
+            currentType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+
+            document.querySelectorAll('.special-input').forEach(input => {
+                input.classList.remove('active');
+            });
+            document.getElementById(`${type}-input`).classList.add('active');
+        }
+
+        // Color picker sync
+        document.getElementById('foregroundColor').addEventListener('input', (e) => {
+            document.getElementById('fgColorText').value = e.target.value;
+            document.getElementById('fgPreview').style.background = e.target.value;
+        });
+
+        document.getElementById('fgColorText').addEventListener('input', (e) => {
+            if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                document.getElementById('foregroundColor').value = e.target.value;
+                document.getElementById('fgPreview').style.background = e.target.value;
+            }
+        });
+
+        document.getElementById('backgroundColor').addEventListener('input', (e) => {
+            document.getElementById('bgColorText').value = e.target.value;
+            document.getElementById('bgPreview').style.background = e.target.value;
+        });
+
+        document.getElementById('bgColorText').addEventListener('input', (e) => {
+            if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                document.getElementById('backgroundColor').value = e.target.value;
+                document.getElementById('bgPreview').style.background = e.target.value;
+            }
+        });
+
+        // Generate QR code
+        function generateQR() {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.classList.remove('show');
+
+            let content = '';
+
+            try {
+                switch(currentType) {
+                    case 'text':
+                        content = document.getElementById('textContent').value.trim();
+                        if (!content) {
+                            throw new Error('Please enter text content');
+                        }
+                        break;
+                    case 'url':
+                        content = document.getElementById('urlContent').value.trim();
+                        if (!content) {
+                            throw new Error('Please enter a URL');
+                        }
+                        if (!content.startsWith('http://') && !content.startsWith('https://')) {
+                            content = 'https://' + content;
+                        }
+                        break;
+                    case 'wifi':
+                        const ssid = document.getElementById('wifiSSID').value.trim();
+                        const password = document.getElementById('wifiPassword').value.trim();
+                        const security = document.getElementById('wifiSecurity').value;
+                        
+                        if (!ssid) {
+                            throw new Error('Please enter WiFi network name');
+                        }
+                        
+                        // WiFi QR format: WIFI:T:WPA;S:networkname;P:password;;
+                        if (security === 'nopass') {
+                            content = `WIFI:T:nopass;S:${ssid};;`;
+                        } else {
+                            if (!password) {
+                                throw new Error('Please enter WiFi password');
+                            }
+                            content = `WIFI:T:${security};S:${ssid};P:${password};;`;
+                        }
+                        break;
+                    case 'email':
+                        const email = document.getElementById('emailAddress').value.trim();
+                        const subject = document.getElementById('emailSubject').value.trim();
+                        const body = document.getElementById('emailBody').value.trim();
+                        
+                        if (!email) {
+                            throw new Error('Please enter email address');
+                        }
+                        
+                        // Email QR format: mailto:email?subject=subject&body=body
+                        let mailto = `mailto:${email}`;
+                        const params = [];
+                        if (subject) params.push(`subject=${encodeURIComponent(subject)}`);
+                        if (body) params.push(`body=${encodeURIComponent(body)}`);
+                        if (params.length > 0) {
+                            mailto += '?' + params.join('&');
+                        }
+                        content = mailto;
+                        break;
+                }
+
+                // Clear previous QR code
+                document.getElementById('qrcode').innerHTML = '';
+                
+                // Get options
+                const width = parseInt(document.getElementById('qrWidth').value);
+                const height = parseInt(document.getElementById('qrHeight').value);
+                const colorDark = document.getElementById('foregroundColor').value;
+                const colorLight = document.getElementById('backgroundColor').value;
+                const correctLevel = QRCode.CorrectLevel[document.getElementById('errorLevel').value];
+
+                // Create QR code
+                qrcode = new QRCode(document.getElementById('qrcode'), {
+                    text: content,
+                    width: width,
+                    height: height,
+                    colorDark: colorDark,
+                    colorLight: colorLight,
+                    correctLevel: correctLevel
+                });
+
+                // Show download buttons
+                document.getElementById('qrActions').style.display = 'flex';
+
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorMsg.classList.add('show');
+            }
+        }
+
+        // Download QR code
+        function downloadQR(format) {
+            if (!qrcode) return;
+
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) return;
+
+            if (format === 'png') {
+                const link = document.createElement('a');
+                link.download = `qrcode-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } else if (format === 'svg') {
+                // For SVG, we need to generate it differently
+                // QRCode.js doesn't support SVG directly, so we'll convert canvas to SVG
+                const svg = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
+                        <image href="${canvas.toDataURL('image/png')}" width="${canvas.width}" height="${canvas.height}"/>
+                    </svg>
+                `;
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const link = document.createElement('a');
+                link.download = `qrcode-${Date.now()}.svg`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+        }
+
+        // Initialize
+        document.getElementById('textContent').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                generateQR();
+            }
+        });
+
+        // Generate on Enter for URL
+        document.getElementById('urlContent').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                generateQR();
+            }
+        });
+
+        // Sidebar Toggle Button
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            toggleSidebar();
+        });
+
+        // Window Controls
+        let currentWindowId = null;
+        if (window.electronAPI) {
+            window.electronAPI.getWindowId().then(id => {
+                currentWindowId = id;
+            });
+        }
+
+        document.getElementById('minimizeBtn').addEventListener('click', () => {
+            if (currentWindowId && window.electronAPI) {
+                window.electronAPI.appWindowMinimize(currentWindowId);
+            }
+        });
+
+        document.getElementById('maximizeBtn').addEventListener('click', () => {
+            if (currentWindowId && window.electronAPI) {
+                window.electronAPI.appWindowMaximize(currentWindowId);
+            }
+        });
+
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            if (currentWindowId && window.electronAPI) {
+                window.electronAPI.appWindowClose(currentWindowId);
+            }
+        });
+    </script>
+</body>
+</html>

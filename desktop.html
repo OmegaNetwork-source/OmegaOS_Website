@@ -110,6 +110,17 @@
             </div>
             <div class="icon-label">Omega Security</div>
         </div>
+        <div class="desktop-icon folder-icon" id="hackermanFolder" data-folder="hackerman">
+            <div class="folder-background" style="background: rgba(20, 30, 20, 0.85); border-color: #00ff99;">
+                <div class="folder-icon-grid folder-grid-4">
+                    <div class="folder-icon-item">🕵️</div>
+                    <div class="folder-icon-item">📡</div>
+                    <div class="folder-icon-item">💀</div>
+                    <div class="folder-icon-item">💻</div>
+                </div>
+            </div>
+            <div class="icon-label" style="color: #00ff99; text-shadow: 0 0 5px rgba(0,255,153,0.5);">Hackerman</div>
+        </div>
         <div class="desktop-icon" id="netrunnerIcon" data-app="netrunner">
             <div class="icon-image"
                 style="background: linear-gradient(135deg, #00ff99 0%, #00ccff 100%); width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 255, 153, 0.3);">
@@ -549,6 +560,27 @@
             <div class="crypto-settings-footer">
                 <button class="crypto-settings-btn cancel" id="cancelCryptoSettings">Cancel</button>
                 <button class="crypto-settings-btn apply" id="applyCryptoSettings">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Password Modal -->
+    <div class="app-folder-modal" id="securityModal" style="z-index: 10000;">
+        <div class="app-folder-content" style="max-width: 400px; min-height: auto; height: auto;">
+            <div class="app-folder-header">
+                <h2 id="securityTitle" style="color: #ff3333; text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);">🔒 SECURITY
+                    CHECK</h2>
+                <button class="app-folder-close" id="closeSecurityModal">&times;</button>
+            </div>
+            <div class="app-folder-body" style="padding: 20px; text-align: center;">
+                <p style="margin-bottom: 20px; font-family: 'Consolas', monospace; color: #ff3333;">ENCRYPTED DIRECTORY
+                    DETECTED</p>
+                <input type="password" id="securityPasswordInput" placeholder="ENTER ACCESS CREDENTIALS"
+                    style="width: 100%; padding: 12px; background: rgba(0,0,0,0.5); border: 2px solid #ff3333; color: white; font-family: 'Consolas', monospace; text-align: center; margin-bottom: 20px; outline: none;">
+                <button id="securitySubmitBtn"
+                    style="background: #ff3333; color: black; border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; font-family: 'Consolas', monospace; text-transform: uppercase;">
+                    AUTHENTICATE
+                </button>
             </div>
         </div>
     </div>

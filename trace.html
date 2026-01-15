@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omega Trace // System Uplink</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --term-green: #00ff33;
+            --term-dim: #008f11;
+            --term-bright: #ccffcc;
+            --alert-red: #ff3333;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--term-green);
+            font-family: var(--font-mono);
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRT Scanline Effect */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Header & Tabs */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--term-dim);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px var(--term-dim);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 2px;
+        }
+
+        .tab-btn {
+            background: #111;
+            border: 1px solid var(--term-dim);
+            color: var(--term-dim);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .tab-btn:hover {
+            background: #0f220f;
+        }
+
+        .tab-btn.active {
+            background: var(--term-dim);
+            color: #000;
+            box-shadow: 0 0 10px var(--term-dim);
+        }
+
+        /* Layout Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Sidebar Panels */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            border: 1px solid var(--term-dim);
+            background: rgba(0, 10, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .panel-header {
+            background: var(--term-dim);
+            color: #000;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .panel-content {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Input Area */
+        .input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        input {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--term-dim);
+            color: var(--term-green);
+            padding: 10px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        button.action-btn {
+            background: var(--term-dim);
+            color: #000;
+            border: none;
+            padding: 0 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.action-btn:hover {
+            background: var(--term-bright);
+        }
+
+        /* Data Display */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #1a2a1a;
+            padding: 5px 0;
+            font-size: 13px;
+        }
+
+        .label {
+            color: var(--term-dim);
+        }
+
+        .value {
+            color: var(--term-bright);
+            text-align: right;
+        }
+
+        /* Map Canvas */
+        #map-container {
+            border: 1px solid var(--term-dim);
+            background: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Terminal Log */
+        .console-log {
+            font-size: 11px;
+            color: #888;
+            height: 150px;
+            overflow-y: auto;
+            border-top: 1px solid var(--term-dim);
+            padding: 5px;
+            background: #050505;
+        }
+
+        .log-entry {
+            margin-bottom: 2px;
+        }
+
+        .success {
+            color: var(--term-green);
+        }
+
+        .error {
+            color: var(--alert-red);
+        }
+
+        .info {
+            color: #aaa;
+        }
+
+        /* Helpers */
+        .hidden {
+            display: none !important;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Port Scanner Grid */
+        .port-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 5px;
+        }
+
+        .port-item {
+            border: 1px solid #333;
+            text-align: center;
+            padding: 5px;
+            font-size: 11px;
+        }
+
+        .port-open {
+            background: var(--term-dim);
+            color: #000;
+            border-color: var(--term-green);
+        }
+
+        .port-closed {
+            color: #444;
+        }
+    </style>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+</head>
+
+<body>
+
+    <div class="header window-drag-region">
+        <div class="brand">OMEGA TRACE <span style="font-size:10px;color:var(--term-dim)">// v2.1</span></div>
+        <div style="flex:1"></div> <!-- Spacer -->
+        <div class="window-controls cyber-controls" style="margin-right: 20px;">
+            <button class="control-btn btn-minimize" title="Minimize"></button>
+            <button class="control-btn btn-maximize" title="Maximize"></button>
+            <button class="control-btn btn-close" title="Close"></button>
+        </div>
+    </div>
+
+    <div class="header" style="border:none; padding-top:0; margin-top:-10px;">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="trace">IP TRACE</button>
+            <button class="tab-btn" data-tab="phone">PHONE</button>
+            <button class="tab-btn" data-tab="ports">PORT SCAN</button>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- Sidebar Controls -->
+        <div class="sidebar">
+            <!-- Control Panel -->
+            <div class="panel" style="flex:0 auto;">
+                <div class="panel-header">TARGET PARAMETERS</div>
+                <div class="panel-content">
+                    <div class="input-group">
+                        <input type="text" id="targetInput" placeholder="ENTER TARGET IP..." value="">
+                        <button class="action-btn" id="runBtn">EXECUTE</button>
+                    </div>
+                    <div style="font-size:10px; color:#666;">
+                        Examples: 8.8.8.8, 1.1.1.1
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="panel" style="flex:1;">
+                <div class="panel-header">DATA INTERCEPT</div>
+                <div class="panel-content" id="resultsArea">
+                    <div style="text-align:center; margin-top:50px; color:#333;">NO ACTIVE TARGET</div>
+                </div>
+            </div>
+
+            <!-- Terminal -->
+            <div class="panel" style="height:150px; flex:0 auto;">
+                <div class="panel-header">SYSTEM LOG</div>
+                <div class="console-log" id="console"></div>
+            </div>
+        </div>
+
+        <!-- Main Visualizer (Map) -->
+        <div class="panel" id="map-container">
+            <div class="panel-header">GLOBAL SURVEILLANCE MATRIX</div>
+            <canvas id="mapCanvas"></canvas>
+
+            <!-- Map Overlays -->
+            <div id="mapOverlay"
+                style="position:absolute; top:10px; right:10px; font-size:10px; color:var(--term-green); text-align:right;">
+                COORDS: <span id="overlayLat">00.0000</span>, <span id="overlayLon">00.0000</span><br>
+                ZOOM: 1.0x<br>
+                MODE: SATELLITE
+            </div>
+        </div>
+    </div>
+
+    <script src="trace.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,289 @@
+{
+    "services": {
+        "ssh": {
+            "patterns": [
+                "SSH",
+                "OpenSSH",
+                "Dropbear"
+            ],
+            "vulnerabilities": [
+                {
+                    "versions": [
+                        "<7.7"
+                    ],
+                    "cve": "CVE-2018-15473",
+                    "severity": "medium",
+                    "title": "OpenSSH User Enumeration",
+                    "description": "OpenSSH through 7.7 is prone to a user enumeration vulnerability due to not delaying bailout for an invalid",
+                    "exploit_url": "https://www.exploit-db.com/exploits/45233",
+                    "fix_steps": [
+                        "Upgrade OpenSSH to version 7.7 or later",
+                        "Disable public key authentication if not needed",
+                        "Use Fail2Ban to block repeated failed login attempts"
+                    ],
+                    "exploit_steps": [
+                        "Use exploit-db script 45233.py",
+                        "Run: python 45233.py --userList users.txt --host <target_ip>",
+                        "Analyze output for valid usernames based on response timing"
+                    ]
+                },
+                {
+                    "versions": [
+                        "<8.1"
+                    ],
+                    "cve": "CVE-2019-6111",
+                    "severity": "medium",
+                    "title": "SCP Client Improper Filename Validation",
+                    "description": "An issue was discovered in OpenSSH where the scp client allows remote SSH servers to bypass intended access restrictions.",
+                    "exploit_url": "https://www.exploit-db.com/exploits/46193",
+                    "fix_steps": [
+                        "Upgrade OpenSSH to version 8.1 or later",
+                        "Avoid using scp for untrusted servers; use sftp instead"
+                    ],
+                    "exploit_steps": [
+                        "Set up a malicious SSH server",
+                        "Wait for client to connect via scp",
+                        "Send files with path traversal characters to overwrite client files"
+                    ]
+                }
+            ]
+        },
+        "apache": {
+            "patterns": [
+                "Apache",
+                "Apache/",
+                "httpd"
+            ],
+            "vulnerabilities": [
+                {
+                    "versions": [
+                        "2.4.49",
+                        "2.4.50"
+                    ],
+                    "cve": "CVE-2021-41773",
+                    "severity": "critical",
+                    "title": "Apache HTTP Server Path Traversal and RCE",
+                    "description": "A flaw in Apache HTTP Server 2.4.49/2.4.50 allows an attacker to use a path traversal attack to read files outside the document root.",
+                    "exploit_url": "https://www.exploit-db.com/exploits/50383",
+                    "fix_steps": [
+                        "Upgrade Apache to version 2.4.51 or later",
+                        "Ensure 'Require all denied' is set for root directory in httpd.conf"
+                    ],
+                    "exploit_steps": [
+                        "Send GET request: /cgi-bin/.%2e/%2e%2e/%2e%2e/etc/passwd",
+                        "For RCE: POST /cgi-bin/.%2e/%2e%2e/%2e%2e/bin/sh",
+                        "Body: echo Content-Type: text/plain; echo; id"
+                    ]
+                }
+            ]
+        },
+        "nginx": {
+            "patterns": [
+                "nginx",
+                "nginx/"
+            ],
+            "vulnerabilities": [
+                {
+                    "versions": [
+                        "<1.17.7"
+                    ],
+                    "cve": "CVE-2019-20372",
+                    "severity": "medium",
+                    "title": "Nginx HTTP Request Smuggling",
+                    "description": "NGINX before 1.17.7, can have an HTTP request smuggled past the proxy.",
+                    "exploit_url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-20372",
+                    "fix_steps": [
+                        "Upgrade nginx to version 1.17.7 or later",
+                        "Disable error_page 497 directive if not needed"
+                    ],
+                    "exploit_steps": [
+                        "Send crafted HTTP request with conflicting Transfer-Encoding and Content-Length headers",
+                        "Target a backend server protected by Nginx",
+                        "Attempt to bypass cache or security controls"
+                    ]
+                }
+            ]
+        },
+        "ftp": {
+            "patterns": [
+                "FTP",
+                "vsftpd",
+                "ProFTPD",
+                "Pure-FTPd"
+            ],
+            "vulnerabilities": [
+                {
+                    "versions": [
+                        "vsftpd 2.3.4"
+                    ],
+                    "cve": "CVE-2011-2523",
+                    "severity": "critical",
+                    "title": "vsftpd 2.3.4 Backdoor Command Execution",
+                    "description": "vsftpd 2.3.4 contains a backdoor that opens a shell on port 6200 when a username ending with :) is entered.",
+                    "exploit_url": "https://www.exploit-db.com/exploits/17491",
+                    "fix_steps": [
+                        "Uninstall the backdoored version immediately",
+                        "Install a clean version from official repositories"
+                    ],
+                    "exploit_steps": [
+                        "Connect to FTP port 21",
+                        "Login with username: user:)",
+                        "Enter any password",
+                        "Connect to port 6200 using netcat/telnet for root shell"
+                    ]
+                }
+            ]
+        },
+        "smb": {
+            "patterns": [
+                "SMB",
+                "Samba",
+                "Microsoft-DS",
+                "netbios"
+            ],
+            "vulnerabilities": [
+                {
+                    "versions": [
+                        "SMBv1"
+                    ],
+                    "cve": "CVE-2017-0144",
+                    "severity": "critical",
+                    "title": "EternalBlue SMB Remote Code Execution",
+                    "description": "The SMBv1 server in Microsoft Windows allows remote attackers to execute arbitrary code via crafted packets (EternalBlue/WannaCry).",
+                    "exploit_url": "https://www.exploit-db.com/exploits/42315",
+                    "fix_steps": [
+                        "Install Microsoft Security Bulletin MS17-010",
+                        "Disable SMBv1 via PowerShell: Set-SmbServerConfiguration -EnableSMB1Protocol $false",
+                        "Block port 445 on perimeter firewall"
+                    ],
+                    "exploit_steps": [
+                        "Download AutoBlue-MS17-010 framework",
+                        "Generate shellcode: python shell_prep.py",
+                        "Run exploit: python eternalblue_exploit7.py <target_ip> shellcode.bin",
+                        "Catch reverse shell with netcat listener"
+                    ]
+                }
+            ]
+        }
+    },
+    "web_checks": {
+        "headers": [
+            {
+                "header": "X-Frame-Options",
+                "missing_severity": "medium",
+                "title": "Missing X-Frame-Options Header",
+                "description": "The X-Frame-Options header is not set, making the site vulnerable to clickjacking attacks.",
+                "fix_steps": [
+                    "Apache: Header always append X-Frame-Options SAMEORIGIN",
+                    "Nginx: add_header X-Frame-Options SAMEORIGIN;",
+                    "IIS: Add custom HTTP response header in IIS Manager"
+                ],
+                "exploit_steps": [
+                    "Create an iframe pointing to the target site",
+                    "Overlay transparent buttons over sensitive actions",
+                    "Trick user into clicking the overlay (Clickjacking)"
+                ]
+            },
+            {
+                "header": "Strict-Transport-Security",
+                "missing_severity": "medium",
+                "title": "Missing HSTS Header",
+                "description": "HTTP Strict Transport Security (HSTS) is not enabled, allowing downgrade attacks.",
+                "fix_steps": [
+                    "Apache: Header always set Strict-Transport-Security 'max-age=31536000; includeSubDomains'",
+                    "Nginx: add_header Strict-Transport-Security 'max-age=31536000; includeSubDomains';"
+                ],
+                "exploit_steps": [
+                    "Perform Man-in-the-Middle (MitM) attack",
+                    "Strip HTTPS from initial redirect",
+                    "Downgrade connection to HTTP (SSL Stripping)",
+                    "Intercept persistent traffic"
+                ]
+            }
+        ],
+        "ssl": [
+            {
+                "check": "expired",
+                "severity": "critical",
+                "title": "SSL Certificate Expired",
+                "description": "The SSL/TLS certificate has expired.",
+                "fix_steps": [
+                    "Renew the SSL certificate via your CA (Let's Encrypt, DigiCert, etc.)",
+                    "Install the new certificate on the web server",
+                    "Restart the web server service"
+                ],
+                "exploit_steps": [
+                    "None (Configuration Issue)",
+                    "Users will see security warnings and trust will be verified",
+                    "Traffic is still encrypted but authenticity is not guaranteed"
+                ]
+            }
+        ]
+    },
+    "port_info": {
+        "21": {
+            "service": "FTP",
+            "risk": "medium"
+        },
+        "22": {
+            "service": "SSH",
+            "risk": "low"
+        },
+        "23": {
+            "service": "Telnet",
+            "risk": "high"
+        },
+        "25": {
+            "service": "SMTP",
+            "risk": "medium"
+        },
+        "53": {
+            "service": "DNS",
+            "risk": "low"
+        },
+        "80": {
+            "service": "HTTP",
+            "risk": "low"
+        },
+        "135": {
+            "service": "MSRPC",
+            "risk": "high"
+        },
+        "139": {
+            "service": "NetBIOS",
+            "risk": "high"
+        },
+        "443": {
+            "service": "HTTPS",
+            "risk": "low"
+        },
+        "445": {
+            "service": "SMB",
+            "risk": "high"
+        },
+        "1433": {
+            "service": "MSSQL",
+            "risk": "high"
+        },
+        "3306": {
+            "service": "MySQL",
+            "risk": "high"
+        },
+        "3389": {
+            "service": "RDP",
+            "risk": "high"
+        },
+        "5432": {
+            "service": "PostgreSQL",
+            "risk": "high"
+        },
+        "6379": {
+            "service": "Redis",
+            "risk": "high"
+        },
+        "27017": {
+            "service": "MongoDB",
+            "risk": "high"
+        }
+    }
+}

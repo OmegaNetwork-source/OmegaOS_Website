@@ -264,6 +264,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Tor / Netrunner
   torGetCircuits: () => ipcRenderer.invoke('tor-get-circuits'),
+
+  // Generic Invoke (for new features like Hackerman)
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+
+  // Xploit Logs
+  onXploitLog: (callback) => ipcRenderer.on('xploit-log', (event, data) => callback(data)),
 });
 
 // TOR HARDENING: Fingerprinting Protection

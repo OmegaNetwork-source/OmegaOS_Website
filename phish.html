@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMEGA PHISH // SOCIAL ENGINEERING SUITE</title>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --panel-bg: #151515;
+            --accent-red: #ff3333;
+            --accent-dim: #661111;
+            --text-color: #eee;
+            --font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-stack);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .title-bar {
+            height: 40px;
+            background: #1a0505;
+            border-bottom: 2px solid var(--accent-red);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+        }
+
+        .brand-logo {
+            color: var(--accent-red);
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #111;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-btn {
+            padding: 15px 20px;
+            color: #888;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .nav-btn.active {
+            background: #220b0b;
+            color: var(--accent-red);
+            border-left-color: var(--accent-red);
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--accent-red);
+            font-size: 18px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .form-input,
+        .form-select,
+        textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-red);
+        }
+
+        .btn-action {
+            background: var(--accent-red);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-action:hover {
+            background: #ff5555;
+        }
+
+        .btn-action:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+
+        .log-panel {
+            background: #000;
+            border: 1px solid #333;
+            height: 300px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 2px;
+        }
+
+        .log-time {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .log-data {
+            color: #ddd;
+        }
+
+        .log-highlight {
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-left: 10px;
+            background: #333;
+        }
+
+        .status-running {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+        .status-stopped {
+            background: #b71c1c;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title-bar window-drag-region">
+        <div class="brand-logo">OMEGA PHISH v1.0</div>
+        <div class="window-controls cyber-controls">
+            <button class="control-btn btn-minimize"></button>
+            <button class="control-btn btn-maximize"></button>
+            <button class="control-btn btn-close"></button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="nav-btn active" onclick="switchTab('tab-setup')">📡 SITE CLONER</div>
+            <div class="nav-btn" onclick="switchTab('tab-email')">✉️ EMAIL CAMPAIGN</div>
+            <div class="nav-btn" onclick="switchTab('tab-feed')">👁️ LIVE FEED</div>
+            <div class="nav-btn" onclick="switchTab('tab-help')">📖 HOW TO</div>
+        </div>
+
+        <div class="content-area">
+
+            <!-- SETUP TAB -->
+            <div id="tab-setup" class="tab-content active">
+                <h2>TARGET CONFIGURATION</h2>
+
+                <div class="form-group">
+                    <label class="form-label">QUICK TEMPLATES</label>
+                    <select id="templateSelect" class="form-select" onchange="applyTemplate()">
+                        <option value="">-- Select Template --</option>
+                        <option value="magiceden">🎨 Magic Eden (NFT Marketplace)</option>
+                        <option value="jupiter">🪐 Jupiter (Solana DEX)</option>
+                        <option value="opensea">🌊 OpenSea (NFT Marketplace)</option>
+                        <option value="raydium">⚡ Raydium (Solana DEX)</option>
+                        <option value="uniswap">🦄 Uniswap (Ethereum DEX)</option>
+                        <option value="custom">✏️ Custom URL</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">TARGET URL (Login Page)</label>
+                    <input type="text" id="targetUrl" class="form-input" placeholder="https://example.com/login">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">LOCAL LISTENER PORT</label>
+                    <input type="number" id="listenPort" class="form-input" value="8080">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">REDIRECT URL (Post-Login)</label>
+                    <input type="text" id="redirectUrl" class="form-input"
+                        placeholder="https://example.com (Where to send victim after capture)">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="useNgrok" checked style="margin-right: 8px; cursor: pointer;">
+                        <span class="form-label" style="margin: 0;">Enable Public URL (Cloudflare)</span>
+                    </label>
+                    <small style="color: #888; font-size: 11px; display: block; margin-top: 5px;">
+                        Creates a public URL with no warning page. Uncheck to use localhost only.
+                    </small>
+                </div>
+
+                <!-- Public URL Display -->
+                <div id="publicUrlContainer" style="display: none; margin-top: 15px;">
+                    <label class="form-label">PUBLIC URL</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="publicUrl" readonly
+                            style="flex: 1; background: #1a1a1a; color: #00ff00; border: 1px solid #333; padding: 8px; font-family: monospace;">
+                        <button onclick="copyPublicUrl()"
+                            style="padding: 8px 16px; background: #00ff00; color: #000; border: none; cursor: pointer; font-weight: bold;">COPY</button>
+                    </div>
+                </div>
+
+                <!-- Manual Cloudflare Button -->
+                <div style="margin-top: 15px;">
+                    <button id="btnGetPublicUrl" onclick="getPublicUrl()"
+                        style="width: 100%; padding: 12px; background: #0066ff; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px;">
+                        GET PUBLIC URL (CLOUDFLARE)
+                    </button>
+                    <small style="color: #888; font-size: 11px; display: block; margin-top: 5px;">
+                        Click after starting server to get public URL
+                    </small>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button id="btnCloneStart" class="btn-action">START SERVER</button>
+                    <span id="serverStatus" class="status-badge status-stopped">STOPPED</span>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label class="form-label">SERVER LOG</label>
+                    <div id="cloneLog" class="log-panel" style="height: 150px; color: #888;"></div>
+                </div>
+            </div>
+
+            <!-- EMAIL TAB -->
+            <div id="tab-email" class="tab-content">
+                <h2>CAMPAIGN MAILER</h2>
+
+                <div
+                    style="background: #221; border: 1px solid #442; padding: 10px; margin-bottom: 15px; font-size: 13px; color: #cc8;">
+                    <strong>ℹ️ NOTE:</strong> Sending "Spoofed" emails (fake sender) requires an SMTP server that allows
+                    it.
+                    Most providers (Gmail, Outlook) will overwrite the "From" address with your real login.
+                    Use Port 465 for SSL (Gmail).
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">QUICK PRESETS</label>
+                    <select id="smtpPreset" class="form-select" onchange="applyPreset()">
+                        <option value="">-- Select Provider --</option>
+                        <option value="gmail">Gmail (Requires App Password)</option>
+                        <option value="outlook">Outlook / Office365</option>
+                        <option value="yahoo">Yahoo Mail</option>
+                        <option value="mailgun">Mailgun (Recommended for Testing)</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 20px;">
+                    <div style="flex: 1;">
+                        <div class="form-group">
+                            <label class="form-label">SMTP HOST</label>
+                            <input type="text" id="smtpHost" class="form-input" placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SMTP PORT</label>
+                            <input type="number" id="smtpPort" class="form-input" value="587">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">USERNAME</label>
+                            <input type="text" id="smtpUser" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">PASSWORD</label>
+                            <input type="password" id="smtpPass" class="form-input">
+                        </div>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <div class="form-group">
+                            <label class="form-label">FROM ADDRESS (Spoofed?)</label>
+                            <input type="text" id="mailFrom" class="form-input"
+                                placeholder="security@google-support.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TO ADDRESS</label>
+                            <input type="text" id="mailTo" class="form-input" placeholder="victim@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SUBJECT</label>
+                            <input type="text" id="mailSubject" class="form-input"
+                                value="Urgent: Account Verification Required">
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    style="background: #1a1a1a; border: 1px solid #333; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <h3 style="color: var(--accent-red); margin-top: 0; font-size: 14px; margin-bottom: 10px;">🎭 URL
+                        MASKING</h3>
+                    <div style="display: flex; gap: 15px;">
+                        <div style="flex: 1;">
+                            <label class="form-label">DISPLAY URL (What victim sees)</label>
+                            <input type="text" id="displayUrl" class="form-input"
+                                placeholder="https://apple.com/verify">
+                        </div>
+                        <div style="flex: 1;">
+                            <label class="form-label">ACTUAL URL (Your phishing site)</label>
+                            <input type="text" id="actualUrl" class="form-input" placeholder="http://localhost:8080">
+                        </div>
+                    </div>
+                    <button onclick="insertMaskedLink()" class="btn-action"
+                        style="margin-top: 10px; background: #444; font-size: 12px; padding: 6px 12px;">
+                        INSERT MASKED LINK INTO EMAIL
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">BODY (HTML)</label>
+                    <textarea id="mailBody" class="form-input" style="height: 200px;">
+<h1>Security Alert</h1>
+<p>We detected unusual activity on your account.</p>
+<p>Please <a href="http://localhost:8080">CLICK HERE</a> to verify your identity.</p>
+                    </textarea>
+                </div>
+
+                <div style="text-align: right; margin-bottom: 10px;">
+                    <button id="btnSendMail" class="btn-action">SEND PHISH</button>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">SMTP LOGS</label>
+                    <div id="emailLog" class="log-panel" style="height: 120px; color: #aaa; font-size: 11px;"></div>
+                </div>
+            </div>
+
+            <!-- FEED TAB -->
+            <div id="tab-feed" class="tab-content">
+                <h2>CAPTURED CREDENTIALS</h2>
+                <div id="feedLog" class="log-panel" style="height: 500px;"></div>
+                <div style="text-align: right; margin-top: 10px;">
+                    <button class="btn-action" style="background: #333;"
+                        onclick="document.getElementById('feedLog').innerHTML=''">CLEAR LOGS</button>
+                </div>
+            </div>
+
+            <!-- HOW TO TAB -->
+            <div id="tab-help" class="tab-content">
+                <h2>📖 HOW TO USE OMEGA PHISH</h2>
+
+                <div style="max-width: 900px; line-height: 1.6; color: #ccc;">
+
+                    <!-- SITE CLONER SECTION -->
+                    <h3
+                        style="color: var(--accent-red); margin-top: 20px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                        📡 SITE CLONER
+                    </h3>
+                    <p><strong>Purpose:</strong> Clone any website and host it locally to capture credentials.</p>
+
+                    <p><strong>Steps:</strong></p>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Select a Template</strong> or enter a custom URL (e.g.,
+                            <code>https://example.com/login</code>)
+                        </li>
+                        <li><strong>Set Local Port</strong> (default: 8080) - this is where your cloned site will be
+                            hosted</li>
+                        <li><strong>Set Redirect URL</strong> - where victims go after entering credentials (usually the
+                            real site)</li>
+                        <li>Click <strong>START SERVER</strong></li>
+                        <li>Share the generated link (e.g., <code>http://localhost:8080</code>) in your phishing email
+                        </li>
+                        <li>Captured credentials appear in the <strong>LIVE FEED</strong> tab</li>
+                    </ol>
+
+                    <h4 style="color: #ff8888; margin-top: 15px;">🛡️ Cloudflare Bypass</h4>
+                    <p>If the target site is protected by Cloudflare, the cloner includes automatic bypass:</p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>User-Agent Spoofing:</strong> Mimics a real browser to avoid detection</li>
+                        <li><strong>Automatic Retry:</strong> Handles Cloudflare challenges automatically</li>
+                        <li><strong>Cookie Handling:</strong> Preserves session cookies for authenticated pages</li>
+                    </ul>
+                    <p style="background: #221; border-left: 3px solid #5f5; padding: 10px; margin: 10px 0;">
+                        <strong>✅ Tip:</strong> If cloning fails, check the Server Log for details. Some sites have
+                        advanced
+                        anti-bot measures that may require manual intervention.
+                    </p>
+
+                    <p style="background: #221; border-left: 3px solid #f55; padding: 10px; margin: 10px 0;">
+                        <strong>⚠️ Note:</strong> The cloned site runs on YOUR computer. To make it accessible to
+                        others,
+                        you'll need to use port forwarding or a tunneling service like ngrok.
+                    </p>
+
+                    <!-- EMAIL CAMPAIGN SECTION -->
+                    <h3
+                        style="color: var(--accent-red); margin-top: 30px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                        ✉️ EMAIL CAMPAIGN
+                    </h3>
+                    <p><strong>Purpose:</strong> Send phishing emails using SMTP servers.</p>
+
+                    <h4 style="color: #ff8888; margin-top: 15px;">🎭 URL MASKING</h4>
+                    <p>Make your phishing links look more legitimate by displaying one URL while linking to another:</p>
+                    <ol style="margin-left: 20px;">
+                        <li>Enter the <strong>Display URL</strong> - what the victim sees (e.g.,
+                            <code>https://apple.com/verify</code>)</li>
+                        <li>Enter the <strong>Actual URL</strong> - your phishing site (e.g.,
+                            <code>http://localhost:8080</code>)</li>
+                        <li>Click <strong>"INSERT MASKED LINK INTO EMAIL"</strong></li>
+                        <li>The masked link will be inserted into your email body at the cursor position</li>
+                    </ol>
+                    <p style="background: #221; border-left: 3px solid #fa0; padding: 10px; margin: 10px 0;">
+                        <strong>⚠️ Note:</strong> When the victim hovers over the link, their email client will show the
+                        actual URL in the status bar. This is a limitation of email security. The text will still show
+                        the
+                        display URL, which can be enough to fool less tech-savvy users.
+                    </p>
+
+                    <h4 style="color: #ff8888; margin-top: 15px;">🔐 GMAIL SETUP</h4>
+                    <ol style="margin-left: 20px;">
+                        <li>Go to <a href="https://myaccount.google.com/security" target="_blank"
+                                style="color: #88ccff;">Google Account Security</a></li>
+                        <li>Enable <strong>2-Step Verification</strong> (required)</li>
+                        <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank"
+                                style="color: #88ccff;">App Passwords</a></li>
+                        <li>Generate a new App Password (16-character code like <code>abcd efgh ijkl mnop</code>)</li>
+                        <li>In Omega Phish:
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><strong>SMTP Host:</strong> <code>smtp.gmail.com</code></li>
+                                <li><strong>Port:</strong> <code>465</code> (SSL)</li>
+                                <li><strong>Username:</strong> Your Gmail address</li>
+                                <li><strong>Password:</strong> The 16-char App Password (NOT your regular password)</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p style="background: #221; border-left: 3px solid #fa0; padding: 10px; margin: 10px 0;">
+                        <strong>⚠️ Important:</strong> Gmail will overwrite the "FROM" address with your real email.
+                        True spoofing is not possible with Gmail.
+                    </p>
+
+                    <h4 style="color: #ff8888; margin-top: 15px;">🔐 OUTLOOK SETUP</h4>
+                    <ol style="margin-left: 20px;">
+                        <li>Go to <a href="https://account.microsoft.com/security" target="_blank"
+                                style="color: #88ccff;">Microsoft Account Security</a></li>
+                        <li>Click <strong>Advanced security options</strong></li>
+                        <li>Under <strong>App passwords</strong>, create a new one</li>
+                        <li>In Omega Phish:
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><strong>SMTP Host:</strong> <code>smtp.office365.com</code></li>
+                                <li><strong>Port:</strong> <code>587</code></li>
+                                <li><strong>Username:</strong> Your Outlook email</li>
+                                <li><strong>Password:</strong> The generated App Password</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h4 style="color: #ff8888; margin-top: 15px;">🔐 MAILGUN SETUP (Recommended for Testing)</h4>
+                    <ol style="margin-left: 20px;">
+                        <li>Sign up at <a href="https://www.mailgun.com" target="_blank"
+                                style="color: #88ccff;">mailgun.com</a></li>
+                        <li>In the dashboard, go to <strong>Sending → Domain settings</strong></li>
+                        <li>Click on your sandbox domain (e.g., <code>sandbox123abc.mailgun.org</code>)</li>
+                        <li>Find <strong>SMTP credentials</strong>:
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><strong>SMTP Host:</strong> <code>smtp.mailgun.org</code></li>
+                                <li><strong>Port:</strong> <code>587</code></li>
+                                <li><strong>Username:</strong> <code>postmaster@sandboxXXXXX.mailgun.org</code></li>
+                                <li><strong>Password:</strong> Click "Reset password" to get it</li>
+                            </ul>
+                        </li>
+                        <li><strong>CRITICAL:</strong> Add authorized recipients:
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>Go to <strong>Sending → Authorized Recipients</strong></li>
+                                <li>Add the email you want to send TO</li>
+                                <li>Verify it by clicking the link sent to that email</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p style="background: #221; border-left: 3px solid #5f5; padding: 10px; margin: 10px 0;">
+                        <strong>✅ Why Mailgun?</strong> Free tier, no 2FA hassles, works great for testing.
+                        Sandbox accounts can only send to authorized recipients (perfect for ethical testing).
+                    </p>
+
+                    <!-- TIPS SECTION -->
+                    <h3
+                        style="color: var(--accent-red); margin-top: 30px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                        💡 TIPS & TROUBLESHOOTING
+                    </h3>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>Email goes to spam?</strong> Use a realistic FROM address (not
+                            <code>security@google.com</code>).
+                            Use your actual Mailgun domain instead.
+                        </li>
+                        <li><strong>Connection timeout?</strong> Check firewall settings. Try port 465 (SSL) instead of
+                            587.</li>
+                        <li><strong>Auth failed?</strong> Make sure you're using an App Password, not your regular
+                            password.</li>
+                        <li><strong>Email not received?</strong> Check spam folder. Check Mailgun logs (Sending → Logs).
+                        </li>
+                        <li><strong>Cloned site looks broken?</strong> Some sites use anti-scraping measures. Try a
+                            simpler target first.</li>
+                    </ul>
+
+                    <p style="background: #221; border-left: 3px solid #f55; padding: 10px; margin: 20px 0;">
+                        <strong>⚠️ LEGAL WARNING:</strong> This tool is for educational and authorized security testing
+                        only.
+                        Unauthorized phishing is illegal. Always get written permission before testing.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="phish.js"></script>
+</body>
+
+</html>

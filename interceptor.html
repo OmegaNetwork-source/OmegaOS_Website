@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMEGA INTERCEPTOR // WEB REPEATER</title>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+    <style>
+        :root {
+            --bg-color: #111;
+            --panel-bg: #1e1e1e;
+            --accent-orange: #ff9900;
+            --text-color: #ddd;
+            --font-mono: 'Consolas', 'Monaco', monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .title-bar {
+            height: 40px;
+            background: #221100;
+            border-bottom: 2px solid var(--accent-orange);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+        }
+
+        .brand-logo {
+            color: var(--accent-orange);
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .workspace {
+            display: flex;
+            flex: 1;
+            padding: 10px;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--panel-bg);
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .panel-header {
+            font-weight: bold;
+            color: var(--accent-orange);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+
+        input,
+        textarea,
+        select {
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px;
+            font-family: inherit;
+            resize: none;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+        }
+
+        .btn-send {
+            background: var(--accent-orange);
+            color: #000;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-send:hover {
+            background: #ffaa33;
+        }
+
+        .response-meta {
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+
+        #responseBody {
+            flex: 1;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title-bar window-drag-region">
+        <div class="brand-logo">INTERCEPTOR</div>
+        <div class="window-controls cyber-controls">
+            <button class="control-btn btn-minimize"></button>
+            <button class="control-btn btn-maximize"></button>
+            <button class="control-btn btn-close"></button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <div class="panel">
+            <div class="panel-header">Request Builder</div>
+
+            <div class="form-row">
+                <div class="form-group" style="width: 100px;">
+                    <label>METHOD</label>
+                    <select id="reqMethod">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                        <option>HEAD</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label>URL</label>
+                    <input type="text" id="reqUrl" value="http://localhost">
+                </div>
+            </div>
+
+            <div class="form-group" style="height: 120px;">
+                <label>HEADERS (JSON format for now)</label>
+                <textarea id="reqHeaders">{"User-Agent": "OmegaInterceptor/1.0", "Accept": "*/*"}</textarea>
+            </div>
+
+            <div class="form-group" style="flex:1">
+                <label>BODY (Raw)</label>
+                <textarea id="reqBody"></textarea>
+            </div>
+
+            <button class="btn-send" id="sendBtn">SEND REQUEST</button>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Response</div>
+            <div class="response-meta">
+                <span id="resStatus">Status: -</span>
+                <span id="resTime">Time: -</span>
+            </div>
+
+            <textarea id="responseBody" readonly placeholder="Waiting for response..."></textarea>
+        </div>
+    </div>
+
+    <script src="interceptor.js"></script>
+</body>
+
+</html>

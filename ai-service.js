@@ -78,7 +78,12 @@ class AIService {
     }
 
     if (!check.available) {
-      throw new Error('Ollama is not running. Please restart Omega OS.');
+      const errorMsg = check.error || 'unknown error';
+      if (errorMsg.includes('ECONNREFUSED')) {
+        throw new Error('Ollama is not running. Please install Ollama from https://ollama.ai or wait a few minutes if it was just starting.');
+      } else {
+        throw new Error(`Ollama is not available: ${errorMsg}. Please install Ollama from https://ollama.ai or restart Omega OS.`);
+      }
     }
 
     // Check if model exists, if not try to find best available model

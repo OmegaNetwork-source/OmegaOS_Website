@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XPLOIT // FRAMEWORK</title>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-panel: #141414;
+            --accent-red: #ff3333;
+            --accent-dim: #8a1c1c;
+            --text-main: #e0e0e0;
+            --font-mono: 'Consolas', 'Monaco', monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 40px;
+            background: #1a0505;
+            border-bottom: 2px solid var(--accent-red);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+        }
+
+        .brand-logo {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--accent-red);
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--accent-dim);
+        }
+
+        /* Layout */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--bg-panel);
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .module-search {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .search-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 5px;
+            font-family: inherit;
+        }
+
+        .module-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .module-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #222;
+            transition: background 0.2s;
+            font-size: 13px;
+        }
+
+        .module-item:hover {
+            background: #220000;
+            color: #fff;
+        }
+
+        .module-item.active {
+            background: var(--accent-dim);
+            color: #fff;
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .mod-type {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        /* Config Panel */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: radial-gradient(circle at top right, #1a0505 0%, #0a0a0a 60%);
+        }
+
+        .config-header {
+            font-size: 24px;
+            color: var(--accent-red);
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-red);
+            outline: none;
+        }
+
+        .exploit-btn {
+            background: var(--accent-red);
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .exploit-btn:hover {
+            background: #ff5555;
+            box-shadow: 0 0 15px var(--accent-dim);
+        }
+
+        /* Console */
+        .console-panel {
+            height: 200px;
+            background: #000;
+            border-top: 1px solid var(--accent-dim);
+            padding: 10px;
+            font-size: 12px;
+            overflow-y: auto;
+            color: #ccc;
+        }
+
+        .log-line {
+            margin-bottom: 2px;
+            font-family: 'Consolas', monospace;
+        }
+
+        .log-success {
+            color: #00ff00;
+        }
+
+        .log-error {
+            color: #ff0000;
+        }
+
+        .log-warn {
+            color: #ffcc00;
+        }
+
+        .log-info {
+            color: #5599ff;
+        }
+
+        .prompt {
+            color: var(--accent-red);
+            margin-right: 5px;
+        }
+
+        /* Helpers */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title-bar window-drag-region">
+        <div class="brand-logo">XPLOIT FRAMEWORK <span style="font-size:10px; opacity:0.6">v4.0</span></div>
+        <div class="window-controls cyber-controls">
+            <button class="control-btn btn-minimize"></button>
+            <button class="control-btn btn-maximize"></button>
+            <button class="control-btn btn-close"></button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <!-- Module Sidebar -->
+        <div class="sidebar">
+            <div class="module-search">
+                <input type="text" class="search-input" placeholder="Search modules..." id="searchBox">
+            </div>
+            <div class="module-list" id="moduleList">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Main Config -->
+        <div class="main-panel">
+            <div id="moduleConfig" style="flex:1">
+                <div class="config-header" id="confTitle">SELECT MODULE</div>
+                <div id="confDesc" style="color:#666; margin-bottom:20px;">Choose a tool from the sidebar to configure.
+                </div>
+
+                <div id="confForm"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Console -->
+    <div class="console-panel" id="console">
+        <div class="log-line"><span class="prompt">msf6 ></span>Initialized Xploit Framework.</div>
+        <div class="log-line"><span class="prompt">msf6 ></span>Ready for input.</div>
+    </div>
+
+    <script src="xploit.js"></script>
+</body>
+
+</html>

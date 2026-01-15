@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMEGA CRACK // HASH BREAKER</title>
+    <link rel="stylesheet" href="window-controls.css">
+    <script src="window-controls.js"></script>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --terminal-bg: #0a0a0a;
+            --accent-main: #00ff9d;
+            /* Green for Crack */
+            --accent-dim: #005533;
+            --text-color: #e0e0e0;
+            --font-stack: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-stack);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .title-bar {
+            height: 40px;
+            background: #001a10;
+            border-bottom: 2px solid var(--accent-main);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+        }
+
+        .brand-logo {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--accent-main);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .input-panel {
+            background: var(--terminal-bg);
+            border: 1px solid #333;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input,
+        select {
+            background: #000;
+            border: 1px solid #444;
+            color: var(--accent-main);
+            padding: 8px;
+            font-family: inherit;
+            flex: 1;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-main);
+        }
+
+        .btn-crack {
+            background: var(--accent-main);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-crack:hover {
+            background: #00cc7a;
+            box-shadow: 0 0 10px var(--accent-dim);
+        }
+
+        .btn-crack:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .visualizer-panel {
+            flex: 1;
+            background: #000;
+            border: 1px solid var(--accent-dim);
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .matrix-column {
+            position: absolute;
+            top: 0;
+            width: 20px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 10px;
+        }
+
+        .attempt-log {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid var(--accent-dim);
+            padding: 10px;
+            overflow-y: auto;
+            color: var(--accent-main);
+            font-size: 12px;
+            display: flex;
+            flex-direction: column-reverse;
+            /* Pin to bottom */
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 11px;
+            color: #888;
+        }
+
+        .highlight {
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title-bar window-drag-region">
+        <div class="brand-logo">OMEGA CRACK v1.0</div>
+        <div class="window-controls cyber-controls">
+            <button class="control-btn btn-minimize"></button>
+            <button class="control-btn btn-maximize"></button>
+            <button class="control-btn btn-close"></button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="input-panel">
+            <div class="form-row" style="align-items: flex-start;">
+                <textarea id="targetList"
+                    placeholder="TARGET LIST (User:Hash)&#10;admin:5f4dcc3b5aa765d61d8327deb882cf99&#10;guest:098f6bcd4621d373cade4e832627b4f6"
+                    style="height: 100px;"></textarea>
+                <select id="algoSelect" style="flex: 0 0 100px;">
+                    <option value="md5">MD5</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <select id="attackMode">
+                    <option value="dict">Dictionary Attack (Fast)</option>
+                    <option value="brute">Brute Force (Slow)</option>
+                </select>
+                <button id="startBtn" class="btn-crack">INITIALIZE CRACK</button>
+            </div>
+        </div>
+
+        <div class="visualizer-panel" id="matrixArea">
+            <!-- Matrix rain canvas or DOM elements -->
+            <div class="status-header">
+                <span id="speedDisplay">0 H/s</span>
+                <span id="attemptDisplay">Attempts: 0</span>
+            </div>
+            <div class="attempt-log" id="logArea">
+                <div>> SYSTEM READY</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="crack.js"></script>
+</body>
+
+</html>

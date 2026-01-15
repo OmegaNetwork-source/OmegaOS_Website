@@ -488,6 +488,71 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #666;
         }
+
+        /* Beta Banner */
+        .beta-banner {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 152, 0, 0.15));
+            border-bottom: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-shrink: 0;
+            font-size: 0.9em;
+            color: var(--text-main);
+        }
+
+        .beta-banner.hidden {
+            display: none;
+        }
+
+        .beta-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .beta-banner-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            color: #ffc107;
+        }
+
+        .beta-banner-text {
+            line-height: 1.5;
+        }
+
+        .beta-banner-title {
+            font-weight: 600;
+            color: #ffc107;
+            margin-bottom: 2px;
+        }
+
+        .beta-banner-message {
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+
+        .beta-banner-close {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .beta-banner-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: var(--text-main);
+        }
     </style>
 </head>
 
@@ -528,6 +593,20 @@
         </div>
     </div>
 
+    <!-- Beta Banner -->
+    <div class="beta-banner" id="betaBanner">
+        <div class="beta-banner-content">
+            <svg class="beta-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <div class="beta-banner-text">
+                <div class="beta-banner-title">Beta Release Notice</div>
+                <div class="beta-banner-message">This application is currently in beta testing. You may experience connection issues, service interruptions, or unexpected behavior. We appreciate your patience as we continue to improve stability and performance.</div>
+            </div>
+        </div>
+        <button class="beta-banner-close" id="betaBannerClose" title="Dismiss">Dismiss</button>
+    </div>
+
     <!-- Main Container Layout -->
     <div class="main-container">
         <!-- Sidebar -->
@@ -537,9 +616,25 @@
                 <div class="my-id-value" id="myOnionId">Loading...</div>
             </div>
 
+            <!-- Tor Status Indicator (compact) -->
+            <div id="torStatus"
+                style="background: rgba(255,100,100,0.2); border: 1px solid #ff6666; border-radius: 4px; padding: 4px 8px; margin-bottom: 10px; font-size: 0.7em;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span id="torStatusDot"
+                        style="width: 6px; height: 6px; border-radius: 50%; background: #ff6666;"></span>
+                    <span id="torStatusText">Tor: Checking...</span>
+                </div>
+            </div>
+
             <div class="contacts-header">
                 <span>Contacts</span>
                 <button class="add-contact-btn" id="addContactBtn">+</button>
+            </div>
+
+            <!-- Helpful note about contacts -->
+            <div
+                style="font-size: 0.7em; color: #666; padding: 8px; margin-bottom: 5px; border-radius: 4px; background: rgba(255,255,255,0.03);">
+                💡 Add contacts to see their messages
             </div>
 
             <div class="contacts-list" id="contactsList">
@@ -582,7 +677,7 @@
                 </div>
                 <input type="text" class="msg-input" id="messageInput" placeholder="Type a message..."
                     autocomplete="off">
-                <button class="send-btn" id="sendBtn">➤</button>
+                <button type="button" class="send-btn" id="sendBtn">➤</button>
             </div>
         </div>
     </div>
