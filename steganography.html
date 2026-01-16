@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostImage - Steganography Tool</title>
+    <link rel="stylesheet" href="steganography.css">
+    <link rel="stylesheet" href="window-controls.css">
+</head>
+
+<body>
+    <div class="title-bar">
+        <div class="title-bar-text">GhostImage v1.0</div>
+        <div class="window-controls">
+            <button class="window-control minimize" id="minimizeBtn">-</button>
+            <button class="window-control maximize" id="maximizeBtn">□</button>
+            <button class="window-control close" id="closeBtn">×</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="brand">
+                <span class="icon">👻</span> GhostImage
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="encode">
+                    <span class="icon">🔒</span> Hide Data
+                </button>
+                <button class="nav-btn" data-tab="decode">
+                    <span class="icon">🔓</span> Extract Data
+                </button>
+            </nav>
+            <div class="status-panel">
+                <div class="status-item">
+                    <span class="label">Algorithm</span>
+                    <span class="value">LSB-3</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Encryption</span>
+                    <span class="value">AES-256</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- ENCODE TAB -->
+            <div id="encode-tab" class="tab-content active">
+                <div class="card upload-card">
+                    <div class="card-header">1. Select Cover Image</div>
+                    <div class="upload-area" id="encode-upload">
+                        <div class="upload-placeholder">
+                            <span class="icon">📁</span>
+                            <p>Drag & Drop or Click to Upload</p>
+                            <span class="subtext">Supports PNG, JPG (Output is always PNG)</span>
+                        </div>
+                        <img id="encode-preview" class="preview-hidden" alt="Preview">
+                        <input type="file" id="encode-file-input" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div class="card message-card">
+                    <div class="card-header">2. Enter Secret Message</div>
+                    <textarea id="secret-message" placeholder="Type your hidden message here..."></textarea>
+
+                    <div class="encryption-options">
+                        <div class="input-group">
+                            <label>Password (Optional)</label>
+                            <input type="password" id="encode-password" placeholder="Encrypt your data">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <div class="capacity-meter">
+                        <div class="meter-label">Capacity Usage: <span id="capacity-text">0%</span></div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="capacity-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btn-encode">
+                        <span class="icon">👻</span> GHOST IT
+                    </button>
+                </div>
+            </div>
+
+            <!-- DECODE TAB -->
+            <div id="decode-tab" class="tab-content">
+                <div class="card upload-card">
+                    <div class="card-header">Select Ghost Image</div>
+                    <div class="upload-area" id="decode-upload">
+                        <div class="upload-placeholder">
+                            <span class="icon">🕵️</span>
+                            <p>Drag & Drop Image to Analyze</p>
+                        </div>
+                        <img id="decode-preview" class="preview-hidden" alt="Preview">
+                        <input type="file" id="decode-file-input" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div class="card result-card">
+                    <div class="card-header">Decryption</div>
+                    <div class="input-group">
+                        <label>Enter Password</label>
+                        <input type="password" id="decode-password" placeholder="Required if message is encrypted">
+                    </div>
+
+                    <button class="btn-primary full-width" id="btn-decode">
+                        <span class="icon">🔓</span> REVEAL SECRETS
+                    </button>
+                </div>
+
+                <div class="output-area hidden" id="decode-output-area">
+                    <label>Hidden Message:</label>
+                    <div class="decoded-text" id="decoded-text"></div>
+                    <button class="btn-secondary copy-btn" id="btn-copy">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="result-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ghost Image Created</h3>
+                <button class="close-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="result-preview">
+                    <img id="result-image" alt="Result">
+                </div>
+                <p>Your message has been hidden safely inside this image.</p>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="btn-download">Download Image</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="steganography.js"></script>
+</body>
+
+</html>

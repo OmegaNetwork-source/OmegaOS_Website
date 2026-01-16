@@ -279,6 +279,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 (function () {
   'use strict';
 
+  // Skip fingerprinting protection for Steganography tool
+  if (window.location.href.includes('steganography.html')) return;
+
   // Store original values
   const originalNavigator = window.navigator;
 

@@ -404,6 +404,10 @@ function createAppWindow(appType, options = {}) {
     appFile = 'omega-vuln.html';
     width = options.width || 1000;
     height = options.height || 750;
+  } else if (appType === 'steganography') {
+    appFile = 'steganography.html';
+    width = options.width || 1000;
+    height = options.height || 700;
   } else {
     return null;
   }
@@ -431,7 +435,7 @@ function createAppWindow(appType, options = {}) {
       contextIsolation: true,
       enableRemoteModule: false,
       preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true,
+      webSecurity: appType !== 'steganography', // Disable for steganography to allow canvas ops
       sandbox: true, // STRICT SANDBOX FOR ALL APPS
       webviewTag: !isWallet, // Disable webview for wallet (offline mode)
       // OFFLINE MODE: Disable network access for wallet

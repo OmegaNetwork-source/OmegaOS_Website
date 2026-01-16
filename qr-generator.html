@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,7 +107,7 @@
             align-items: center;
             justify-content: center;
             z-index: 100;
-            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
             transition: left 0.3s ease, background 0.2s;
         }
 
@@ -148,7 +149,9 @@
             color: #555;
         }
 
-        input, select, textarea {
+        input,
+        select,
+        textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
@@ -259,7 +262,7 @@
             background: white;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             min-width: 400px;
             display: flex;
@@ -306,6 +309,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title">Omega QR Generator</div>
@@ -422,6 +426,21 @@
                     <button class="btn btn-secondary btn-download" onclick="downloadQR('png')">Download PNG</button>
                     <button class="btn btn-secondary btn-download" onclick="downloadQR('svg')">Download SVG</button>
                 </div>
+                <!-- Bounce Mode Toggle -->
+                <button class="btn btn-secondary" id="bounceBtn" onclick="toggleBounceMode()"
+                    style="margin-top: 10px; display: none;">
+                    🖥️ Bounce Mode (Screensaver)
+                </button>
+            </div>
+
+            <!-- Bounce Animation Container -->
+            <div id="bounceContainer"
+                style="display: none; position: absolute; top: 32px; left: 0; right: 0; bottom: 0; background: #000; overflow: hidden; z-index: 1000;">
+                <div id="bouncingQR" style="position: absolute; will-change: transform;"></div>
+                <button onclick="toggleBounceMode()"
+                    style="position: absolute; top: 20px; right: 20px; padding: 10px 20px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 4px; cursor: pointer; z-index: 1001;">
+                    Exit Bounce Mode
+                </button>
             </div>
         </div>
     </div>
@@ -437,7 +456,7 @@
             const toggleBtn = document.getElementById('sidebarToggle');
             const toggleIcon = document.getElementById('sidebarToggleIcon');
             sidebarMinimized = !sidebarMinimized;
-            
+
             if (sidebarMinimized) {
                 sidebar.classList.add('minimized');
                 toggleBtn.style.left = '0';
@@ -496,7 +515,7 @@
             let content = '';
 
             try {
-                switch(currentType) {
+                switch (currentType) {
                     case 'text':
                         content = document.getElementById('textContent').value.trim();
                         if (!content) {
@@ -516,11 +535,11 @@
                         const ssid = document.getElementById('wifiSSID').value.trim();
                         const password = document.getElementById('wifiPassword').value.trim();
                         const security = document.getElementById('wifiSecurity').value;
-                        
+
                         if (!ssid) {
                             throw new Error('Please enter WiFi network name');
                         }
-                        
+
                         // WiFi QR format: WIFI:T:WPA;S:networkname;P:password;;
                         if (security === 'nopass') {
                             content = `WIFI:T:nopass;S:${ssid};;`;
@@ -535,11 +554,11 @@
                         const email = document.getElementById('emailAddress').value.trim();
                         const subject = document.getElementById('emailSubject').value.trim();
                         const body = document.getElementById('emailBody').value.trim();
-                        
+
                         if (!email) {
                             throw new Error('Please enter email address');
                         }
-                        
+
                         // Email QR format: mailto:email?subject=subject&body=body
                         let mailto = `mailto:${email}`;
                         const params = [];
@@ -554,7 +573,7 @@
 
                 // Clear previous QR code
                 document.getElementById('qrcode').innerHTML = '';
-                
+
                 // Get options
                 const width = parseInt(document.getElementById('qrWidth').value);
                 const height = parseInt(document.getElementById('qrHeight').value);
@@ -574,6 +593,8 @@
 
                 // Show download buttons
                 document.getElementById('qrActions').style.display = 'flex';
+                // Show bounce button
+                document.getElementById('bounceBtn').style.display = 'block';
 
             } catch (error) {
                 errorMsg.textContent = error.message;
@@ -624,6 +645,135 @@
             }
         });
 
+        // --- Bounce Animation Logic ---
+        let bounceActive = false;
+        let bounceAnimId = null;
+        let bouncePos = { x: 0, y: 0 };
+        let bounceVel = { x: 2, y: 2 }; // Speed
+        let bounceEl = document.getElementById('bouncingQR');
+        let bounceContainer = document.getElementById('bounceContainer');
+
+        function toggleBounceMode() {
+            bounceActive = !bounceActive;
+            const qrcodeEl = document.getElementById('qrcode');
+            const bounceEl = document.getElementById('bouncingQR');
+
+            if (bounceActive) {
+                if (!qrcodeEl.hasChildNodes()) return; // No QR generated yet
+
+                // Show container
+                bounceContainer.style.display = 'block';
+
+                // MOVE the existing QR element to the bounce container
+                // This avoids canvas dataURL issues completely
+                while (qrcodeEl.firstChild) {
+                    const child = qrcodeEl.firstChild;
+                    // Apply bounce styles
+                    child.dataset.originalWidth = child.style.width;
+                    child.dataset.originalHeight = child.style.height;
+
+                    child.style.width = '200px';
+                    child.style.height = '200px';
+                    child.style.boxShadow = '0 0 20px rgba(255,255,255,0.5)';
+                    child.style.borderRadius = '4px';
+
+                    bounceEl.appendChild(child);
+                }
+
+                startBounce();
+            } else {
+                bounceContainer.style.display = 'none';
+                stopBounce();
+
+                // MOVE content back
+                while (bounceEl.firstChild) {
+                    const child = bounceEl.firstChild;
+                    // Restore styles
+                    child.style.width = child.dataset.originalWidth || '';
+                    child.style.height = child.dataset.originalHeight || '';
+                    child.style.boxShadow = '';
+                    child.style.borderRadius = '';
+
+                    qrcodeEl.appendChild(child);
+                }
+            }
+        }
+
+        function startBounce() {
+            stopBounce(); // Clear existing
+
+            // Random start position
+            const maxX = Math.max(0, bounceContainer.clientWidth - 200);
+            const maxY = Math.max(0, bounceContainer.clientHeight - 200);
+            bouncePos.x = Math.random() * maxX;
+            bouncePos.y = Math.random() * maxY;
+
+            // Apply initial transform to avoid jump
+            bounceEl.style.transform = `translate(${bouncePos.x}px, ${bouncePos.y}px)`;
+
+            // Random direction
+            // Reduced speed: Base 1, max 1.5 (was Base 2, max 4)
+            bounceVel.x = (Math.random() > 0.5 ? 1 : -1) * (0.8 + Math.random() * 0.5);
+            bounceVel.y = (Math.random() > 0.5 ? 1 : -1) * (0.8 + Math.random() * 0.5);
+
+            updateBounce();
+        }
+
+        function stopBounce() {
+            if (bounceAnimId) {
+                cancelAnimationFrame(bounceAnimId);
+                bounceAnimId = null;
+            }
+        }
+
+        function updateBounce() {
+            if (!bounceActive) return;
+
+            const qrSize = 200; // Fixed size for bounce mode
+            const bounds = {
+                w: bounceContainer.clientWidth,
+                h: bounceContainer.clientHeight
+            };
+
+            // Update position
+            bouncePos.x += bounceVel.x;
+            bouncePos.y += bounceVel.y;
+
+            // Bounce X
+            if (bouncePos.x <= 0) {
+                bouncePos.x = 0;
+                bounceVel.x *= -1;
+                changeColor();
+            } else if (bouncePos.x + qrSize >= bounds.w) {
+                bouncePos.x = bounds.w - qrSize;
+                bounceVel.x *= -1;
+                changeColor();
+            }
+
+            // Bounce Y
+            if (bouncePos.y <= 0) {
+                bouncePos.y = 0;
+                bounceVel.y *= -1;
+                changeColor();
+            } else if (bouncePos.y + qrSize >= bounds.h) {
+                bouncePos.y = bounds.h - qrSize;
+                bounceVel.y *= -1;
+                changeColor();
+            }
+
+            // Apply transform
+            bounceEl.style.transform = `translate(${bouncePos.x}px, ${bouncePos.y}px)`;
+
+            bounceAnimId = requestAnimationFrame(updateBounce);
+        }
+
+        function changeColor() {
+            // Optional: Change shadow color on bounce
+            const hue = Math.floor(Math.random() * 360);
+            bounceEl.children[0].style.boxShadow = `0 0 30px hsla(${hue}, 100%, 70%, 0.8)`;
+        }
+        // ------------------------------
+
         // Sidebar Toggle Button
         document.getElementById('sidebarToggle').addEventListener('click', () => {
             toggleSidebar();
@@ -656,4 +806,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -590,7 +590,8 @@ const appFolders = {
             { id: 'phish', name: 'Omega Phish', icon: '🎣', app: 'phish' },
             { id: 'drainer', name: 'Omega Drainer', icon: '💸', app: 'drainer' },
             { id: 'vuln', name: 'Omega Vuln', icon: '🛡️', app: 'vuln' },
-            { id: 'cloudflare-tunnel', name: 'Cloudflare Tunnel', icon: '☁️', app: 'cloudflare-tunnel' }
+            { id: 'cloudflare-tunnel', name: 'Cloudflare Tunnel', icon: '☁️', app: 'cloudflare-tunnel' },
+            { id: 'steganography', name: 'GhostImage', icon: '👻', app: 'steganography' }
         ]
     }
 };

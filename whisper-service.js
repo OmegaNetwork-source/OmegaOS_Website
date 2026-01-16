@@ -423,7 +423,10 @@ class WhisperService {
 
             // Use socks5h:// (note the 'h' at the end) which enables hostname resolution through SOCKS
             // This is important for .onion addresses
-            const agent = new SocksProxyAgent('socks5h://127.0.0.1:9050');
+            const agent = new SocksProxyAgent('socks5h://127.0.0.1:9050', {
+                keepAlive: true,
+                timeout: 120000
+            });
             const postData = JSON.stringify(payload);
 
             const options = {
@@ -435,11 +438,13 @@ class WhisperService {
                 headers: {
                     'Content-Type': 'application/json',
                     'Content-Length': Buffer.byteLength(postData),
-                    'Connection': 'close' // Ensure connection is closed after request
+                    'Connection': 'keep-alive'
                 },
-                timeout: 120000, // 120 seconds (hidden services can be slow)
-                // Allow .onion addresses
-                lookup: false // Disable DNS lookup (SOCKS handles it)
+                timeout: 120000,
+                // CRITICAL: Disable local DNS lookup to force SOCKS remote resolution
+                lookup: (hostname, options, callback) => {
+                    callback(null, hostname, 4);
+                }
             };
 
             this.log('info', `Making HTTP request to ${fullOnionAddress}:80/message via SOCKS5`);

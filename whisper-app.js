@@ -34,9 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup debug panel
     setupDebugPanel();
 
-    // Setup debug panel
-    setupDebugPanel();
-
     // Event Listeners
     setupEventListeners();
 
@@ -629,6 +626,7 @@ function setupDebugPanel() {
     const toggleBtn = document.getElementById('toggleDebugBtn');
     const closeBtn = document.getElementById('closeDebugBtn');
     const clearBtn = document.getElementById('clearLogsBtn');
+    const copyBtn = document.getElementById('copyLogsBtn');
     const content = document.getElementById('debugLogContent');
 
     if (!debugPanel || !toggleBtn) return;
@@ -649,6 +647,20 @@ function setupDebugPanel() {
     clearBtn.addEventListener('click', () => {
         content.innerHTML = '';
     });
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const text = content.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => copyBtn.textContent = originalText, 1500);
+            }).catch(err => {
+                console.error('Failed to copy logs:', err);
+                copyBtn.textContent = 'Error';
+            });
+        });
+    }
 
     // Append Log Helper
     const appendLog = (type, message, timestamp) => {
