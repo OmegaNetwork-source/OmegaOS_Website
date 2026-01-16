@@ -48,6 +48,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         ttlMenu.classList.toggle('visible');
     });
 
+    // Reset Identity
+    const resetIdBtn = document.getElementById('resetIdBtn');
+    if (resetIdBtn) {
+        resetIdBtn.addEventListener('click', async () => {
+            if (confirm('WARNING: This will DELETE your current Tor Identity.\n\nYour current Onion Address will be lost forever.\nYou will need to share your NEW address with contacts.\n\nProceed?')) {
+                try {
+                    // Update UI to show loading
+                    const idEl = document.getElementById('myOnionId');
+                    if (idEl) idEl.textContent = 'Resetting...';
+
+                    const result = await window.electronAPI.whisperResetIdentity();
+                    if (result.success) {
+                        alert('Identity reset successfully!\n\nYour new Onion Address is ready.');
+                        // Update UI
+                        if (result.address) {
+                            // Update global var
+                            myOnionAddress = result.address;
+                            if (idEl) {
+                                idEl.textContent = myOnionAddress;
+                                // Reset color just in case
+                                idEl.style.color = '#03dac6';
+                            }
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        alert('Error: ' + result.error);
+                        window.location.reload();
+                    }
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                    window.location.reload();
+                }
+            }
+        });
+    }
+
     // Close menu when clicking outside
     document.addEventListener('click', () => {
         ttlMenu.classList.remove('visible');

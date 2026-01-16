@@ -146,6 +146,21 @@ class WhisperService {
         }
     }
 
+    async resetIdentity() {
+        this.log('warn', 'Resetting identity requested...');
+        try {
+            await torManager.regenerateOnionAddress();
+
+            // Re-setup hidden service to generate new key immediately
+            this.onionAddress = await torManager.setupHiddenService(this.port, 80);
+
+            this.log('info', `Identity reset! New address: ${this.onionAddress}`);
+            return { success: true, message: 'Identity reset successfully.', address: this.onionAddress };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
+
     startServer() {
         return new Promise((resolve, reject) => {
             this.server = http.createServer(async (req, res) => {

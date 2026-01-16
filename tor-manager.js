@@ -589,23 +589,44 @@ CookieAuthentication 0
     try {
       this.log('info', `Creating Hidden Service forwarding ${targetPort} -> ${localPort}...`);
 
-      // ADD_ONION NEW:BEST Port=TargetPort,127.0.0.1:LocalPort
-      // NEW:BEST generates a new v3 key
-      // Flags=DiscardPK keeps the key in memory only (transient) - good for "Burner" style
-      // For persistence, we'd want to save the key. For now, let's use ephemeral.
-      // To make it persistent, we should use 'Detached' or provide the key.
-      // Let's use ephemeral for now as per "Whisper" (like sessions), 
-      // OR we can make it persistent by creating a directory.
-      // Let's go with ephemeral for true "Whisper" privacy initially.
+      // Persistence Logic
+      const keyPath = path.join(this.torDataDir, 'hidden_service_key');
+      let keyParam = 'NEW:BEST'; // Default: Generate new
 
-      const cmd = `ADD_ONION NEW:BEST Port=${targetPort},127.0.0.1:${localPort}`;
+      if (fs.existsSync(keyPath)) {
+        try {
+          const savedKey = fs.readFileSync(keyPath, 'utf8').trim();
+          if (savedKey) {
+            this.log('info', 'Loading persistent identity from storage...');
+            keyParam = savedKey;
+          }
+        } catch (err) {
+          this.log('warn', `Failed to read key file, generating new one: ${err.message}`);
+        }
+      } else {
+        this.log('info', 'No persistent identity found. Generating new permanent address...');
+      }
+
+      const cmd = `ADD_ONION ${keyParam} Port=${targetPort},127.0.0.1:${localPort}`;
       const response = await this.sendControlCommand(cmd);
 
       if (response.includes('250-ServiceID=')) {
         const match = response.match(/ServiceID=([a-z2-7]+)/);
         if (match && match[1]) {
           const onionAddress = match[1];
-          this.log('info', `Hidden Service created: ${onionAddress}.onion`);
+          this.log('info', `Hidden Service active: ${onionAddress}.onion`);
+
+          // If we generated a new key, save it for next time
+          if (keyParam === 'NEW:BEST') {
+            const keyMatch = response.match(/PrivateKey=(\S+)/);
+            if (keyMatch && keyMatch[1]) {
+              fs.writeFileSync(keyPath, keyMatch[1], { mode: 0o600 });
+              this.log('info', 'Saved new identity key to secure storage.');
+            } else {
+              this.log('warn', 'Could not retrieve PrivateKey from Tor to save!');
+            }
+          }
+
           return onionAddress + '.onion';
         }
       }
@@ -613,7 +634,28 @@ CookieAuthentication 0
       throw new Error(`Failed to create Hidden Service. Response: ${response}`);
     } catch (error) {
       this.log('error', `Hidden Service setup failed: ${error}`);
+
+      // If setup failed with a specific key (maybe corrupted), try falling back to new?
+      // For now, just throw to let user know.
       throw error;
+    }
+  }
+
+  /**
+   * Delete the persistent key to force a new address on next run
+   */
+  async regenerateOnionAddress() {
+    try {
+      const keyPath = path.join(this.torDataDir, 'hidden_service_key');
+      if (fs.existsSync(keyPath)) {
+        fs.unlinkSync(keyPath);
+        this.log('info', 'Persistent identity deleted.');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      this.log('error', `Failed to delete identity: ${e.message}`);
+      return false;
     }
   }
 

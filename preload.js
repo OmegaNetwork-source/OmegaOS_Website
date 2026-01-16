@@ -256,6 +256,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   whisperEditContact: (onionAddress, newName) => ipcRenderer.invoke('whisper-edit-contact', onionAddress, newName),
   whisperDeleteContact: (onionAddress) => ipcRenderer.invoke('whisper-delete-contact', onionAddress),
   whisperRetryInit: () => ipcRenderer.invoke('whisper-retry-init'),
+  whisperResetIdentity: () => ipcRenderer.invoke('whisper-reset-identity'),
   onWhisperMessageDeleted: (callback) => ipcRenderer.on('whisper-message-deleted', (event, messageId) => callback(messageId)),
   onWhisperLog: (callback) => ipcRenderer.on('whisper-log', (event, data) => callback(data)),
 

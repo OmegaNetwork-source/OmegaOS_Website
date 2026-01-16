@@ -3989,6 +3989,11 @@ function setupIPCHandlers() {
     return whisperService.deleteContact(address);
   });
 
+  ipcMain.handle('whisper-reset-identity', async () => {
+    if (!whisperService) return { success: false, error: 'Service not available' };
+    return whisperService.resetIdentity();
+  });
+
   ipcMain.handle('whisper-retry-init', async () => {
     if (!whisperService) return { success: false, error: 'Service not available' };
     try {
