@@ -440,11 +440,7 @@ class WhisperService {
                     'Content-Length': Buffer.byteLength(postData),
                     'Connection': 'keep-alive'
                 },
-                timeout: 120000,
-                // CRITICAL: Disable local DNS lookup to force SOCKS remote resolution
-                lookup: (hostname, options, callback) => {
-                    callback(null, hostname, 4);
-                }
+                timeout: 120000
             };
 
             this.log('info', `Making HTTP request to ${fullOnionAddress}:80/message via SOCKS5`);
