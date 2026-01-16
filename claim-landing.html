@@ -407,7 +407,7 @@
                     <div class="logo-area">
                         <div class="omega-logo">Ω</div>
                         <div>
-                            <div class="pair-name">OMEGA / AIRDROP</div>
+                            <div class="pair-name">tOmega Airdrop</div>
                             <div class="sub-text">Official Claim</div>
                         </div>
                     </div>
@@ -425,11 +425,16 @@
                     "I just claimed my airdrop, eligible for wave 2!"
                 </div>
 
+                <div style="background: rgba(29, 161, 242, 0.1); border: 1px solid rgba(29, 161, 242, 0.3); border-radius: 8px; padding: 12px; margin-top: 20px; text-align: center;">
+                    <div style="color: #1DA1F2; font-weight: 600; font-size: 13px; margin-bottom: 4px;">⚠️ Wave 2 Eligibility Required</div>
+                    <div style="color: #888; font-size: 11px;">You must tweet your claim card to be eligible for Wave 2 airdrop</div>
+                </div>
+
                 <div class="pnl-footer">
                     <div class="qr-section">
-                        <!-- Generic QR or link to site -->
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=OmegaWave1Claimed"
-                            class="qr-mock">
+                        <!-- QR code links to YouTube -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ%26list%3DRDdQw4w9WgXcQ%26start_radio%3D1"
+                            class="qr-mock" id="qrCodeImg">
                         <div style="font-size: 10px; color: #888; font-weight: 500;">
                             Scan to<br>Verify
                         </div>
@@ -444,13 +449,15 @@
         </div>
 
         <div class="action-row">
-            <button class="secondary-btn" style="background:#1DA1F2; border-color:#1DA1F2;" onclick="shareTweet()">
-                Tweet Claim
+            <button class="secondary-btn" style="background:#1DA1F2; border-color:#1DA1F2; font-weight: 700;" onclick="shareTweet()">
+                📢 Tweet for Wave 2 Eligibility
             </button>
             <button class="secondary-btn" onclick="downloadCard()">
                 Save Image
             </button>
         </div>
+        
+        <div id="tweetStatus" style="margin-top: 15px; font-size: 12px; color: #666; text-align: center; min-height: 20px;"></div>
     </div>
 
     <script>
@@ -602,7 +609,11 @@
         }
 
         function shareTweet() {
-            const text = `I just claimed my airdrop, eligible for wave 2! 🚀\n\n@omega_netw0rd #OmegaNetwork #Airdrop`;
+            // Generate random receipt ID (6-8 digits)
+            const receiptId = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            const text = `I Just claimed my tOmega Airdrop at: https://airdrop.omeganetwork.co/\n\nIm now eligble for Wave 2!!\n\nReceipt ID: ${receiptId}\n\n@omega_netw0rk`;
+            
             window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
         }
 
