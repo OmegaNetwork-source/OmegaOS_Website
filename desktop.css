@@ -3037,10 +3037,12 @@ body {
         align-content: flex-start;
         gap: 15px;
         /* Reduced gap */
-        justify-content: center;
-        /* Center icons */
+        justify-content: flex-start;
+        /* Align icons to start (left) */
         width: 100%;
         padding: 0 10px;
+        padding-left: 30px;
+        /* Indent slightly for visibility */
     }
 
     .desktop-icon {
@@ -3100,14 +3102,24 @@ body {
 
     /* Crypto Ticker - Make it fit */
     #cryptoTicker {
-        max-width: 120px;
-        /* Limit width */
+        max-width: fit-content;
+        /* Allow it to shrink to content */
         font-size: 10px;
         /* Small text */
-        gap: 10px;
+        gap: 5px;
         padding: 0 5px;
         margin-left: auto;
         /* Push to right */
+    }
+
+    /* Only show the first crypto item (usually BTC) on mobile to save space */
+    #cryptoWidget .crypto-item:not(:first-child) {
+        display: none;
+    }
+
+    .ticker-item {
+        font-size: 10px;
+        padding: 0 5px;
     }
 
     .ticker-item {

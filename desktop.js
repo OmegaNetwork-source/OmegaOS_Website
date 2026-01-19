@@ -1607,9 +1607,9 @@ async function updateCryptoPrices() {
 
             // Realistic base prices
             const basePrices = {
-                'bitcoin': 65000,
+                'bitcoin': 96500,
                 'ethereum': 3500,
-                'solana': 145,
+                'solana': 240,
                 'cardano': 0.45,
                 'polkadot': 7.20,
                 'dogecoin': 0.12,
