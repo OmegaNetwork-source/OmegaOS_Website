@@ -3024,6 +3024,114 @@ body {
     cursor: pointer;
 }
 
-.desktop-folder-preview-item:hover {
-    background: rgba(0, 0, 0, 0.1);
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+
+    /* 1. Push Desktop Icons Down to clear VPN badge and Ribbon */
+    .desktop-icons {
+        margin-top: 100px !important;
+        /* Force icons lower */
+        /* Also adjust grid to be tighter on narrow screens */
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 15px;
+        /* Reduced gap */
+        justify-content: center;
+        /* Center icons */
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .desktop-icon {
+        /* Reset absolute positioning from JS if possible, or use !important to override */
+        /* Note: JS uses inline styles for top/left. We might need !important to override drag positions on mobile reload */
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        margin: 5px;
+        width: 70px;
+        /* Slightly smaller */
+    }
+
+    .icon-image {
+        width: 56px;
+        height: 56px;
+        font-size: 32px;
+    }
+
+    /* 2. Taskbar Optimization */
+    .taskbar {
+        height: 50px;
+        /* Keep height manageable */
+        padding: 0 5px;
+        gap: 5px;
+    }
+
+    /* Shrink Search Bar */
+    .taskbar-search {
+        width: 80px;
+        /* Much smaller width */
+        min-width: 60px;
+        padding: 0 8px;
+    }
+
+    .taskbar-search input {
+        font-size: 11px;
+    }
+
+    .taskbar-search svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Shrink Start Button */
+    .start-button {
+        width: 36px;
+        height: 36px;
+        padding: 6px;
+    }
+
+    /* Hide Window List/Taskbar items if too cramped */
+    .taskbar-items {
+        display: none;
+        /* Hide open app indicators on strict mobile to save space */
+    }
+
+    /* Crypto Ticker - Make it fit */
+    #cryptoTicker {
+        max-width: 120px;
+        /* Limit width */
+        font-size: 10px;
+        /* Small text */
+        gap: 10px;
+        padding: 0 5px;
+        margin-left: auto;
+        /* Push to right */
+    }
+
+    .ticker-item {
+        font-size: 10px;
+        padding: 0 5px;
+    }
+
+    /* System Tray - Compact */
+    .system-tray {
+        gap: 4px;
+        padding: 0 4px;
+    }
+
+    .tray-time {
+        font-size: 10px;
+        display: flex;
+        flex-direction: column;
+        line-height: 1;
+        align-items: flex-end;
+    }
+
+    .tray-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
 }
