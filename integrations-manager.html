@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Integrations Manager</title>
+    <script src="web-adapter.js"></script>
     <style>
         * {
             margin: 0;
@@ -285,32 +287,33 @@
             border-radius: 50%;
         }
 
-        input:checked + .toggle-slider {
+        input:checked+.toggle-slider {
             background-color: #0078d4;
         }
 
-        input:checked + .toggle-slider:before {
+        input:checked+.toggle-slider:before {
             transform: translateX(20px);
         }
     </style>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title">Integrations Manager</div>
         <div class="title-bar-controls">
             <button class="title-bar-btn minimize" id="minimizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="0" y="5" width="12" height="1"/>
+                    <rect x="0" y="5" width="12" height="1" />
                 </svg>
             </button>
             <button class="title-bar-btn maximize" id="maximizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
             <button class="title-bar-btn close" id="closeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
             </button>
         </div>
@@ -351,7 +354,8 @@
                 <div class="section-header">
                     <h2>Browser Extensions</h2>
                     <p>Manage browser extensions and add-ons</p>
-                    <button class="btn btn-primary" id="addExtensionBtn" style="margin-top: 12px;">+ Add Extension</button>
+                    <button class="btn btn-primary" id="addExtensionBtn" style="margin-top: 12px;">+ Add
+                        Extension</button>
                 </div>
                 <div class="item-list" id="extensions-list"></div>
             </div>
@@ -371,7 +375,8 @@
                 <div class="section-header">
                     <h2>API Gateway</h2>
                     <p>Connect to external services</p>
-                    <button class="btn btn-primary" id="addAPIEndpointBtn" style="margin-top: 12px;">+ Add API Endpoint</button>
+                    <button class="btn btn-primary" id="addAPIEndpointBtn" style="margin-top: 12px;">+ Add API
+                        Endpoint</button>
                 </div>
                 <div class="item-list" id="api-list"></div>
             </div>
@@ -393,7 +398,5 @@
 
     <script src="integrations-manager-ui.js"></script>
 </body>
+
 </html>
-
-
-

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omega Hash Verifier</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="web-adapter.js"></script>
     <style>
         body {
             margin: 0;
@@ -275,6 +277,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="hash-window">
         <div class="hash-header">
@@ -292,7 +295,8 @@
                 <h3>Hash a File</h3>
                 <div class="file-drop-zone" id="fileDropZone">
                     <p style="font-size: 16px; margin: 0 0 8px 0;">📁 Drop a file here or click to browse</p>
-                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin: 0;">Calculate SHA-256 hash of any file</p>
+                    <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin: 0;">Calculate SHA-256 hash of
+                        any file</p>
                     <input type="file" id="fileInput" style="display: none;" multiple>
                 </div>
                 <div id="fileInfo" class="file-info" style="display: none;"></div>
@@ -349,5 +353,5 @@
 
     <script src="hash-verifier.js"></script>
 </body>
-</html>
 
+</html>

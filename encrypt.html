@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omega Encrypt</title>
     <link rel="stylesheet" href="encrypt.css">
+    <script src="web-adapter.js"></script>
 </head>
+
 <body>
     <!-- Window Title Bar -->
     <div class="window-titlebar">
@@ -13,18 +16,18 @@
         <div class="window-controls">
             <button class="window-control minimize" id="minimizeBtn">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="0" y1="6" x2="12" y2="6"/>
+                    <line x1="0" y1="6" x2="12" y2="6" />
                 </svg>
             </button>
             <button class="window-control maximize" id="maximizeBtn">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="2" width="8" height="8"/>
+                    <rect x="2" y="2" width="8" height="8" />
                 </svg>
             </button>
             <button class="window-control close" id="closeBtn">
                 <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="2" y1="2" x2="10" y2="10"/>
-                    <line x1="10" y1="2" x2="2" y2="10"/>
+                    <line x1="2" y1="2" x2="10" y2="10" />
+                    <line x1="10" y1="2" x2="2" y2="10" />
                 </svg>
             </button>
         </div>
@@ -36,16 +39,16 @@
             <div class="toolbar-group">
                 <button class="toolbar-btn active" id="encryptTab">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
                     Encrypt File
                 </button>
                 <button class="toolbar-btn" id="decryptTab">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 5-5v0a5 5 0 0 1 5 5v4"/>
-                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 5-5v0a5 5 0 0 1 5 5v4" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     Decrypt File
                 </button>
@@ -60,9 +63,9 @@
             </div>
             <div class="file-select-area" id="encryptFileArea">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
                 <p>Select a file from your isolated documents folder</p>
                 <button class="browse-btn" id="encryptBrowseBtn">Browse Files</button>
@@ -78,8 +81,8 @@
                     <input type="password" id="encryptPassword" placeholder="Enter a strong password">
                     <button class="toggle-password" id="encryptTogglePassword">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
                         </svg>
                     </button>
                 </div>
@@ -91,7 +94,7 @@
             <div class="result-area" id="encryptResult" style="display: none;">
                 <div class="success-message">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"/>
+                        <polyline points="20 6 9 17 4 12" />
                     </svg>
                     File encrypted successfully!
                 </div>
@@ -110,9 +113,9 @@
             </div>
             <div class="file-select-area" id="decryptFileArea">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
                 <p>Select an encrypted file from your isolated documents folder</p>
                 <button class="browse-btn" id="decryptBrowseBtn">Browse Files</button>
@@ -128,8 +131,8 @@
                     <input type="password" id="decryptPassword" placeholder="Enter the encryption password">
                     <button class="toggle-password" id="decryptTogglePassword">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
                         </svg>
                     </button>
                 </div>
@@ -140,7 +143,7 @@
             <div class="result-area" id="decryptResult" style="display: none;">
                 <div class="success-message">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="20 6 9 17 4 12"/>
+                        <polyline points="20 6 9 17 4 12" />
                     </svg>
                     File decrypted successfully!
                 </div>
@@ -153,5 +156,5 @@
 
     <script src="encrypt.js"></script>
 </body>
-</html>
 
+</html>

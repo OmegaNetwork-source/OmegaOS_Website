@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -404,24 +405,26 @@
             background: rgba(255, 255, 255, 0.3);
         }
     </style>
+    <script src="web-adapter.js"></script>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title">Omega Calculator</div>
         <div class="title-bar-controls">
             <button class="title-bar-btn minimize" id="minimizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="0" y="5" width="12" height="1"/>
+                    <rect x="0" y="5" width="12" height="1" />
                 </svg>
             </button>
             <button class="title-bar-btn maximize" id="maximizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
             <button class="title-bar-btn close" id="closeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
             </button>
         </div>
@@ -458,7 +461,7 @@
                 <button class="btn btn-function" onclick="appendFunction(')')">)</button>
                 <button class="btn btn-function" onclick="appendFunction('fact(')">x!</button>
                 <button class="btn btn-operator" onclick="setOperator('/')">÷</button>
-                
+
                 <button class="btn btn-function" onclick="percent()">%</button>
                 <button class="btn btn-number" onclick="appendNumber('7')">7</button>
                 <button class="btn btn-number" onclick="appendNumber('8')">8</button>
@@ -467,7 +470,7 @@
                 <button class="btn btn-scientific" onclick="appendFunction('pow(')">x²</button>
                 <button class="btn btn-scientific" onclick="appendFunction('sqrt(')">√x</button>
                 <button class="btn btn-scientific" onclick="appendFunction('1/')">1/x</button>
-                
+
                 <button class="btn btn-scientific" onclick="appendFunction('abs(')">|x|</button>
                 <button class="btn btn-number" onclick="appendNumber('4')">4</button>
                 <button class="btn btn-number" onclick="appendNumber('5')">5</button>
@@ -476,7 +479,7 @@
                 <button class="btn btn-scientific" onclick="appendFunction('pow(')">10^x</button>
                 <button class="btn btn-scientific" onclick="appendFunction('log(')">log₁₀</button>
                 <button class="btn btn-scientific" onclick="appendFunction('ln(')">ln</button>
-                
+
                 <button class="btn btn-scientific" onclick="appendFunction('(')">(</button>
                 <button class="btn btn-number" onclick="appendNumber('1')">1</button>
                 <button class="btn btn-number" onclick="appendNumber('2')">2</button>
@@ -485,7 +488,7 @@
                 <button class="btn btn-scientific" onclick="appendFunction('deg(')">deg</button>
                 <button class="btn btn-scientific" onclick="appendFunction('rad(')">rad</button>
                 <button class="btn btn-scientific" onclick="appendFunction('(')">ANS</button>
-                
+
                 <button class="btn btn-scientific" onclick="appendFunction(')')">)</button>
                 <button class="btn btn-number btn-zero" onclick="appendNumber('0')">0</button>
                 <button class="btn btn-number" onclick="appendDecimal()">.</button>
@@ -513,14 +516,16 @@
                             <li>Help with trigonometry, logarithms, calculus, and more</li>
                             <li>Guide you on which calculator functions to use</li>
                         </ul>
-                        <strong>Available functions:</strong> sin, cos, tan, log, ln, √, x², x^y, π, e, factorial, and more!
+                        <strong>Available functions:</strong> sin, cos, tan, log, ln, √, x², x^y, π, e, factorial, and
+                        more!
                         <br><br>
                         What would you like to solve?
                     </div>
                 </div>
             </div>
             <div class="ai-chat-input-container">
-                <textarea class="ai-chat-input" id="aiChatInput" placeholder="Ask a math question or enter an equation..." rows="2"></textarea>
+                <textarea class="ai-chat-input" id="aiChatInput"
+                    placeholder="Ask a math question or enter an equation..." rows="2"></textarea>
                 <button class="ai-chat-send" id="aiChatSend">Send</button>
             </div>
         </div>
@@ -564,7 +569,7 @@
         });
 
         function updateDisplay() {
-            display.textContent = currentExpression.length > 30 ? 
+            display.textContent = currentExpression.length > 30 ?
                 currentExpression.substring(0, 30) + '...' : currentExpression;
         }
 
@@ -573,7 +578,7 @@
                 currentExpression = '0';
                 shouldResetDisplay = false;
             }
-            
+
             if (currentExpression === '0') {
                 currentExpression = num;
             } else {
@@ -587,7 +592,7 @@
                 currentExpression = '0';
                 shouldResetDisplay = false;
             }
-            
+
             // Check if the last number already has a decimal
             const parts = currentExpression.match(/\d+\.?\d*$/);
             if (!parts || !parts[0].includes('.')) {
@@ -601,7 +606,7 @@
                 currentExpression = '0';
                 shouldResetDisplay = false;
             }
-            
+
             if (currentExpression === '0') {
                 currentExpression = func;
             } else if (func === 'pow(') {
@@ -619,9 +624,9 @@
                 currentExpression = '0';
                 shouldResetDisplay = false;
             }
-            
+
             const value = constant === 'PI' ? Math.PI : Math.E;
-            
+
             if (currentExpression === '0') {
                 currentExpression = value.toString();
             } else {
@@ -632,7 +637,7 @@
 
         function setOperator(op) {
             shouldResetDisplay = false;
-            
+
             if (currentExpression === '0') {
                 currentExpression = op === '-' ? '-' : '0';
             } else {
@@ -660,8 +665,8 @@
             try {
                 const value = parseFloat(arg);
                 if (isNaN(value)) return 'NaN';
-                
-                switch(funcName) {
+
+                switch (funcName) {
                     case 'sin':
                         return (angleMode === 'deg' ? Math.sin(value * Math.PI / 180) : Math.sin(value)).toString();
                     case 'cos':
@@ -707,18 +712,18 @@
             expr = expr.replace(/\bPI\b/g, Math.PI.toString());
             expr = expr.replace(/\bE\b/g, Math.E.toString());
             expr = expr.replace(/\bANS\b/g, lastAnswer !== null ? lastAnswer.toString() : '0');
-            
+
             // Process functions from innermost to outermost
             let maxIterations = 50;
             let iteration = 0;
-            
+
             while (iteration < maxIterations) {
                 let changed = false;
-                
+
                 // Match innermost function calls: funcName(number or expression)
                 const functionPattern = /(sin|cos|tan|asin|acos|atan|sqrt|cbrt|log|ln|exp|abs|fact)\(([^()]+)\)/;
                 let match = expr.match(functionPattern);
-                
+
                 if (match) {
                     const funcName = match[1];
                     const arg = match[2];
@@ -737,37 +742,37 @@
                 } else {
                     break;
                 }
-                
+
                 iteration++;
                 if (!changed) break;
             }
-            
+
             // Replace ^ with ** for exponentiation
             expr = expr.replace(/\^/g, '**');
-            
+
             return expr;
         }
 
         function calculate() {
             try {
                 let expr = currentExpression;
-                
+
                 // Parse the expression
                 expr = parseExpression(expr);
-                
+
                 // Evaluate safely using Function constructor
                 const result = Function('"use strict"; return (' + expr + ')')();
-                
+
                 if (isNaN(result) || !isFinite(result)) {
                     currentExpression = 'Error';
                 } else {
                     lastAnswer = result;
                     currentExpression = result.toString();
                 }
-                
+
                 shouldResetDisplay = true;
                 updateDisplay();
-                
+
                 // Remove operator active states
                 document.querySelectorAll('.btn-operator').forEach(btn => {
                     btn.classList.remove('active');
@@ -783,7 +788,7 @@
             currentExpression = '0';
             shouldResetDisplay = false;
             updateDisplay();
-            
+
             document.querySelectorAll('.btn-operator').forEach(btn => {
                 btn.classList.remove('active');
             });
@@ -871,9 +876,9 @@
 
             // Send message
             aiChatSend.addEventListener('click', sendAIMessage);
-            
+
             // Auto-resize textarea
-            aiChatInput.addEventListener('input', function() {
+            aiChatInput.addEventListener('input', function () {
                 this.style.height = 'auto';
                 this.style.height = Math.min(this.scrollHeight, 120) + 'px';
             });
@@ -883,7 +888,7 @@
             const messagesContainer = document.getElementById('aiChatMessages');
             const messageDiv = document.createElement('div');
             messageDiv.className = `ai-message ai-message-${role}`;
-            
+
             const contentDiv = document.createElement('div');
             contentDiv.className = 'ai-message-content';
             if (isThinking) {
@@ -899,11 +904,11 @@
                 content = content.replace(/\n/g, '<br>');
                 contentDiv.innerHTML = content;
             }
-            
+
             messageDiv.appendChild(contentDiv);
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
+
             return messageDiv;
         }
 
@@ -973,5 +978,5 @@ Be concise but thorough. Use mathematical notation when appropriate. Format your
         setupAIFeatures();
     </script>
 </body>
-</html>
 
+</html>

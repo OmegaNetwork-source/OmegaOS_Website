@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -150,7 +151,7 @@
         .view-btn.active {
             background: white;
             color: #1a73e8;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .events-panel {
@@ -308,12 +309,12 @@
             font-size: 14px;
             font-weight: 500;
             transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         .btn-primary:hover {
             background: #1765cc;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
         .calendar-grid {
@@ -546,7 +547,7 @@
         }
 
         .week-event:hover {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         /* Event Modal */
@@ -576,7 +577,7 @@
             max-width: 90vw;
             max-height: 90vh;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
         }
@@ -769,15 +770,20 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.5;
             }
         }
     </style>
+    <script src="web-adapter.js"></script>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title">Omega Calendar</div>
@@ -821,12 +827,14 @@
                 <div class="toolbar-left">
                     <div class="toolbar-nav">
                         <button class="nav-btn" onclick="previousPeriod()" title="Previous">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <polyline points="15 18 9 12 15 6"></polyline>
                             </svg>
                         </button>
                         <button class="nav-btn" onclick="nextPeriod()" title="Next">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <polyline points="9 18 15 12 9 6"></polyline>
                             </svg>
                         </button>
@@ -836,7 +844,8 @@
                 </div>
                 <div class="toolbar-right">
                     <button class="btn-primary" onclick="openEventModal(null)">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="display: inline; vertical-align: middle; margin-right: 6px;">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
@@ -919,7 +928,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteEvent()">Delete</button>
+                <button type="button" class="btn btn-danger" id="deleteBtn" style="display: none;"
+                    onclick="deleteEvent()">Delete</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
                 <button type="submit" class="btn btn-submit" onclick="saveEvent()">Save</button>
             </div>
@@ -970,22 +980,22 @@
 
         function updateClock() {
             const now = new Date();
-            
+
             // Format time (12-hour format)
             let hours = now.getHours();
             const minutes = now.getMinutes();
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12 || 12;
             const timeStr = `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-            
+
             // Format date
             const dateOptions = { month: 'long', day: 'numeric', year: 'numeric' };
             const dateStr = now.toLocaleDateString('en-US', dateOptions);
-            
+
             // Format weekday
             const weekdayOptions = { weekday: 'long' };
             const weekdayStr = now.toLocaleDateString('en-US', weekdayOptions);
-            
+
             document.getElementById('clockTime').textContent = timeStr;
             document.getElementById('clockDate').textContent = dateStr;
             document.getElementById('clockWeekday').textContent = weekdayStr;
@@ -1006,14 +1016,14 @@
         function populateMonthYear() {
             const monthSelect = document.getElementById('monthSelect');
             const yearSelect = document.getElementById('yearSelect');
-            
-            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                          'July', 'August', 'September', 'October', 'November', 'December'];
-            
-            monthSelect.innerHTML = months.map((month, i) => 
+
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+            monthSelect.innerHTML = months.map((month, i) =>
                 `<option value="${i}" ${i === currentDate.getMonth() ? 'selected' : ''}>${month}</option>`
             ).join('');
-            
+
             const currentYear = new Date().getFullYear();
             for (let i = currentYear - 5; i <= currentYear + 10; i++) {
                 const option = document.createElement('option');
@@ -1089,19 +1099,19 @@
 
         function updateCurrentPeriodDisplay() {
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                              'July', 'August', 'September', 'October', 'November', 'December'];
+                'July', 'August', 'September', 'October', 'November', 'December'];
             if (currentView === 'month') {
-                document.getElementById('currentPeriod').textContent = 
+                document.getElementById('currentPeriod').textContent =
                     `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
             } else {
                 const weekStart = getWeekStart(currentDate);
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekEnd.getDate() + 6);
                 if (weekStart.getMonth() === weekEnd.getMonth()) {
-                    document.getElementById('currentPeriod').textContent = 
+                    document.getElementById('currentPeriod').textContent =
                         `${weekStart.getDate()}-${weekEnd.getDate()} ${monthNames[weekStart.getMonth()]} ${weekStart.getFullYear()}`;
                 } else {
-                    document.getElementById('currentPeriod').textContent = 
+                    document.getElementById('currentPeriod').textContent =
                         `${weekStart.getDate()} ${monthNames[weekStart.getMonth()]} - ${weekEnd.getDate()} ${monthNames[weekEnd.getMonth()]} ${weekStart.getFullYear()}`;
                 }
             }
@@ -1123,7 +1133,7 @@
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
+
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const startDate = new Date(firstDay);
@@ -1135,10 +1145,10 @@
             for (let i = 0; i < 42; i++) {
                 const date = new Date(startDate);
                 date.setDate(startDate.getDate() + i);
-                
+
                 const day = document.createElement('div');
                 day.className = 'calendar-day';
-                
+
                 const dateStr = formatDate(date);
                 const dayEvents = getEventsForDate(date);
 
@@ -1170,7 +1180,7 @@
         function renderWeekView() {
             const weekHeader = document.getElementById('weekHeader');
             const weekGrid = document.getElementById('weekGrid');
-            
+
             weekHeader.innerHTML = '<div class="week-time-header"></div>';
             weekGrid.innerHTML = '';
 
@@ -1183,7 +1193,7 @@
                 const date = new Date(weekStart);
                 date.setDate(weekStart.getDate() + i);
                 const isToday = formatDate(date) === formatDate(today);
-                
+
                 const dayHeader = document.createElement('div');
                 dayHeader.className = `week-day-header ${isToday ? 'today' : ''}`;
                 dayHeader.innerHTML = `
@@ -1209,7 +1219,7 @@
 
                     const daySlot = document.createElement('div');
                     daySlot.className = 'week-day-slot';
-                    
+
                     const slotEvents = getEventsForTimeSlot(date, hour);
                     slotEvents.forEach(event => {
                         const eventDiv = document.createElement('div');
@@ -1279,7 +1289,7 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const todayStr = formatDate(today);
-            
+
             const todayEvents = events.filter(event => {
                 const eventDate = new Date(event.startDate);
                 return formatDate(eventDate) === todayStr;
@@ -1363,7 +1373,7 @@
                 form.reportValidity();
                 return;
             }
-            
+
             const eventData = {
                 id: editingEventId || Date.now().toString(),
                 title: document.getElementById('eventTitle').value,
@@ -1405,4 +1415,5 @@
         init();
     </script>
 </body>
+
 </html>

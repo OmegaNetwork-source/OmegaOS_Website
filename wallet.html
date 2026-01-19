@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -108,36 +109,36 @@
         }
 
         /* Toggle Switch Styling */
-        #hotWalletToggle:checked + span {
+        #hotWalletToggle:checked+span {
             background-color: rgba(34, 197, 94, 0.5) !important;
         }
 
-        #hotWalletToggle:checked + span span {
+        #hotWalletToggle:checked+span span {
             transform: translateX(24px) !important;
         }
 
-        #hotWalletToggle + span {
+        #hotWalletToggle+span {
             transition: background-color 0.3s;
         }
 
-        #hotWalletToggle + span span {
+        #hotWalletToggle+span span {
             transition: transform 0.3s;
         }
-        
+
         /* Tab Styling */
         .wallet-tab.active {
             color: rgba(255, 255, 255, 0.95) !important;
             border-bottom-color: rgba(34, 197, 94, 0.8) !important;
         }
-        
+
         .wallet-tab:hover {
             color: rgba(255, 255, 255, 0.9);
         }
-        
+
         .tab-content {
             min-height: 200px;
         }
-        
+
         /* Token/Asset Item Styling */
         .token-item {
             display: flex;
@@ -150,17 +151,17 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        
+
         .token-item:hover {
             background: rgba(255, 255, 255, 0.05);
         }
-        
+
         .token-item-left {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        
+
         .token-icon {
             width: 40px;
             height: 40px;
@@ -171,39 +172,41 @@
             justify-content: center;
             font-size: 20px;
         }
-        
+
         .token-info {
             display: flex;
             flex-direction: column;
         }
-        
+
         .token-name {
             font-size: 15px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.95);
         }
-        
+
         .token-symbol {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.6);
         }
-        
+
         .token-item-right {
             text-align: right;
         }
-        
+
         .token-balance {
             font-size: 15px;
             font-weight: 600;
             color: rgba(255, 255, 255, 0.95);
         }
-        
+
         .token-balance-usd {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.6);
         }
     </style>
+    <script src="web-adapter.js"></script>
 </head>
+
 <body>
     <div class="wallet-window">
         <div class="wallet-header">
@@ -211,17 +214,18 @@
             <div class="wallet-window-controls">
                 <button class="wallet-window-btn minimize" id="minimizeBtn">
                     <svg width="12" height="12" viewBox="0 0 12 12">
-                        <rect x="0" y="5" width="12" height="1"/>
+                        <rect x="0" y="5" width="12" height="1" />
                     </svg>
                 </button>
                 <button class="wallet-window-btn maximize" id="maximizeBtn">
                     <svg width="12" height="12" viewBox="0 0 12 12">
-                        <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" />
                     </svg>
                 </button>
                 <button class="wallet-window-btn close" id="closeBtn">
                     <svg width="12" height="12" viewBox="0 0 12 12">
-                        <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
                     </svg>
                 </button>
             </div>
@@ -245,7 +249,7 @@
                         </div>
                     </button>
                 </div>
-                
+
                 <!-- Create Wallet Form -->
                 <div id="createWalletForm" style="display: none; margin-top: 20px;">
                     <div class="wallet-form-group">
@@ -254,17 +258,23 @@
                     </div>
                     <div class="wallet-form-group">
                         <label>Confirm Password</label>
-                        <input type="password" id="createPasswordConfirm" class="wallet-input" placeholder="Confirm password">
+                        <input type="password" id="createPasswordConfirm" class="wallet-input"
+                            placeholder="Confirm password">
                     </div>
                     <button class="wallet-primary-btn" id="createWalletSubmit">Create Wallet</button>
-                    <div id="walletMnemonic" style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <p style="font-weight: 600; margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">⚠️ Save Your Private Key</p>
-                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">This is the only time you'll see this. Save it securely!</p>
-                        <textarea id="walletPrivateKey" readonly style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-family: monospace; font-size: 12px; color: rgba(255, 255, 255, 0.9);"></textarea>
-                        <button class="wallet-primary-btn" id="walletMnemonicConfirm" style="margin-top: 10px;">I've Saved It</button>
+                    <div id="walletMnemonic"
+                        style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">⚠️ Save Your
+                            Private Key</p>
+                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">This is the
+                            only time you'll see this. Save it securely!</p>
+                        <textarea id="walletPrivateKey" readonly
+                            style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-family: monospace; font-size: 12px; color: rgba(255, 255, 255, 0.9);"></textarea>
+                        <button class="wallet-primary-btn" id="walletMnemonicConfirm" style="margin-top: 10px;">I've
+                            Saved It</button>
                     </div>
                 </div>
-                
+
                 <!-- Import Wallet Form -->
                 <div id="importWalletForm" style="display: none; margin-top: 20px;">
                     <div class="wallet-form-group">
@@ -278,7 +288,7 @@
                     <button class="wallet-primary-btn" id="importWalletSubmit">Import Wallet</button>
                 </div>
             </div>
-            
+
             <!-- Wallet Login -->
             <div id="walletLogin" style="display: none;">
                 <div class="wallet-form-group">
@@ -287,94 +297,126 @@
                 </div>
                 <button class="wallet-primary-btn" id="loginWalletBtn">Unlock Wallet</button>
             </div>
-            
+
             <!-- Wallet Dashboard -->
             <div id="walletDashboard" style="display: none;">
                 <!-- Top Bar: Account & Network (MetaMask-style) -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <select id="walletSelector" class="wallet-input" style="min-width: 140px; margin: 0; height: 36px; font-size: 15px; font-weight: 500; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0 12px; color: rgba(255, 255, 255, 0.9); cursor: pointer;">
+                        <select id="walletSelector" class="wallet-input"
+                            style="min-width: 140px; margin: 0; height: 36px; font-size: 15px; font-weight: 500; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0 12px; color: rgba(255, 255, 255, 0.9); cursor: pointer;">
                             <option value="">Select Account</option>
                         </select>
-                        <button id="generateWalletBtn" style="padding: 8px 12px; border: none; background: transparent; border-radius: 8px; cursor: pointer; color: rgba(34, 197, 94, 0.9); font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap; height: 36px; display: flex; align-items: center; gap: 4px;">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M7 2 L7 12 M2 7 L12 7"/>
+                        <button id="generateWalletBtn"
+                            style="padding: 8px 12px; border: none; background: transparent; border-radius: 8px; cursor: pointer; color: rgba(34, 197, 94, 0.9); font-size: 13px; font-weight: 500; transition: all 0.2s; white-space: nowrap; height: 36px; display: flex; align-items: center; gap: 4px;">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M7 2 L7 12 M2 7 L12 7" />
                             </svg>
                             Add account
                         </button>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <select id="walletNetworkSelect" class="wallet-input" style="min-width: 120px; margin: 0; height: 36px; font-size: 13px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0 12px; color: rgba(255, 255, 255, 0.9); cursor: pointer;">
+                        <select id="walletNetworkSelect" class="wallet-input"
+                            style="min-width: 120px; margin: 0; height: 36px; font-size: 13px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 0 12px; color: rgba(255, 255, 255, 0.9); cursor: pointer;">
                             <option value="solana">Solana</option>
                             <option value="omega">Omega Network</option>
                             <option value="evm">Ethereum</option>
                             <option value="bsc">BSC</option>
                         </select>
-                        <button id="walletSettingsBtn" style="width: 36px; height: 36px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
-                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2">
-                                <circle cx="9" cy="4.5" r="1.5"/>
-                                <circle cx="9" cy="9" r="1.5"/>
-                                <circle cx="9" cy="13.5" r="1.5"/>
+                        <button id="walletSettingsBtn"
+                            style="width: 36px; height: 36px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                stroke="rgba(255, 255, 255, 0.7)" stroke-width="2">
+                                <circle cx="9" cy="4.5" r="1.5" />
+                                <circle cx="9" cy="9" r="1.5" />
+                                <circle cx="9" cy="13.5" r="1.5" />
                             </svg>
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Balance Display (MetaMask-style) -->
                 <div style="text-align: center; margin-bottom: 24px; padding: 20px 0;">
-                    <div id="walletBalance" style="font-size: 48px; font-weight: 700; color: rgba(255, 255, 255, 0.95); margin: 8px 0; line-height: 1.2;">--</div>
-                    <div style="font-size: 14px; color: rgba(34, 197, 94, 0.8); margin-top: 4px;" id="walletBalanceChange">+$0.00 (+0.00%)</div>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px;">
-                        <div id="walletAddress" style="font-size: 13px; color: rgba(255, 255, 255, 0.6); font-family: monospace;">Loading...</div>
-                        <button id="copyWalletAddressBtn" style="width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.6;" title="Copy address">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="2">
-                                <rect x="4" y="4" width="7" height="7" rx="1"/>
-                                <path d="M2 10 L2 2 L10 2"/>
+                    <div id="walletBalance"
+                        style="font-size: 48px; font-weight: 700; color: rgba(255, 255, 255, 0.95); margin: 8px 0; line-height: 1.2;">
+                        --</div>
+                    <div style="font-size: 14px; color: rgba(34, 197, 94, 0.8); margin-top: 4px;"
+                        id="walletBalanceChange">+$0.00 (+0.00%)</div>
+                    <div
+                        style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px;">
+                        <div id="walletAddress"
+                            style="font-size: 13px; color: rgba(255, 255, 255, 0.6); font-family: monospace;">Loading...
+                        </div>
+                        <button id="copyWalletAddressBtn"
+                            style="width: 28px; height: 28px; border: none; background: transparent; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.6;"
+                            title="Copy address">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                                stroke="rgba(255, 255, 255, 0.6)" stroke-width="2">
+                                <rect x="4" y="4" width="7" height="7" rx="1" />
+                                <path d="M2 10 L2 2 L10 2" />
                             </svg>
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Action Buttons (MetaMask-style) -->
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 24px;">
-                    <button id="sendBtn" style="padding: 12px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 10 L17 10 M10 3 L17 10 L10 17"/>
+                    <button id="sendBtn"
+                        style="padding: 12px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255, 255, 255, 0.7)"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10 L17 10 M10 3 L17 10 L10 17" />
                         </svg>
                         <span style="font-size: 12px; color: rgba(255, 255, 255, 0.7); font-weight: 500;">Send</span>
                     </button>
-                    <button id="receiveBtn" style="padding: 12px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255, 255, 255, 0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 10 L17 10 M10 3 L3 10 L10 17"/>
+                    <button id="receiveBtn"
+                        style="padding: 12px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="rgba(255, 255, 255, 0.7)"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10 L17 10 M10 3 L3 10 L10 17" />
                         </svg>
                         <span style="font-size: 12px; color: rgba(255, 255, 255, 0.7); font-weight: 500;">Receive</span>
                     </button>
                 </div>
-                
+
                 <!-- Navigation Tabs (MetaMask-style) -->
-                <div style="display: flex; gap: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 16px;">
-                    <button class="wallet-tab active" data-tab="tokens" style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">Tokens</button>
-                    <button class="wallet-tab" data-tab="nfts" style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">NFTs</button>
-                    <button class="wallet-tab" data-tab="activity" style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">Activity</button>
+                <div
+                    style="display: flex; gap: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 16px;">
+                    <button class="wallet-tab active" data-tab="tokens"
+                        style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">Tokens</button>
+                    <button class="wallet-tab" data-tab="nfts"
+                        style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">NFTs</button>
+                    <button class="wallet-tab" data-tab="activity"
+                        style="flex: 1; padding: 12px 0; border: none; background: transparent; color: rgba(255, 255, 255, 0.7); font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">Activity</button>
                 </div>
-                
+
                 <!-- Tab Content -->
                 <div id="tokensTab" class="tab-content" style="display: block;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <select id="tokenFilter" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 6px 12px; color: rgba(255, 255, 255, 0.9); font-size: 13px; cursor: pointer;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <select id="tokenFilter"
+                            style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 6px 12px; color: rgba(255, 255, 255, 0.9); font-size: 13px; cursor: pointer;">
                             <option value="all">All tokens</option>
                             <option value="omega">Omega</option>
                         </select>
                         <div style="display: flex; gap: 8px;">
-                            <button id="addTokenBtn" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.1);" title="Add Custom Token">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="2">
-                                    <path d="M3 8 L13 8 M8 3 L8 13"/>
+                            <button id="addTokenBtn"
+                                style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.1);"
+                                title="Add Custom Token">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                    stroke="rgba(255, 255, 255, 0.6)" stroke-width="2">
+                                    <path d="M3 8 L13 8 M8 3 L8 13" />
                                 </svg>
                             </button>
-                            <button id="refreshBalanceBtn" style="display: none; width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.1);">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="rgba(255, 255, 255, 0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 8 C1 4 4 1 8 1 C11 1 13.5 3 14.5 6 M15 8 C15 12 12 15 8 15 C5 15 2.5 13 1.5 10"/>
-                                    <path d="M11 1 L14 1 L14 4 M5 15 L2 15 L2 12"/>
+                            <button id="refreshBalanceBtn"
+                                style="display: none; width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+                                    stroke="rgba(255, 255, 255, 0.6)" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path
+                                        d="M1 8 C1 4 4 1 8 1 C11 1 13.5 3 14.5 6 M15 8 C15 12 12 15 8 15 C5 15 2.5 13 1.5 10" />
+                                    <path d="M11 1 L14 1 L14 4 M5 15 L2 15 L2 12" />
                                 </svg>
                             </button>
                         </div>
@@ -383,25 +425,31 @@
                         <!-- Assets will be populated here -->
                     </div>
                 </div>
-                
-                <div id="nftsTab" class="tab-content" style="display: none; text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
+
+                <div id="nftsTab" class="tab-content"
+                    style="display: none; text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
                     No NFTs yet
                 </div>
-                
+
                 <div id="activityTab" class="tab-content" style="display: none;">
-                    <div id="activityList" style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
+                    <div id="activityList"
+                        style="text-align: center; padding: 40px 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
                         No transactions yet
                     </div>
                 </div>
-                
+
             </div>
-            
+
             <!-- Send Modal -->
-            <div id="sendModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div id="sendModal"
+                style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div
+                    style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Send</h3>
-                        <button id="closeSendModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                        <button id="closeSendModal"
+                            style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
                     </div>
                     <div class="wallet-form-group">
                         <label>Chain</label>
@@ -418,44 +466,61 @@
                     </div>
                     <div class="wallet-form-group">
                         <label>Amount (<span id="sendAmountUnit">SOL</span>)</label>
-                        <input type="number" id="sendAmount" class="wallet-input" placeholder="0.00" step="0.000000001" min="0">
+                        <input type="number" id="sendAmount" class="wallet-input" placeholder="0.00" step="0.000000001"
+                            min="0">
                     </div>
-                    <button class="wallet-primary-btn" id="sendTransactionBtn" style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600;">Send Transaction</button>
+                    <button class="wallet-primary-btn" id="sendTransactionBtn"
+                        style="width: 100%; padding: 16px; font-size: 16px; font-weight: 600;">Send Transaction</button>
                 </div>
             </div>
-            
+
             <!-- Receive Modal -->
-            <div id="receiveModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div id="receiveModal"
+                style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div
+                    style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Receive</h3>
-                        <button id="closeReceiveModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                        <button id="closeReceiveModal"
+                            style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); margin-bottom: 12px;">Your Address</div>
-                        <div id="receiveAddress" style="font-size: 13px; color: rgba(255, 255, 255, 0.9); word-break: break-all; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 16px;"></div>
-                        <button id="copyReceiveAddressBtn" class="wallet-primary-btn" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                                <rect x="5" y="5" width="8" height="8" rx="1"/>
-                                <path d="M3 11 L3 3 L11 3"/>
+                        <div style="font-size: 13px; color: rgba(255, 255, 255, 0.6); margin-bottom: 12px;">Your Address
+                        </div>
+                        <div id="receiveAddress"
+                            style="font-size: 13px; color: rgba(255, 255, 255, 0.9); word-break: break-all; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; margin-bottom: 16px;">
+                        </div>
+                        <button id="copyReceiveAddressBtn" class="wallet-primary-btn"
+                            style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                                stroke-width="2"
+                                style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                                <rect x="5" y="5" width="8" height="8" rx="1" />
+                                <path d="M3 11 L3 3 L11 3" />
                             </svg>
                             Copy Address
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Generate Wallet Modal -->
-            <div id="generateWalletModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div id="generateWalletModal"
+                style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div
+                    style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Generate New Wallet</h3>
-                        <button id="closeGenerateWalletModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                        <button id="closeGenerateWalletModal"
+                            style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
                     </div>
                     <div id="generateWalletForm">
                         <div class="wallet-form-group">
                             <label>Wallet Name (Optional)</label>
-                            <input type="text" id="generateWalletName" class="wallet-input" placeholder="Enter wallet name (e.g., My Wallet)">
+                            <input type="text" id="generateWalletName" class="wallet-input"
+                                placeholder="Enter wallet name (e.g., My Wallet)">
                         </div>
                         <div class="wallet-form-group">
                             <label>Network</label>
@@ -468,78 +533,116 @@
                         </div>
                         <div class="wallet-form-group">
                             <label>Password</label>
-                            <input type="password" id="generateWalletPassword" class="wallet-input" placeholder="Enter password to encrypt wallet">
+                            <input type="password" id="generateWalletPassword" class="wallet-input"
+                                placeholder="Enter password to encrypt wallet">
                         </div>
-                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 16px; line-height: 1.6;">
-                            A new wallet will be created for the selected network. Make sure to save your private key securely.
+                        <p
+                            style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 16px; line-height: 1.6;">
+                            A new wallet will be created for the selected network. Make sure to save your private key
+                            securely.
                         </p>
-                        <button class="wallet-primary-btn" id="generateWalletSubmit" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">Generate Wallet</button>
+                        <button class="wallet-primary-btn" id="generateWalletSubmit"
+                            style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">Generate
+                            Wallet</button>
                     </div>
-                    <div id="generateWalletPrivateKeyDisplay" style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <p style="font-weight: 600; margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">⚠️ Save Your Private Key</p>
-                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">This is the only time you'll see this. Save it securely!</p>
-                        <textarea id="generateWalletPrivateKey" readonly style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-family: monospace; font-size: 12px; color: rgba(255, 255, 255, 0.9);"></textarea>
-                        <button class="wallet-primary-btn" id="generateWalletConfirm" style="margin-top: 10px; width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">I've Saved It & Switch to This Wallet</button>
+                    <div id="generateWalletPrivateKeyDisplay"
+                        style="display: none; margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <p style="font-weight: 600; margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">⚠️ Save Your
+                            Private Key</p>
+                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 10px;">This is the
+                            only time you'll see this. Save it securely!</p>
+                        <textarea id="generateWalletPrivateKey" readonly
+                            style="width: 100%; min-height: 80px; padding: 10px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; font-family: monospace; font-size: 12px; color: rgba(255, 255, 255, 0.9);"></textarea>
+                        <button class="wallet-primary-btn" id="generateWalletConfirm"
+                            style="margin-top: 10px; width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">I've
+                            Saved It & Switch to This Wallet</button>
                     </div>
                 </div>
             </div>
 
             <!-- Import Wallet Modal -->
-            <div id="importWalletModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div id="importWalletModal"
+                style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div
+                    style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <h3 style="margin: 0; font-size: 18px; font-weight: 700;">Import Wallet</h3>
-                        <button id="closeImportWalletModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+                        <button id="closeImportWalletModal"
+                            style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
                     </div>
                     <div class="wallet-form-group">
                         <label>Private Key (Base58 or Hex)</label>
-                        <textarea id="importWalletPrivateKey" class="wallet-input" placeholder="Enter private key" style="min-height: 80px; font-family: monospace; font-size: 12px;"></textarea>
+                        <textarea id="importWalletPrivateKey" class="wallet-input" placeholder="Enter private key"
+                            style="min-height: 80px; font-family: monospace; font-size: 12px;"></textarea>
                     </div>
                     <div class="wallet-form-group">
                         <label>Password</label>
-                        <input type="password" id="importWalletPassword" class="wallet-input" placeholder="Enter password to encrypt wallet">
+                        <input type="password" id="importWalletPassword" class="wallet-input"
+                            placeholder="Enter password to encrypt wallet">
                     </div>
                     <p style="font-size: 12px; color: rgba(255, 255, 255, 0.6); margin-bottom: 16px; line-height: 1.6;">
                         Import an existing wallet using your private key. The key will be encrypted with your password.
                     </p>
-                    <button class="wallet-primary-btn" id="importWalletSubmitSettings" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">Import Wallet</button>
+                    <button class="wallet-primary-btn" id="importWalletSubmitSettings"
+                        style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600;">Import Wallet</button>
                 </div>
             </div>
 
             <!-- Settings Modal -->
-            <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 80vh; overflow-y: auto;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);">Settings</h3>
-                        <button id="closeSettingsModal" style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
+            <div id="settingsModal"
+                style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+                <div
+                    style="background: linear-gradient(135deg, rgba(10, 10, 20, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; border: 1px solid rgba(255, 255, 255, 0.1); max-height: 80vh; overflow-y: auto;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);">
+                            Settings</h3>
+                        <button id="closeSettingsModal"
+                            style="width: 32px; height: 32px; border: none; background: rgba(255, 255, 255, 0.05); border-radius: 8px; cursor: pointer; color: rgba(255, 255, 255, 0.7); font-size: 20px; line-height: 1;">×</button>
                     </div>
                     <div class="wallet-section" style="margin-bottom: 24px;">
-                        <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600; color: rgba(255, 255, 255, 0.95);">Wallet Mode</h3>
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <h3
+                            style="margin-bottom: 16px; font-size: 16px; font-weight: 600; color: rgba(255, 255, 255, 0.95);">
+                            Wallet Mode</h3>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
                             <div>
-                                <div style="font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.95); margin-bottom: 4px;" id="modeDescription">Hot Wallet Mode</div>
-                                <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6);">Select for Cold Storage Mode (Takes Wallet Offline)</div>
+                                <div style="font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.95); margin-bottom: 4px;"
+                                    id="modeDescription">Hot Wallet Mode</div>
+                                <div style="font-size: 11px; color: rgba(255, 255, 255, 0.6);">Select for Cold Storage
+                                    Mode (Takes Wallet Offline)</div>
                             </div>
-                            <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
-                                <input type="checkbox" id="hotWalletToggle" style="position: absolute; opacity: 0; width: 44px; height: 24px; margin: 0; padding: 0; cursor: pointer; z-index: 2; top: 0; left: 0;">
-                                <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(100, 116, 139, 0.5); border-radius: 24px; transition: 0.3s; pointer-events: none;">
-                                    <span style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); pointer-events: none;"></span>
+                            <label
+                                style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+                                <input type="checkbox" id="hotWalletToggle"
+                                    style="position: absolute; opacity: 0; width: 44px; height: 24px; margin: 0; padding: 0; cursor: pointer; z-index: 2; top: 0; left: 0;">
+                                <span
+                                    style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(100, 116, 139, 0.5); border-radius: 24px; transition: 0.3s; pointer-events: none;">
+                                    <span
+                                        style="position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2); pointer-events: none;"></span>
                                 </span>
                             </label>
                         </div>
-                        <div id="hotModeWarning" style="display: none; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 12px; color: rgba(239, 68, 68, 0.9); line-height: 1.5;">
+                        <div id="hotModeWarning"
+                            style="display: none; margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; font-size: 12px; color: rgba(239, 68, 68, 0.9); line-height: 1.5;">
                             ⚠️ <strong>Hot Wallet Mode:</strong> Network access enabled. Security reduced.
                         </div>
                     </div>
                     <div class="wallet-section">
-                        <h3 style="margin-bottom: 16px; font-size: 16px; font-weight: 600; color: rgba(255, 255, 255, 0.95);">Security</h3>
-                        <button class="wallet-primary-btn" id="exportPrivateKeyBtn" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: rgba(239, 68, 68, 1); margin-bottom: 12px;">
+                        <h3
+                            style="margin-bottom: 16px; font-size: 16px; font-weight: 600; color: rgba(255, 255, 255, 0.95);">
+                            Security</h3>
+                        <button class="wallet-primary-btn" id="exportPrivateKeyBtn"
+                            style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: rgba(239, 68, 68, 1); margin-bottom: 12px;">
                             Export Private Key
                         </button>
-                        <button class="wallet-primary-btn" id="importWalletBtnSettings" style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: rgba(59, 130, 246, 1);">
+                        <button class="wallet-primary-btn" id="importWalletBtnSettings"
+                            style="width: 100%; padding: 14px; font-size: 14px; font-weight: 600; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: rgba(59, 130, 246, 1);">
                             Import Wallet
                         </button>
-                        <p style="font-size: 12px; color: rgba(255, 255, 255, 0.75); margin-top: 12px; line-height: 1.6;">
+                        <p
+                            style="font-size: 12px; color: rgba(255, 255, 255, 0.75); margin-top: 12px; line-height: 1.6;">
                             Export your private key for backup or import an existing wallet using a private key.
                         </p>
                     </div>
@@ -572,7 +675,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         ">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);">Your Private Keys</h3>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);">Your Private
+                    Keys</h3>
                 <button id="closeExportKeysModal" style="
                     background: rgba(255, 255, 255, 0.05);
                     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -626,9 +730,12 @@
             width: 90%;
             border: 1px solid rgba(255, 255, 255, 0.1);
         ">
-            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);" id="passwordPromptTitle">Enter Password</h3>
-            <p style="margin: 0 0 16px 0; font-size: 14px; color: rgba(255, 255, 255, 0.7);" id="passwordPromptMessage">Enter your wallet password:</p>
-            <input type="password" id="passwordPromptInput" class="wallet-input" placeholder="Enter password" style="width: 100%; margin-bottom: 16px;" autofocus>
+            <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: rgba(255, 255, 255, 0.95);"
+                id="passwordPromptTitle">Enter Password</h3>
+            <p style="margin: 0 0 16px 0; font-size: 14px; color: rgba(255, 255, 255, 0.7);" id="passwordPromptMessage">
+                Enter your wallet password:</p>
+            <input type="password" id="passwordPromptInput" class="wallet-input" placeholder="Enter password"
+                style="width: 100%; margin-bottom: 16px;" autofocus>
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
                 <button id="passwordPromptCancel" class="wallet-primary-btn" style="
                     background: rgba(100, 116, 139, 0.2);
@@ -643,5 +750,5 @@
 
     <script src="wallet-app.js"></script>
 </body>
-</html>
 
+</html>

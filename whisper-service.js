@@ -347,6 +347,12 @@ class WhisperService {
                         throw new Error('Tor is not running. Please wait for Tor to connect.');
                     }
 
+                    // CHECK BOOTSTRAP PROGRESS
+                    const progress = torManager.getBootstrapProgress();
+                    if (progress < 100) {
+                        throw new Error(`Tor is still connecting (${progress}%). Please wait for 100% bootstrap.`);
+                    }
+
                     // Construct URL properly - remove any existing /message and trailing slashes
                     let cleanOnion = targetOnion
                         .replace(/^https?:\/\//, '')  // Remove http:// or https://
@@ -406,19 +412,21 @@ class WhisperService {
 
             // Provide more helpful error messages
             let userError = error.message;
+
+            // CUSTOM ERROR PARSING
             if (error.code === 'ECONNREFUSED') {
-                userError = 'Connection refused. The recipient may be offline, or their hidden service is still propagating (wait 1-2 minutes).';
+                userError = 'Recipient offline or restarting. (Connection Refused)';
+            } else if (error.code === 'HostUnreachable' || (error.message && error.message.includes('HostUnreachable'))) {
+                // SOCKS5 HostUnreachable
+                userError = 'Recipient not found. The user may be offline, the ID is wrong, or they haven\'t fully propagated to the network yet.';
             } else if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
                 userError = 'Connection timed out. Hidden services can take 30-60 seconds to propagate. Try again in a minute.';
             } else if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN') {
                 userError = 'Address not found. The hidden service may still be propagating, or the address is invalid. Wait 1-2 minutes and try again.';
             } else if (error.message.includes('SOCKS') || error.code === 'ECONNREFUSED') {
                 userError = 'Tor proxy error. Make sure Tor is running and fully bootstrapped.';
-            } else if (error.message.includes('proxy')) {
-                userError = 'Proxy error. Make sure Tor is running properly.';
-            } else {
-                // Generic error - add hint about propagation
-                userError = `${error.message}. Note: Hidden services take 30-60 seconds to propagate. Wait a minute and try again.`;
+            } else if (error.message.includes('bootstrap')) {
+                userError = error.message; // Pass through our custom bootstrap error
             }
 
             // Update message status to failed (but keep it saved)
@@ -450,6 +458,11 @@ class WhisperService {
                 path: '/message',
                 method: 'POST',
                 agent: agent,
+                // NODE V22 FIX: Custom lookup to satisfy strict DNS checks
+                // We return localhost, but the SOCKS agent ignores it and resolves remotely
+                lookup: (hostname, options, callback) => {
+                    callback(null, '127.0.0.1', 4);
+                },
                 headers: {
                     'Content-Type': 'application/json',
                     'Content-Length': Buffer.byteLength(postData),

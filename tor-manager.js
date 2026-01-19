@@ -19,6 +19,7 @@ class TorManager {
     this.platform = process.platform;
     this.arch = process.arch;
     this.logger = null;
+    this.bootstrapProgress = 0;
   }
 
   setLogger(callback) {
@@ -330,11 +331,13 @@ CookieAuthentication 0
 
       if (output.includes('Bootstrapped 100%')) {
         this.log('info', 'Tor is ready!');
+        this.bootstrapProgress = 100;
         this.isRunning = true;
       } else if (output.includes('Bootstrapped')) {
         const match = output.match(/Bootstrapped (\d+)%/);
         if (match) {
-          const percent = match[1];
+          const percent = parseInt(match[1], 10);
+          this.bootstrapProgress = percent;
           this.log('info', `Bootstrapping: ${percent}%`);
         }
       }
@@ -504,6 +507,11 @@ CookieAuthentication 0
   }
 
   // Get Tor status
+  // Get bootstrap progress
+  getBootstrapProgress() {
+    return this.bootstrapProgress || 0;
+  }
+
   // Get Tor status
   getStatus() {
     return {
@@ -511,7 +519,8 @@ CookieAuthentication 0
       pid: this.torProcess ? this.torProcess.pid : null,
       port: this.torPort,
       controlPort: this.controlPort,
-      onionAddress: null // TODO: Store persistent address if needed
+      onionAddress: null, // TODO: Store persistent address if needed
+      bootstrapProgress: this.bootstrapProgress || 0
     };
   }
 

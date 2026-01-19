@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Web App</title>
+    <script src="web-adapter.js"></script>
     <style>
         * {
             margin: 0;
@@ -86,23 +88,24 @@
         }
     </style>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title" id="windowTitle">Web App</div>
         <div class="title-bar-controls">
             <button class="title-bar-btn minimize" id="minimizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="0" y="5" width="12" height="1"/>
+                    <rect x="0" y="5" width="12" height="1" />
                 </svg>
             </button>
             <button class="title-bar-btn maximize" id="maximizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
             <button class="title-bar-btn close" id="closeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
             </button>
         </div>
@@ -131,7 +134,7 @@
                 loadWebApp();
             });
         }
-        
+
         function loadWebApp() {
             if (webAppUrl) {
                 webview.src = webAppUrl;
@@ -175,5 +178,5 @@
         });
     </script>
 </body>
-</html>
 
+</html>

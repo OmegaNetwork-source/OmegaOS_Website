@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -227,7 +228,8 @@
             margin: 0 8px;
         }
 
-        .sort-menu, .view-menu {
+        .sort-menu,
+        .view-menu {
             position: absolute;
             background: white;
             border: 1px solid #d0d0d0;
@@ -240,11 +242,13 @@
             margin-top: 2px;
         }
 
-        .sort-menu.show, .view-menu.show {
+        .sort-menu.show,
+        .view-menu.show {
             display: block;
         }
 
-        .sort-menu-item, .view-menu-item {
+        .sort-menu-item,
+        .view-menu-item {
             padding: 6px 16px;
             cursor: pointer;
             font-size: 13px;
@@ -252,11 +256,13 @@
             transition: background 0.1s;
         }
 
-        .sort-menu-item:hover, .view-menu-item:hover {
+        .sort-menu-item:hover,
+        .view-menu-item:hover {
             background: #f0f0f0;
         }
 
-        .sort-menu-item.active, .view-menu-item.active {
+        .sort-menu-item.active,
+        .view-menu-item.active {
             background: #e3f2fd;
             color: #0078d4;
         }
@@ -393,24 +399,26 @@
             word-break: break-word;
         }
     </style>
+    <script src="web-adapter.js"></script>
 </head>
+
 <body>
     <div class="title-bar">
         <div class="title-bar-title">Documents</div>
         <div class="title-bar-controls">
             <button class="title-bar-btn minimize" id="minimizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="0" y="5" width="12" height="1"/>
+                    <rect x="0" y="5" width="12" height="1" />
                 </svg>
             </button>
             <button class="title-bar-btn maximize" id="maximizeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1"/>
+                    <rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" />
                 </svg>
             </button>
             <button class="title-bar-btn close" id="closeBtn">
                 <svg width="12" height="12" viewBox="0 0 12 12">
-                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
             </button>
         </div>
@@ -665,10 +673,10 @@
                 return;
             }
 
-            const confirmMsg = contextMenuFile.isDirectory 
+            const confirmMsg = contextMenuFile.isDirectory
                 ? `Are you sure you want to delete the folder "${contextMenuFile.name}"?`
                 : `Are you sure you want to delete "${contextMenuFile.name}"?`;
-            
+
             if (confirm(confirmMsg)) {
                 try {
                     const success = await window.electronAPI.deleteFile(contextMenuFile.path);
@@ -688,7 +696,7 @@
         function showPropertiesDialog(stats) {
             const modal = document.getElementById('propertiesModal');
             const body = document.getElementById('propertiesBody');
-            
+
             const formatDate = (timestamp) => {
                 const date = new Date(timestamp);
                 return date.toLocaleString();
@@ -802,11 +810,11 @@
             const sorted = [...files];
             sorted.sort((a, b) => {
                 let comparison = 0;
-                
+
                 // Directories first
                 if (a.isDirectory && !b.isDirectory) return -1;
                 if (!a.isDirectory && b.isDirectory) return 1;
-                
+
                 switch (currentSort) {
                     case 'name':
                         comparison = a.name.localeCompare(b.name);
@@ -827,10 +835,10 @@
                         }
                         break;
                 }
-                
+
                 return sortOrder === 'asc' ? comparison : -comparison;
             });
-            
+
             return sorted;
         }
 
@@ -838,19 +846,19 @@
         function renderFiles(files) {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';
-            
+
             // Apply view class
             fileList.className = currentView === 'grid' ? 'file-list grid-view' : 'file-list';
-            
+
             if (files.length === 0) {
                 fileList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">This folder is empty</div></div>';
                 return;
             }
-            
+
             files.forEach(file => {
-                        const item = document.createElement('div');
-                        item.className = 'file-item';
-                        item.innerHTML = `
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
                             <div class="file-icon">${getFileIcon(file)}</div>
                             <div class="file-info">
                                 <div class="file-name">${file.name}</div>
@@ -859,63 +867,63 @@
                             ${!file.isDirectory ? `<div class="file-size">${formatFileSize(file.size)}</div>` : ''}
                         `;
 
-                        // Click to select
-                        item.addEventListener('click', (e) => {
-                            if (e.button === 0) { // Left click
-                                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
-                                item.classList.add('selected');
-                                selectedFile = file;
+                // Click to select
+                item.addEventListener('click', (e) => {
+                    if (e.button === 0) { // Left click
+                        document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
+                        item.classList.add('selected');
+                        selectedFile = file;
+                    }
+                });
+
+                // Right-click for context menu
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    contextMenuFile = file;
+
+                    // Position context menu
+                    const rect = item.getBoundingClientRect();
+                    const menuWidth = 180;
+                    const menuHeight = 200;
+                    let left = e.clientX;
+                    let top = e.clientY;
+
+                    // Adjust if menu would go off screen
+                    if (left + menuWidth > window.innerWidth) {
+                        left = window.innerWidth - menuWidth - 10;
+                    }
+                    if (top + menuHeight > window.innerHeight) {
+                        top = window.innerHeight - menuHeight - 10;
+                    }
+
+                    contextMenu.style.left = left + 'px';
+                    contextMenu.style.top = top + 'px';
+                    contextMenu.style.display = 'block';
+
+                    // Update menu item states for file context
+                    document.getElementById('contextOpen').classList.toggle('disabled', file.isDirectory);
+                    document.getElementById('contextRename').classList.remove('disabled');
+                    document.getElementById('contextCut').classList.remove('disabled');
+                    document.getElementById('contextCopy').classList.remove('disabled');
+                    document.getElementById('contextProperties').classList.remove('disabled');
+                    document.getElementById('contextDelete').classList.remove('disabled');
+                    document.getElementById('contextPaste').classList.toggle('disabled', !clipboardFile);
+                });
+
+                // Double-click to open
+                item.addEventListener('dblclick', () => {
+                    if (!file.isDirectory && window.electronAPI && window.electronAPI.openFileInApp) {
+                        window.electronAPI.openFileInApp(file.path).then(result => {
+                            if (!result.success) {
+                                alert('Failed to open file: ' + result.error);
                             }
                         });
+                    }
+                });
 
-                        // Right-click for context menu
-                        item.addEventListener('contextmenu', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            contextMenuFile = file;
-                            
-                            // Position context menu
-                            const rect = item.getBoundingClientRect();
-                            const menuWidth = 180;
-                            const menuHeight = 200;
-                            let left = e.clientX;
-                            let top = e.clientY;
-                            
-                            // Adjust if menu would go off screen
-                            if (left + menuWidth > window.innerWidth) {
-                                left = window.innerWidth - menuWidth - 10;
-                            }
-                            if (top + menuHeight > window.innerHeight) {
-                                top = window.innerHeight - menuHeight - 10;
-                            }
-                            
-                            contextMenu.style.left = left + 'px';
-                            contextMenu.style.top = top + 'px';
-                            contextMenu.style.display = 'block';
-                            
-                            // Update menu item states for file context
-                            document.getElementById('contextOpen').classList.toggle('disabled', file.isDirectory);
-                            document.getElementById('contextRename').classList.remove('disabled');
-                            document.getElementById('contextCut').classList.remove('disabled');
-                            document.getElementById('contextCopy').classList.remove('disabled');
-                            document.getElementById('contextProperties').classList.remove('disabled');
-                            document.getElementById('contextDelete').classList.remove('disabled');
-                            document.getElementById('contextPaste').classList.toggle('disabled', !clipboardFile);
-                        });
-
-                        // Double-click to open
-                        item.addEventListener('dblclick', () => {
-                            if (!file.isDirectory && window.electronAPI && window.electronAPI.openFileInApp) {
-                                window.electronAPI.openFileInApp(file.path).then(result => {
-                                    if (!result.success) {
-                                        alert('Failed to open file: ' + result.error);
-                                    }
-                                });
-                            }
-                        });
-
-                        fileList.appendChild(item);
-                    });
+                fileList.appendChild(item);
+            });
         }
 
         // Load files
@@ -939,31 +947,31 @@
         const sortMenu = document.getElementById('sortMenu');
         const viewBtn = document.getElementById('viewBtn');
         const viewMenu = document.getElementById('viewMenu');
-        
+
         sortBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             sortMenu.classList.toggle('show');
             viewMenu.classList.remove('show');
         });
-        
+
         viewBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             viewMenu.classList.toggle('show');
             sortMenu.classList.remove('show');
         });
-        
+
         // Close menus when clicking outside
         document.addEventListener('click', () => {
             sortMenu.classList.remove('show');
             viewMenu.classList.remove('show');
         });
-        
+
         // Sort menu items
         document.querySelectorAll('.sort-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const sortType = item.dataset.sort;
-                
+
                 if (sortType === 'asc' || sortType === 'desc') {
                     sortOrder = sortType;
                 } else {
@@ -971,13 +979,13 @@
                     document.querySelectorAll('.sort-menu-item').forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
                 }
-                
+
                 const sorted = sortFiles(allFiles);
                 renderFiles(sorted);
                 sortMenu.classList.remove('show');
             });
         });
-        
+
         // View menu items
         document.querySelectorAll('.view-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -985,12 +993,12 @@
                 currentView = item.dataset.view;
                 document.querySelectorAll('.view-menu-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-                
+
                 renderFiles(sortFiles(allFiles));
                 viewMenu.classList.remove('show');
             });
         });
-        
+
         // Set initial active sort
         document.querySelector('.sort-menu-item[data-sort="name"]').classList.add('active');
 
@@ -1006,13 +1014,13 @@
                 e.preventDefault();
                 e.stopPropagation();
                 contextMenuFile = null; // No file selected
-                
+
                 // Position context menu
                 const menuWidth = 180;
                 const menuHeight = 150;
                 let left = e.clientX;
                 let top = e.clientY;
-                
+
                 // Adjust if menu would go off screen
                 if (left + menuWidth > window.innerWidth) {
                     left = window.innerWidth - menuWidth - 10;
@@ -1020,11 +1028,11 @@
                 if (top + menuHeight > window.innerHeight) {
                     top = window.innerHeight - menuHeight - 10;
                 }
-                
+
                 contextMenu.style.left = left + 'px';
                 contextMenu.style.top = top + 'px';
                 contextMenu.style.display = 'block';
-                
+
                 // Update menu item states for empty area context
                 document.getElementById('contextOpen').classList.add('disabled');
                 document.getElementById('contextRename').classList.add('disabled');
@@ -1040,6 +1048,5 @@
         loadFiles();
     </script>
 </body>
+
 </html>
-
-
