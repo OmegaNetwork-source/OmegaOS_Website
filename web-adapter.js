@@ -51,7 +51,7 @@
             // Simple routing for web version
             const mappings = {
                 'browser': 'browser.html',
-                'terminal': 'terminal.html',
+                'terminal': 'https://terminalv2.omeganetwork.co/',
                 'word': 'word.html',
                 'finance': 'finance.html',
                 'slides': 'slides.html',
