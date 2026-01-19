@@ -3087,63 +3087,48 @@ body {
         height: 14px;
     }
 
-    /* Shrink Start Button */
+    /* Shrink Start Button - HIDDEN */
     .start-button {
-        width: 36px;
-        height: 36px;
-        padding: 6px;
+        display: none !important;
     }
 
     /* Hide Window List/Taskbar items if too cramped */
-    .taskbar-items {
-        display: none;
-        /* Hide open app indicators on strict mobile to save space */
-    }
-
-    /* Crypto Ticker - Make it fit */
-    #cryptoTicker {
-        max-width: fit-content;
-        /* Allow it to shrink to content */
-        font-size: 10px;
-        /* Small text */
-        gap: 5px;
-        padding: 0 5px;
-        margin-left: auto;
-        /* Push to right */
-    }
-
-    /* Only show the first crypto item (usually BTC) on mobile to save space */
-    #cryptoWidget .crypto-item:not(:first-child) {
-        display: none;
-    }
-
-    .ticker-item {
-        font-size: 10px;
-        padding: 0 5px;
-    }
-
-    .ticker-item {
-        font-size: 10px;
-        padding: 0 5px;
-    }
-
-    /* System Tray - Compact */
+    .taskbar-items,
+    #cryptoTicker,
     .system-tray {
-        gap: 4px;
-        padding: 0 4px;
+        display: none !important;
     }
 
-    .tray-time {
-        font-size: 10px;
-        display: flex;
-        flex-direction: column;
-        line-height: 1;
-        align-items: flex-end;
+    /* Search Bar - Full Width & Prominent */
+    .taskbar-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 36px;
+        margin: 0;
+        background: rgba(255, 255, 255, 0.15);
+        /* Slightly lighter for visibility */
     }
 
-    .tray-icon {
-        width: 28px;
-        height: 28px;
+    .taskbar-search input {
         font-size: 14px;
+        /* Larger text for mobile typing */
+    }
+
+    .taskbar-search svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Ensure search results take full screen on mobile for better usability */
+    .search-results {
+        position: fixed;
+        bottom: 50px;
+        left: 0;
+        width: 100%;
+        max-width: 100% !important;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        max-height: 50vh;
     }
 }
