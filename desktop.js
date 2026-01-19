@@ -344,9 +344,12 @@ function setupDesktopIcons() {
         });
 
         // Touch events for mobile support
+        let hasMoved = false;
+
         icon.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
                 isDragging = true;
+                hasMoved = false; // Reset movement flag
                 icon.classList.add('dragging');
 
                 const rect = icon.getBoundingClientRect();
@@ -356,7 +359,9 @@ function setupDesktopIcons() {
                 dragStartX = e.touches[0].clientX;
                 dragStartY = e.touches[0].clientY;
 
-                e.preventDefault();
+                // Don't prevent default immediately, or we can't scroll the page/zoom if needed.
+                // But for a desktop-like app, we probably want to prevent scrolling on the desktop area.
+                // e.preventDefault(); 
             }
         });
 
@@ -364,6 +369,14 @@ function setupDesktopIcons() {
             if (isDragging && icon.classList.contains('dragging') && e.touches.length === 1) {
                 const deltaX = e.touches[0].clientX - dragStartX;
                 const deltaY = e.touches[0].clientY - dragStartY;
+
+                // Only consider it a move if we've dragged more than 5 pixels (prevents jitter clicks)
+                if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                    hasMoved = true;
+                    e.preventDefault(); // Prevent scrolling only when actually dragging
+                } else {
+                    return;
+                }
 
                 let newX = initialX + deltaX;
                 let newY = initialY + deltaY;
@@ -378,15 +391,29 @@ function setupDesktopIcons() {
                 icon.style.top = newY + 'px';
 
                 saveIconPosition(icon.id, newX, newY);
-
-                e.preventDefault();
             }
         });
 
-        document.addEventListener('touchend', () => {
+        icon.addEventListener('touchend', (e) => {
             if (isDragging) {
                 isDragging = false;
                 icon.classList.remove('dragging');
+
+                // If we didn't move (much), treat it as a tap/click to launch
+                if (!hasMoved) {
+                    // Logic from dblclick handler
+                    const appType = icon.dataset.app;
+                    const action = icon.dataset.action;
+                    const folder = icon.dataset.folder;
+
+                    if (appType) {
+                        launchApp(appType);
+                    } else if (action === 'open-folder') {
+                        launchApp('filemanager');
+                    } else if (folder) {
+                        openAppFolder(folder);
+                    }
+                }
             }
         });
     });

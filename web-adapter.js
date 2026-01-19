@@ -284,18 +284,37 @@
     // --- DOM Initialization ---
     window.addEventListener('DOMContentLoaded', () => {
         // 1. WEB DEMO RIBBON
+        // 1. WEB DEMO RIBBON
+        const ribbonStyle = document.createElement('style');
+        ribbonStyle.innerHTML = `
+            .web-demo-ribbon {
+                position: fixed;
+                bottom: 60px;
+                right: 10px;
+                background: rgba(255, 68, 68, 0.8);
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                z-index: 999999;
+                pointer-events: none;
+                font-family: monospace;
+            }
+            @media (max-width: 768px) {
+                .web-demo-ribbon {
+                    bottom: auto; /* Reset bottom */
+                    top: 10px;
+                    right: 10px;
+                    font-size: 10px; /* Smaller text */
+                    padding: 4px 8px;
+                    background: rgba(255, 68, 68, 0.4); /* More transparent on mobile */
+                }
+            }
+        `;
+        document.head.appendChild(ribbonStyle);
+
         const ribbon = document.createElement('div');
-        ribbon.style.position = 'fixed';
-        ribbon.style.bottom = '60px';
-        ribbon.style.right = '10px';
-        ribbon.style.background = 'rgba(255, 68, 68, 0.8)';
-        ribbon.style.color = 'white';
-        ribbon.style.padding = '5px 10px';
-        ribbon.style.borderRadius = '5px';
-        ribbon.style.fontSize = '12px';
-        ribbon.style.zIndex = '999999';
-        ribbon.style.pointerEvents = 'none';
-        ribbon.style.fontFamily = 'monospace';
+        ribbon.className = 'web-demo-ribbon';
         ribbon.innerText = 'WEB DEMO MODE';
         document.body.appendChild(ribbon);
 
