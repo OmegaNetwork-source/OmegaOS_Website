@@ -2190,21 +2190,15 @@
             }
 
             // Download functionality
+            // Download functionality
             function getDownloadUrl() {
-                // Google Drive direct download URL
-                return 'https://drive.google.com/uc?export=download&id=1DzVqjap0YKnoMui0KyVj1KZhUz3YZf7y';
+                // Google Drive folder/view URL (Avoids direct download quota issues)
+                return 'https://drive.google.com/file/d/139wzt3jjXpIjC6TzYgVvb4oK0TcG7knp/view';
             }
 
-            // Set up download button
+            // Set up download button - REMOVED INTERCEPTOR so href works naturally
             const downloadBtn = document.getElementById('downloadBtn');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const url = getDownloadUrl();
-                    // Direct download - open in new window
-                    window.open(url, '_blank');
-                });
-            }
+            // Listener removed to allow default anchor tag behavior
 
             // Set up platform links
             const platformLinks = document.querySelectorAll('.platform-link');
