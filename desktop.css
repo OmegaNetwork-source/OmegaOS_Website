@@ -3027,33 +3027,26 @@ body {
 /* Mobile Optimizations */
 @media (max-width: 768px) {
 
-    /* 1. Push Desktop Icons Down to clear VPN badge and Ribbon */
+    /* 1. Push Desktop Icons Down & Left Align */
     .desktop-icons {
         margin-top: 100px !important;
-        /* Force icons lower */
-        /* Also adjust grid to be tighter on narrow screens */
         display: flex;
         flex-wrap: wrap;
         align-content: flex-start;
         gap: 15px;
-        /* Reduced gap */
         justify-content: flex-start;
-        /* Align icons to start (left) */
+        /* Align left */
         width: 100%;
         padding: 0 10px;
         padding-left: 30px;
-        /* Indent slightly for visibility */
     }
 
     .desktop-icon {
-        /* Reset absolute positioning from JS if possible, or use !important to override */
-        /* Note: JS uses inline styles for top/left. We might need !important to override drag positions on mobile reload */
         position: relative !important;
         left: auto !important;
         top: auto !important;
         margin: 5px;
         width: 70px;
-        /* Slightly smaller */
     }
 
     .icon-image {
@@ -3062,64 +3055,44 @@ body {
         font-size: 32px;
     }
 
-    /* 2. Taskbar Optimization */
+    /* 2. Taskbar Optimization - CLEAN MODE (Search Only) */
     .taskbar {
         height: 50px;
-        /* Keep height manageable */
-        padding: 0 5px;
-        gap: 5px;
+        padding: 0 10px;
+        gap: 0;
+        justify-content: center;
+        /* Center the search bar */
     }
 
-    /* Shrink Search Bar */
-    .taskbar-search {
-        width: 80px;
-        /* Much smaller width */
-        min-width: 60px;
-        padding: 0 8px;
-    }
-
-    .taskbar-search input {
-        font-size: 11px;
-    }
-
-    .taskbar-search svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    /* Shrink Start Button - HIDDEN */
-    .start-button {
-        display: none !important;
-    }
-
-    /* Hide Window List/Taskbar items if too cramped */
+    /* Hide Unwanted Elements */
+    .start-button,
     .taskbar-items,
     #cryptoTicker,
     .system-tray {
         display: none !important;
     }
 
-    /* Search Bar - Full Width & Prominent */
+    /* Search Bar - Full Width */
     .taskbar-search {
         width: 100% !important;
         max-width: 100% !important;
-        height: 36px;
+        height: 38px;
         margin: 0;
         background: rgba(255, 255, 255, 0.15);
-        /* Slightly lighter for visibility */
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .taskbar-search input {
-        font-size: 14px;
-        /* Larger text for mobile typing */
+        font-size: 16px;
+        /* 16px prevents iOS zoom on focus */
     }
 
     .taskbar-search svg {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
     }
 
-    /* Ensure search results take full screen on mobile for better usability */
+    /* Search Results - Mobile Overlay */
     .search-results {
         position: fixed;
         bottom: 50px;
@@ -3127,8 +3100,9 @@ body {
         width: 100%;
         max-width: 100% !important;
         border-radius: 0;
-        border-left: none;
-        border-right: none;
-        max-height: 50vh;
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        max-height: 60vh;
+        background: rgba(30, 30, 30, 0.98);
     }
 }
