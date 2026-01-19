@@ -4110,3 +4110,105 @@ async function registerIdentity() {
     }
 }
 
+
+// --- MOBILE LAYOUT ENFORCEMENT ---
+// Forces the "Clean Mode" taskbar on mobile devices via JS
+function enforceMobileLayout() {
+    const isMobile = window.innerWidth <= 768;
+
+    // Select elements - using both class and ID selectors just in case
+    const startBtn = document.querySelector('.start-button');
+    const cryptoTicker = document.getElementById('cryptoTicker');
+    const sysTray = document.querySelector('.system-tray');
+    const taskbarSearch = document.querySelector('.taskbar-search');
+    const taskbarItems = document.querySelector('.taskbar-items');
+
+    // Elements to HIDE on mobile
+    const elementsToHide = [
+        { el: startBtn, name: 'Start Button' },
+        { el: cryptoTicker, name: 'Crypto Ticker' },
+        { el: sysTray, name: 'System Tray' },
+        { el: taskbarItems, name: 'Taskbar Items' }
+    ];
+
+    if (isMobile) {
+        console.log('[Mobile] Enforcing clean layout...');
+        // Enforce Hiding
+        elementsToHide.forEach(item => {
+            if (item.el) {
+                item.el.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+        // Enforce Search Bar Width
+        if (taskbarSearch) {
+            taskbarSearch.style.setProperty('width', '100%', 'important');
+            taskbarSearch.style.setProperty('max-width', '100%', 'important');
+            taskbarSearch.style.setProperty('margin', '0', 'important');
+        }
+
+        // Add Close Button to Search Results if not exists
+        addMobileSearchCloseButton();
+
+    } else {
+        // Reset to CSS defaults (Desktop)
+        elementsToHide.forEach(item => {
+            if (item.el) {
+                // Remove inline style so CSS takes over
+                item.el.style.display = '';
+            }
+        });
+        if (taskbarSearch) {
+            taskbarSearch.style.width = '';
+            taskbarSearch.style.maxWidth = '';
+            taskbarSearch.style.margin = '';
+        }
+    }
+}
+
+function addMobileSearchCloseButton() {
+    const searchResults = document.getElementById('searchResults');
+    if (!searchResults) return;
+
+    // Check if button already exists
+    if (document.getElementById('mobileSearchClose')) return;
+
+    const closeBtn = document.createElement('div');
+    closeBtn.id = 'mobileSearchClose';
+    closeBtn.innerHTML = '✕ Close Search';
+    closeBtn.style.cssText = `
+        padding: 12px;
+        background: #ff4444;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        user-select: none;
+    `;
+
+    closeBtn.onclick = (e) => {
+        e.stopPropagation(); // Prevent bubbling
+        searchResults.style.display = 'none';
+        const input = document.getElementById('taskbarSearchInput');
+        if (input) input.blur();
+    };
+
+    // Insert at top of results
+    if (searchResults.firstChild) {
+        searchResults.insertBefore(closeBtn, searchResults.firstChild);
+    } else {
+        searchResults.appendChild(closeBtn);
+    }
+}
+
+// Run on load and resize
+window.addEventListener('load', () => {
+    enforceMobileLayout();
+    // Run again after a short delay in case of dynamic rendering
+    setTimeout(enforceMobileLayout, 500);
+});
+window.addEventListener('resize', enforceMobileLayout);
+
+// Run immediately
+enforceMobileLayout();
