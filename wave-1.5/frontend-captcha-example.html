@@ -1,0 +1,73 @@
+<!-- 
+  Example: Adding CAPTCHA to Wave 1.5 Frontend
+  
+  This shows how to integrate hCaptcha into the claim page.
+  Replace the claim button section in index.html with this pattern.
+-->
+
+<!-- Add hCaptcha script in <head> -->
+<script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+<!-- Modify the claim button section -->
+<div class="container" id="startView">
+    <h1>Claim Airdrop</h1>
+    <p>Connect wallet to verify eligibility for Wave 1.5.</p>
+
+    <!-- Add CAPTCHA before claim button -->
+    <div id="hcaptcha-container" style="margin: 20px 0; display: flex; justify-content: center;"></div>
+    
+    <button class="main-btn" id="actionBtn" onclick="connectAndClaim()" disabled>Claim 1000 tOmega</button>
+    <div id="status"></div>
+</div>
+
+<script>
+// Initialize CAPTCHA
+let captchaToken = null;
+
+window.onload = function() {
+    // Initialize hCaptcha
+    hcaptcha.render('hcaptcha-container', {
+        sitekey: 'YOUR_HCAPTCHA_SITE_KEY', // Get from hcaptcha.com
+        callback: function(token) {
+            captchaToken = token;
+            document.getElementById('actionBtn').disabled = false;
+            document.getElementById('status').innerText = '✅ Verification complete';
+        },
+        'error-callback': function() {
+            document.getElementById('status').innerText = '❌ CAPTCHA verification failed';
+        }
+    });
+};
+
+async function connectAndClaim() {
+    // Verify CAPTCHA token first
+    if (!captchaToken) {
+        alert('Please complete the CAPTCHA verification');
+        return;
+    }
+    
+    // Optional: Verify CAPTCHA token with backend
+    // const verifyResponse = await fetch('/api/verify-captcha', {
+    //     method: 'POST',
+    //     body: JSON.stringify({ token: captchaToken })
+    // });
+    
+    // Continue with wallet connection and claim...
+    // (rest of existing connectAndClaim function)
+}
+</script>
+
+<!-- 
+  Alternative: reCAPTCHA v3 (invisible, less friction)
+  
+  <script src="https://www.google.com/recaptcha/api.js?render=YOUR_SITE_KEY"></script>
+  
+  <script>
+  grecaptcha.ready(function() {
+      grecaptcha.execute('YOUR_SITE_KEY', {action: 'claim'})
+          .then(function(token) {
+              // Send token to backend for verification
+          });
+  });
+  </script>
+-->

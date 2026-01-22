@@ -84,7 +84,8 @@
                 'crack': 'crack.html',
                 'encrypt': 'encrypt.html',
                 'hash-verifier': 'hash-verifier.html',
-                'integrations-manager': 'integrations-manager.html'
+                'integrations-manager': 'integrations-manager.html',
+                'pgt': 'https://www.pgtools.tech/'
             };
 
             if (mappings[appType]) {

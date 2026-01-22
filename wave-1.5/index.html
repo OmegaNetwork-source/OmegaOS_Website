@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave 1.5 Airdrop Claim - Omega Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #000000;
+            --card-bg: #111111;
+            --border-color: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --accent-white: #ffffff;
+            --accent-green: #4caf50;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 50px;
+            border-radius: 24px;
+            /* White glow */
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(255, 255, 255, 0.05);
+            text-align: center;
+            max-width: 480px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        button.main-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            width: 100%;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        button.main-btn:hover {
+            opacity: 0.9;
+        }
+
+        button.main-btn:active {
+            transform: scale(0.98);
+        }
+
+        button.main-btn:disabled {
+            background: #333333;
+            color: #666666;
+            cursor: not-allowed;
+        }
+
+        #status {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+            min-height: 20px;
+            margin-top: 20px;
+            color: #94a3b8;
+        }
+
+        /* --- RAIN ANIMATION (WHITE) --- */
+        .rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .omega-flake {
+            position: absolute;
+            top: -50px;
+            color: #ffffff;
+            font-family: sans-serif;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4);
+            animation: fall linear forwards;
+            user-select: none;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+
+        /* --- RESULT / PNL CARD STYLES --- */
+        #resultView {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 1s forwards;
+            position: relative;
+            z-index: 20;
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+        }
+
+        .pnl-wrapper {
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pnl-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            /* Constrain max width for desktop */
+            background: #151515;
+            border-radius: 20px;
+            padding: 32px;
+            box-sizing: border-box;
+            background-image:
+                radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: 'JetBrains Mono', monospace;
+            text-align: left;
+            overflow: hidden;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 80px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.03);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        .pnl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .omega-logo {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: 900;
+            font-size: 26px;
+            font-family: sans-serif;
+        }
+
+        .pair-name {
+            font-weight: 800;
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .sub-text {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .side-badge {
+            color: #4caf50;
+            /* Green for success */
+            font-weight: 800;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(76, 175, 80, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .roi-section {
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .roi-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .roi-value {
+            font-size: 48px;
+            font-weight: 800;
+            color: #4caf50;
+            line-height: 1;
+            letter-spacing: -2px;
+            text-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .pnl-value {
+            font-size: 18px;
+            color: #fff;
+            opacity: 0.9;
+            font-weight: 600;
+        }
+
+        .pnl-footer {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #333;
+            padding-top: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .qr-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qr-mock {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            background: #fff;
+            padding: 2px;
+        }
+
+        .footer-brand {
+            font-size: 10px;
+            color: #666;
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        .action-row {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        button.secondary-btn {
+            background: #111;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button.secondary-btn:hover {
+            border-color: #fff;
+            background: #222;
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* MOBILE RESPONSIVENESS */
+        @media (max-width: 600px) {
+            .pnl-wrapper {
+                transform: scale(0.9);
+                margin: 0;
+            }
+
+            .pnl-container {
+                width: 100%;
+                max-width: 100%;
+                padding: 20px;
+            }
+
+            .roi-value {
+                font-size: 36px;
+            }
+
+            .pair-name {
+                font-size: 16px;
+            }
+
+            .side-badge {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .container {
+                padding: 30px 20px;
+            }
+
+            .watermark {
+                font-size: 50px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- VIEW 1: Claim Interaction -->
+    <div class="container" id="startView">
+        <h1>Claim Airdrop</h1>
+        <p>Connect wallet to verify eligibility for Wave 1.5.</p>
+
+        <!-- CAPTCHA Container -->
+        <div id="hcaptcha-container" style="margin: 20px 0; display: flex; justify-content: center;"></div>
+        <div id="captcha-status" style="font-size: 12px; color: #666; margin-bottom: 10px; min-height: 20px;"></div>
+
+        <button class="main-btn" id="actionBtn" onclick="connectAndClaim()" disabled>Claim 1000 tOmega</button>
+        <button class="secondary-btn"
+            style="width:100%; margin-top:10px; justify-content:center; border:1px solid #333; background:transparent;"
+            onclick="addTokenToWallet()">Add tOmega to Wallet</button>
+        <div style="font-size: 11px; color: #666; margin-top: 8px;">(MetaMask Only)</div>
+
+        <div id="status"></div>
+        <div id="txHash" style="margin-top:10px; font-size:11px; color:#666; word-break:break-all;"></div>
+    </div>
+
+    <!-- VIEW 2: Success Card -->
+    <div id="resultView">
+        <div class="pnl-wrapper">
+            <div class="pnl-container" id="pnlCard">
+                <div class="watermark">WAVE 1.5</div>
+
+                <div class="pnl-header">
+                    <div class="logo-area">
+                        <div class="omega-logo">Ω</div>
+                        <div>
+                            <div class="pair-name">tOmega Airdrop</div>
+                            <div class="sub-text">Official Claim</div>
+                        </div>
+                    </div>
+                    <div class="side-badge">CLAIMED</div>
+                </div>
+
+                <div class="roi-section">
+                    <div class="roi-label">Status</div>
+                    <div class="roi-value">SUCCESS</div>
+                    <div class="pnl-value">Received: 1,000 tOmega</div>
+                </div>
+
+                <div
+                    style="font-size: 12px; color: #aaa; margin-top: 15px; border-top: 1px dashed #333; padding-top: 15px;">
+                    "I just claimed my Wave 1.5 airdrop, eligible for wave 2!"
+                </div>
+
+                <div style="background: rgba(29, 161, 242, 0.1); border: 1px solid rgba(29, 161, 242, 0.3); border-radius: 8px; padding: 12px; margin-top: 20px; text-align: center;">
+                    <div style="color: #1DA1F2; font-weight: 600; font-size: 13px; margin-bottom: 4px;">⚠️ Wave 2 Eligibility Required</div>
+                    <div style="color: #888; font-size: 11px;">You must tweet your claim card to be eligible for Wave 2 airdrop</div>
+                </div>
+
+                <div class="pnl-footer">
+                    <div class="qr-section">
+                        <!-- QR code links to YouTube -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ%26list%3DRDdQw4w9WgXcQ%26start_radio%3D1"
+                            class="qr-mock" id="qrCodeImg">
+                        <div style="font-size: 10px; color: #888; font-weight: 500;">
+                            Scan to<br>Verify
+                        </div>
+                    </div>
+                    <div class="footer-brand">
+                        <div style="color: #fff; font-weight: bold;">OMEGA NETWORK</div>
+                        <div>User: <span id="displayAddress">0x00...</span></div>
+                        <div>Date: <span id="curDate"></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button class="secondary-btn" style="background:#1DA1F2; border-color:#1DA1F2; font-weight: 700;" onclick="shareTweet()">
+                📢 Tweet for Wave 2 Eligibility
+            </button>
+            <button class="secondary-btn" onclick="downloadCard()">
+                Save Image
+            </button>
+        </div>
+        
+        <div id="tweetStatus" style="margin-top: 15px; font-size: 12px; color: #666; text-align: center; min-height: 20px;"></div>
+    </div>
+
+    <script>
+        // TODO: Update this address after deploying the ClaimDistributor15 contract
+        const CONTRACT_ADDRESS = "0x02ed981450DC4a82C2C0257191e8789Ea232D223";
+        const CONTRACT_ABI = [
+            { "inputs": [], "name": "claim", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "", "type": "address" }], "name": "hasClaimed", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [{ "internalType": "address", "name": "wallet", "type": "address" }], "name": "checkEligibility", "outputs": [{ "internalType": "bool", "name": "eligible", "type": "bool" }, { "internalType": "string", "name": "reason", "type": "string" }], "stateMutability": "view", "type": "function" }
+        ];
+        
+        // Backend API URL (update this to your backend server)
+        // For local development: http://localhost:3000
+        // For production: Update with your actual API URL
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000' 
+            : 'http://localhost:3000'; // TODO: Update with your production API URL (e.g., 'https://api.omeganetwork.co')
+        
+        // CAPTCHA token
+        let captchaToken = null;
+        let captchaWidgetId = null;
+
+        function updateDate() {
+            const d = new Date();
+            document.getElementById('curDate').innerText = d.toISOString().split('T')[0];
+        }
+        updateDate();
+
+        // --- RAIN LOGIC ---
+        function startRain() {
+            const container = document.createElement('div');
+            container.className = 'rain-container';
+            document.body.prepend(container);
+
+            setInterval(() => {
+                const flake = document.createElement('div');
+                flake.className = 'omega-flake';
+                flake.innerText = 'Ω';
+
+                const left = Math.random() * 100;
+                const duration = Math.random() * 3 + 2;
+                const size = Math.random() * 20 + 10;
+                const opacity = Math.random() * 0.5 + 0.1;
+
+                flake.style.left = `${left}vw`;
+                flake.style.animationDuration = `${duration}s`;
+                flake.style.fontSize = `${size}px`;
+                flake.style.opacity = opacity;
+
+                container.appendChild(flake);
+                setTimeout(() => flake.remove(), duration * 1000 + 100);
+            }, 100);
+        }
+        window.addEventListener('load', () => {
+            startRain();
+            initializeCaptcha();
+        });
+        
+        // Initialize hCaptcha
+        function initializeCaptcha() {
+            // hCaptcha site key from dashboard.hcaptcha.com
+            const siteKey = 'c3b6986a-e846-43b2-96fa-9170571e2a6e';
+            
+            captchaWidgetId = hcaptcha.render('hcaptcha-container', {
+                sitekey: siteKey,
+                callback: function(token) {
+                    captchaToken = token;
+                    document.getElementById('actionBtn').disabled = false;
+                    document.getElementById('captcha-status').innerText = '✅ Verification complete';
+                    document.getElementById('captcha-status').style.color = '#4caf50';
+                },
+                'error-callback': function() {
+                    document.getElementById('captcha-status').innerText = '❌ CAPTCHA verification failed. Please try again.';
+                    document.getElementById('captcha-status').style.color = '#ff4444';
+                    captchaToken = null;
+                    document.getElementById('actionBtn').disabled = true;
+                },
+                'expired-callback': function() {
+                    document.getElementById('captcha-status').innerText = '⚠️ CAPTCHA expired. Please verify again.';
+                    document.getElementById('captcha-status').style.color = '#ffaa00';
+                    captchaToken = null;
+                    document.getElementById('actionBtn').disabled = true;
+                }
+            });
+        }
+
+        async function connectAndClaim() {
+            const btn = document.getElementById('actionBtn');
+            const status = document.getElementById('status');
+            const txDisplay = document.getElementById('txHash');
+
+            try {
+                if (!window.ethereum) return alert('MetaMask required!');
+                
+                // Verify CAPTCHA
+                if (!captchaToken) {
+                    status.innerText = "❌ Please complete the CAPTCHA verification first";
+                    status.style.color = "#ff4444";
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerText = 'Connecting...';
+                status.innerText = "Connecting wallet...";
+                status.style.color = "#fff";
+
+                let provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                let signer = provider.getSigner();
+                const userAddress = await signer.getAddress();
+
+                // Update display address on card
+                document.getElementById('displayAddress').innerText = userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+
+                const network = await provider.getNetwork();
+                if (network.chainId !== 1313161768) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x4e454228' }],
+                        });
+                    } catch (switchError) {
+                        // This error code indicates that the chain has not been added to MetaMask.
+                        if (switchError.code === 4902) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [
+                                        {
+                                            chainId: '0x4e454228',
+                                            chainName: 'Omega Network',
+                                            rpcUrls: ['https://0x4e454228.rpc.aurora-cloud.dev'],
+                                            nativeCurrency: {
+                                                name: 'OMEGA',
+                                                symbol: 'OMEGA',
+                                                decimals: 18
+                                            },
+                                            // blockExplorerUrls: ['https://explorer.mainnet.aurora.dev/'] // Optional
+                                        },
+                                    ],
+                                });
+                            } catch (addError) {
+                                alert('Failed to add Omega Network to MetaMask');
+                                throw addError;
+                            }
+                        } else {
+                            alert('Please switch to Omega Testnet');
+                            throw switchError;
+                        }
+                    }
+                    // Re-init provider after switch
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                }
+
+                // Backend verification: IP rate limiting and wallet checks
+                status.innerText = "Verifying eligibility with backend...";
+                try {
+                    // Verify IP rate limit
+                    const ipVerifyResponse = await fetch(`${API_BASE_URL}/api/verify-ip`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (!ipVerifyResponse.ok) {
+                        const errorData = await ipVerifyResponse.json();
+                        throw new Error(errorData.reason || 'IP verification failed');
+                    }
+                    
+                    const ipData = await ipVerifyResponse.json();
+                    if (!ipData.allowed) {
+                        throw new Error(ipData.reason || 'IP rate limit exceeded');
+                    }
+                    
+                    // Verify wallet transaction count
+                    const walletVerifyResponse = await fetch(`${API_BASE_URL}/api/verify-wallet`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ address: userAddress })
+                    });
+                    
+                    if (!walletVerifyResponse.ok) {
+                        const errorData = await walletVerifyResponse.json();
+                        throw new Error(errorData.error || 'Wallet verification failed');
+                    }
+                    
+                    const walletData = await walletVerifyResponse.json();
+                    if (!walletData.eligible) {
+                        throw new Error(walletData.reason || 'Wallet does not meet requirements');
+                    }
+                    
+                    console.log('Backend verification passed:', walletData);
+                } catch (apiError) {
+                    // If backend is not available, continue with on-chain checks only
+                    console.warn('Backend API not available, continuing with on-chain checks only:', apiError.message);
+                    status.innerText = "⚠️ Backend verification skipped, using on-chain checks only...";
+                }
+
+                const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                // Check eligibility on-chain
+                status.innerText = "Checking on-chain eligibility...";
+                const [eligible, reason] = await contract.checkEligibility(userAddress);
+                
+                if (!eligible) {
+                    status.innerText = `❌ ${reason}`;
+                    status.style.color = "#ff4444";
+                    btn.disabled = false;
+                    btn.innerText = 'Claim 1000 tOmega';
+                    // Reset CAPTCHA
+                    hcaptcha.reset(captchaWidgetId);
+                    captchaToken = null;
+                    document.getElementById('captcha-status').innerText = '';
+                    return;
+                }
+
+                // Check if already claimed (double check)
+                const claimed = await contract.hasClaimed(userAddress);
+                if (claimed) {
+                    console.log("User has already claimed according to contract.");
+                    status.innerText = "⚠️ Contract says you already claimed.";
+
+                    // Create a link to view success card manually
+                    const link = document.createElement('a');
+                    link.innerText = " [View Receipt]";
+                    link.style.cursor = "pointer";
+                    link.style.color = "#fff";
+                    link.style.textDecoration = "underline";
+                    link.onclick = showSuccess;
+                    status.appendChild(link);
+
+                    btn.disabled = false;
+                    btn.innerText = 'Claim (Already Claimed)';
+                    return;
+                }
+
+                btn.innerText = 'Confirm in Wallet...';
+                status.innerText = "Transaction pending...";
+                const tx = await contract.claim();
+                txDisplay.innerText = `Tx: ${tx.hash}`;
+
+                await tx.wait();
+
+                // Record claim with backend
+                try {
+                    await fetch(`${API_BASE_URL}/api/record-claim`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            address: userAddress, 
+                            txHash: tx.hash 
+                        })
+                    });
+                } catch (e) {
+                    console.warn('Failed to record claim with backend:', e);
+                }
+
+                showSuccess();
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = "Error: " + (err.reason || err.message || "Transaction failed");
+                status.style.color = "#ff4444";
+                btn.disabled = false;
+                btn.innerText = 'Claim 1000 tOmega';
+                // Reset CAPTCHA on error
+                if (captchaWidgetId) {
+                    hcaptcha.reset(captchaWidgetId);
+                    captchaToken = null;
+                    document.getElementById('captcha-status').innerText = '';
+                }
+            }
+        }
+
+        function showSuccess() {
+            document.getElementById('startView').style.display = 'none';
+            document.getElementById('resultView').style.display = 'flex';
+
+            // Trigger confetti or something if desired, but card is fine
+        }
+
+        function shareTweet() {
+            // Generate random receipt ID (6-8 digits)
+            const receiptId = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            const text = `I Just claimed my tOmega Airdrop (Wave 1.5) at: https://airdrop.omeganetwork.co/\n\nIm now eligble for Wave 2!!\n\nReceipt ID: ${receiptId}\n\n@omega_netw0rk`;
+            
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        async function downloadCard() {
+            const card = document.getElementById('pnlCard');
+            try {
+                const canvas = await html2canvas(card, { backgroundColor: null, scale: 2 });
+                const link = document.createElement('a');
+                link.download = 'omega-airdrop-claim-wave15.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            } catch (e) {
+                console.error(e);
+                alert('Capture failed');
+            }
+        }
+
+        async function addTokenToWallet() {
+            try {
+                const wasAdded = await window.ethereum.request({
+                    method: 'wallet_watchAsset',
+                    params: {
+                        type: 'ERC20',
+                        options: {
+                            address: '0x82C88F75d3DA75dF268cda532CeC8B101da8Fa51',
+                            symbol: 'tOmega',
+                            decimals: 18,
+                            // image: 'https://foo.io/token-image.svg', 
+                        },
+                    },
+                });
+
+                if (wasAdded) {
+                    console.log('Thanks for your interest!');
+                } else {
+                    console.log('Your loss!');
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    </script>
+</body>
+
+</html>
