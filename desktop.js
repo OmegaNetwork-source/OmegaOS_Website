@@ -235,6 +235,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Web server URL (browser access) - show in taskbar when server is ready
+    const trayWebUrl = document.getElementById('trayWebUrl');
+    if (window.electronAPI && window.electronAPI.onWebServerReady && trayWebUrl) {
+        window.electronAPI.onWebServerReady((data) => {
+            if (!data || !data.local || trayWebUrl.dataset.ready) return;
+            trayWebUrl.dataset.ready = '1';
+            trayWebUrl.href = data.local;
+            trayWebUrl.style.display = 'inline-block';
+            trayWebUrl.title = 'Web version: ' + data.local + (data.network && data.network.length ? '\nNetwork: ' + data.network.join(', ') : '');
+            trayWebUrl.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (window.electronAPI && window.electronAPI.openExternalUrl) {
+                    window.electronAPI.openExternalUrl(trayWebUrl.href);
+                } else {
+                    window.open(trayWebUrl.href, '_blank');
+                }
+            });
+        });
+    }
+
     // Listen for window state updates from main process
     if (window.electronAPI) {
         console.log('Electron API available');
@@ -595,7 +615,8 @@ const appFolders = {
             { id: 'paint', name: 'Omega Paint', icon: '🎨', app: 'paint' },
             { id: 'calculator', name: 'Calculator', icon: '🔢', app: 'calculator' },
             { id: 'qr-generator', name: 'QR Generator', icon: '📱', app: 'qr-generator' },
-            { id: 'calendar', name: 'Omega Calendar', icon: '📅', app: 'calendar' }
+            { id: 'calendar', name: 'Omega Calendar', icon: '📅', app: 'calendar' },
+            { id: 'strix', name: 'STRIX', icon: '<img src="strix-logo.svg" style="width: 48px; height: 48px; object-fit: contain;">', app: 'strix' }
         ]
     },
     security: {
@@ -1203,7 +1224,9 @@ function getAppName(appType) {
         'calculator': 'Calculator',
         'cookie-manager': 'Cookie Manager',
         'ai-dev': 'Omega Create',
-        'integrations': 'Integrations'
+        'integrations': 'Integrations',
+        'pgt': 'PGT',
+        'strix': 'STRIX'
     };
     return names[appType] || appType;
 }
@@ -1227,7 +1250,9 @@ function getAppIcon(appType) {
         'calculator': '🔢',
         'cookie-manager': '🍪',
         'ai-dev': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
-        'integrations': '🔗'
+        'integrations': '🔗',
+        'pgt': '🔧',
+        'strix': '<img src="strix-logo.svg" style="width: 16px; height: 16px; object-fit: contain;">'
     };
     return icons[appType] || '📄';
 }
@@ -3455,6 +3480,9 @@ async function checkAndExecuteAction(message) {
         'messenger': 'whisper',
         'chat': 'whisper',
         'messaging': 'whisper',
+        'pgt': 'pgt',
+        'strix': 'strix',
+        'shield': 'strix',
     };
 
     // Open app actions - more flexible pattern matching

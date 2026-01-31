@@ -85,7 +85,8 @@
                 'encrypt': 'encrypt.html',
                 'hash-verifier': 'hash-verifier.html',
                 'integrations-manager': 'integrations-manager.html',
-                'pgt': 'https://www.pgtools.tech/'
+                'pgt': 'https://www.pgtools.tech/',
+                'strix': 'strix.html'
             };
 
             if (mappings[appType]) {

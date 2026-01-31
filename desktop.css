@@ -1183,6 +1183,20 @@ body {
     margin-top: 1px;
 }
 
+.tray-web-url {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+    margin-left: 4px;
+    transition: background 0.15s ease;
+}
+.tray-web-url:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
 .vpn-indicator {
     position: relative;
 }

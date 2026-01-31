@@ -243,6 +243,16 @@ function createDesktopWindow() {
     }
   });
 
+  desktopWindow.webContents.on('did-finish-load', () => {
+    if (webServer) {
+      const locals = getLocalAddresses();
+      desktopWindow.webContents.send('web-server-ready', {
+        local: 'http://localhost:' + WEB_SERVER_PORT,
+        network: locals.map((ip) => 'http://' + ip + ':' + WEB_SERVER_PORT),
+      });
+    }
+  });
+
   // Handle errors
   desktopWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
     console.error('Failed to load:', errorDescription, validatedURL);
@@ -316,6 +326,17 @@ function createAppWindow(appType, options = {}) {
     width = options.width || 1200;
     height = options.height || 800;
     loadUrl = options.url;
+  } else if (appType === 'pgt') {
+    // PGT – open in webapp wrapper
+    appFile = 'webapp-wrapper.html';
+    width = options.width || 1200;
+    height = options.height || 800;
+    loadUrl = 'https://www.pgtools.tech/';
+  } else if (appType === 'strix') {
+    // STRIX (Shield) – Security & compliance platform
+    appFile = 'strix.html';
+    width = options.width || 1400;
+    height = options.height || 900;
   } else if (appType === 'integrations') {
     appFile = 'integrations-manager.html';
     width = options.width || 1000;
@@ -4010,6 +4031,98 @@ function setupIPCHandlers() {
 // Setup IPC handlers before app is ready
 setupIPCHandlers();
 
+// --- Web server for browser access (localhost + LAN IP) ---
+const WEB_SERVER_PORT = 9080;
+let webServer = null;
+
+function getLocalAddresses() {
+  const addresses = [];
+  try {
+    const ifaces = os.networkInterfaces();
+    for (const name of Object.keys(ifaces)) {
+      for (const iface of ifaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          addresses.push(iface.address);
+        }
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return addresses;
+}
+
+function startWebServer() {
+  if (webServer) return;
+  const root = __dirname;
+  const mime = {
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'application/javascript',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.ico': 'image/x-icon',
+    '.svg': 'image/svg+xml',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+  };
+  webServer = nodeHttp.createServer((req, res) => {
+    let p = req.url.split('?')[0] || '/';
+    if (p === '/') p = '/index.html';
+    const safe = path.join(root, p.replace(/^\//, '').replace(/\.\./g, ''));
+    if (!safe.startsWith(root)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+    fs.readFile(safe, (err, data) => {
+      if (err) {
+        if (p === '/index.html') {
+          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.end('<h1>Omega OS</h1><p>Web version: open the Electron app for full experience. <a href="/desktop.html">Desktop</a></p>');
+          return;
+        }
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+      const ext = path.extname(safe);
+      res.setHeader('Content-Type', mime[ext] || 'application/octet-stream');
+      res.end(data);
+    });
+  });
+  webServer.listen(WEB_SERVER_PORT, '0.0.0.0', () => {
+    const locals = getLocalAddresses();
+    console.log('');
+    console.log('========================================');
+    console.log('  Omega OS – Web version');
+    console.log('========================================');
+    console.log('  Local:   http://localhost:' + WEB_SERVER_PORT);
+    if (locals.length) {
+      locals.forEach((ip) => console.log('  Network: http://' + ip + ':' + WEB_SERVER_PORT));
+    }
+    console.log('  Open in a browser to use the web version.');
+    console.log('========================================');
+    console.log('');
+    if (desktopWindow && !desktopWindow.isDestroyed()) {
+      desktopWindow.webContents.send('web-server-ready', {
+        local: 'http://localhost:' + WEB_SERVER_PORT,
+        network: locals.map((ip) => 'http://' + ip + ':' + WEB_SERVER_PORT),
+      });
+    }
+  });
+  webServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn('[Main] Web server port ' + WEB_SERVER_PORT + ' in use; web version not started.');
+    } else {
+      console.warn('[Main] Web server error:', err.message);
+    }
+  });
+}
+
 // --- Hackerman Utilities ---
 const nodeNet = require('net');
 const nodeHttp = require('http');
@@ -4656,6 +4769,9 @@ function setupFirewallInterceptor() {
 }
 
 app.whenReady().then(async () => {
+  // Start web server immediately so http://localhost:9080 is available right away
+  startWebServer();
+
   // Track app launch
   if (analytics) {
     try {
@@ -5185,6 +5301,16 @@ app.on('before-quit', async (event) => {
       await analytics.trackClose();
     } catch (e) {
       console.warn('[Main] Analytics close tracking failed:', e.message);
+    }
+  }
+
+  // Stop web server
+  if (webServer) {
+    try {
+      webServer.close();
+      webServer = null;
+    } catch (e) {
+      // ignore
     }
   }
 

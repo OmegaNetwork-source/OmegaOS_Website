@@ -21,6 +21,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('app-window-id', (event, windowId) => callback(windowId));
   },
 
+  // Listen for webapp URL (webapp-wrapper, PGT, etc.)
+  onWebAppUrl: (callback) => ipcRenderer.on('webapp-url', (event, url) => callback(url)),
+
   // Listen for open file event
   onOpenFile: (callback) => {
     ipcRenderer.on('open-file', (event, filePath) => callback(filePath));
@@ -272,6 +275,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Xploit Logs
   onXploitLog: (callback) => ipcRenderer.on('xploit-log', (event, data) => callback(data)),
+
+  // Web server (browser access URL)
+  onWebServerReady: (callback) => ipcRenderer.on('web-server-ready', (event, data) => callback(data)),
 });
 
 // TOR HARDENING: Fingerprinting Protection
