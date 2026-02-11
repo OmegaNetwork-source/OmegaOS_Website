@@ -1226,7 +1226,10 @@ function getAppName(appType) {
         'ai-dev': 'Omega Create',
         'integrations': 'Integrations',
         'pgt': 'PGT',
-        'strix': 'STRIX'
+        'strix': 'STRIX',
+        'dappfun': 'Dapp.Fun',
+        'heatmap': 'Heat Map',
+        'quake': 'Quake'
     };
     return names[appType] || appType;
 }
@@ -1252,7 +1255,10 @@ function getAppIcon(appType) {
         'ai-dev': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
         'integrations': '🔗',
         'pgt': '🔧',
-        'strix': '<img src="strix-logo.svg" style="width: 16px; height: 16px; object-fit: contain;">'
+        'strix': '<img src="strix-logo.svg" style="width: 16px; height: 16px; object-fit: contain;">',
+        'dappfun': '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;"><path d="M 50 15 L 85 50 L 50 85 L 15 50 Z" fill="white" /><path d="M 44 42 L 36 50 L 44 58 M 56 42 L 64 50 L 56 58" stroke="#1a1a1a" stroke-width="4" fill="none" /></svg>',
+        'heatmap': '<img src="heatmap-logo.png" style="width: 16px; height: 16px; object-fit: contain;">',
+        'quake': '<img src="quake-logo.png" style="width: 16px; height: 16px; object-fit: contain;">'
     };
     return icons[appType] || '📄';
 }

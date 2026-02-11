@@ -86,7 +86,10 @@
                 'hash-verifier': 'hash-verifier.html',
                 'integrations-manager': 'integrations-manager.html',
                 'pgt': 'https://www.pgtools.tech/',
-                'strix': 'strix.html'
+                'strix': 'strix.html',
+                'dappfun': 'https://dappfun.omeganetwork.co/',
+                'heatmap': 'https://networkmap.omeganetwork.co/',
+                'quake': 'https://quake.omeganetwork.co/'
             };
 
             if (mappings[appType]) {
