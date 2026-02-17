@@ -1229,7 +1229,8 @@ function getAppName(appType) {
         'strix': 'STRIX',
         'dappfun': 'Dapp.Fun',
         'heatmap': 'Heat Map',
-        'quake': 'Quake'
+        'quake': 'Quake',
+        'omegamusic': 'Omega Music'
     };
     return names[appType] || appType;
 }
@@ -1258,7 +1259,8 @@ function getAppIcon(appType) {
         'strix': '<img src="strix-logo.svg" style="width: 16px; height: 16px; object-fit: contain;">',
         'dappfun': '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px;"><path d="M 50 15 L 85 50 L 50 85 L 15 50 Z" fill="white" /><path d="M 44 42 L 36 50 L 44 58 M 56 42 L 64 50 L 56 58" stroke="#1a1a1a" stroke-width="4" fill="none" /></svg>',
         'heatmap': '<img src="heatmap-logo.png" style="width: 16px; height: 16px; object-fit: contain;">',
-        'quake': '<img src="quake-logo.png" style="width: 16px; height: 16px; object-fit: contain;">'
+        'quake': '<img src="quake-logo.png" style="width: 16px; height: 16px; object-fit: contain;">',
+        'omegamusic': '<img src="https://omegamusic.omeganetwork.co/favicon.ico?favicon.0b3bf435.ico" style="width: 16px; height: 16px; object-fit: contain;">'
     };
     return icons[appType] || '📄';
 }

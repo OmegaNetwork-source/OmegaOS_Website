@@ -89,7 +89,8 @@
                 'strix': 'strix.html',
                 'dappfun': 'https://dappfun.omeganetwork.co/',
                 'heatmap': 'https://networkmap.omeganetwork.co/',
-                'quake': 'https://quake.omeganetwork.co/'
+                'quake': 'https://quake.omeganetwork.co/',
+                'omegamusic': 'https://omegamusic.omeganetwork.co/'
             };
 
             if (mappings[appType]) {
